@@ -173,7 +173,8 @@ begin
     checkbox := TLazCheckbox(caption.AnchorSideLeft.Control);
 
   checkbox.Toggle();
-  Lapify(checkbox.OnChange)(checkbox);
+  if checkbox.OnChange <> nil then
+    Lapify(checkbox.OnChange)(checkbox);
 end;
 
 var
