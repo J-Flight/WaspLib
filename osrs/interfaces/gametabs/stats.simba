@@ -174,7 +174,7 @@ begin
   for i := 0 to High(lines) do
     lines[i] := OCR.Recognize([b.X1, b.Y1 + (i * 12), b.X2, b.Y1 + ((i+1) * 12) + 3], RSFonts.PLAIN_12, [0], 0);
 
-  if not (ToStr(skill).Capitalize() in lines[0]) then Exit;
+  if not (ToStr(skill).After('.').Capitalize() in lines[0]) then Exit;
 
   skillInfo.XP := lines[0].ExtractInteger(0);
   skillInfo.Level := XP2Level(skillInfo.XP);
