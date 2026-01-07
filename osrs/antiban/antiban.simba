@@ -69,12 +69,12 @@ Main record to handle the built-in WaspLib antiban.
     TimeRunning: TStopwatch;
   end;
 
-function TAntiban.TimeRunningAtClock(time: String; randomness: Double = 0.10): Int64;
+function TAntiban.TimeRunningAtClock(value: String; randomness: Double = 0.10): Int64;
 var
   current, res: TDateTime;
 begin
   current := TDateTime.CreateFromSystem();
-  res := TDateTime.CreateFromISO(current.Date.ToString('YYYY-MM-DD') + 'T' + time);
+  res := TDateTime.CreateFromISO(current.Date.ToString('YYYY-MM-DD') + 'T' + value);
 
   res -= current;
   if res < 0 then res += 1;
@@ -191,7 +191,7 @@ Schedule a sleep break. A sleep break is a large break, it can be any length but
 it's usually the several hours and also the largest one/ones.
 
 `time` is the aproximate time you want the break to occur and should be written
-in a "bare" time format (00:00:00).
+in a "bare" time format (00:00:00) which is a 24H format.
 
 `length` is how long we will sleep for in milliseconds.
 

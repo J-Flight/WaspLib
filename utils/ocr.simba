@@ -18,11 +18,11 @@ Record wrapping TPixelOCR with convenience methods for text recognition.
 (*
 ## OCR.RecognizeStatic
 ```pascal
-function TOCR.RecognizeStatic(bounds: TBox; font: TPixelFont; colors: TColorArray; tolerance: Single): String;
+function TOCR.RecognizeStatic(bounds: TBox; constref font: TPixelFont; colors: TColorArray; tolerance: Single): String;
 ```
 Recognizes static text (non-moving) within bounds using specified font and colors.
 *)
-function TOCR.RecognizeStatic(bounds: TBox; font: TPixelFont; colors: TColorArray; tolerance: Single): String;
+function TOCR.RecognizeStatic(bounds: TBox; constref font: TPixelFont; colors: TColorArray; tolerance: Single): String;
 var
   img: TImage;
 begin
@@ -34,11 +34,11 @@ end;
 (*
 ## OCR.RecognizeStaticInvert
 ```pascal
-function TOCR.RecognizeStaticInvert(bounds: TBox; font: TPixelFont; colors: TColorArray): String;
+function TOCR.RecognizeStaticInvert(bounds: TBox; constref font: TPixelFont; colors: TColorArray): String;
 ```
 Recognizes static text with inverted colors (background becomes text).
 *)
-function TOCR.RecognizeStaticInvert(bounds: TBox; font: TPixelFont; colors: TColorArray): String;
+function TOCR.RecognizeStaticInvert(bounds: TBox; constref font: TPixelFont; colors: TColorArray): String;
 var
   img: TImage;
 begin
@@ -50,11 +50,11 @@ end;
 (*
 ## OCR.Recognize
 ```pascal
-function TOCR.Recognize(bounds: TBox; font: TPixelFont; colors: TColorArray; tolerance: Single): String;
+function TOCR.Recognize(bounds: TBox; constref font: TPixelFont; colors: TColorArray; tolerance: Single): String;
 ```
 Recognizes text within bounds using specified font and colors.
 *)
-function TOCR.Recognize(bounds: TBox; font: TPixelFont; colors: TColorArray; tolerance: Single): String;
+function TOCR.Recognize(bounds: TBox; constref font: TPixelFont; colors: TColorArray; tolerance: Single): String;
 var
   img: TImage;
 begin
@@ -66,11 +66,11 @@ end;
 (*
 ## OCR.RecognizeLines
 ```pascal
-function TOCR.RecognizeLines(bounds: TBox; font: TPixelFont; colors: TColorArray; tolerance: Single): TStringArray;
+function TOCR.RecognizeLines(bounds: TBox; constref font: TPixelFont; colors: TColorArray; tolerance: Single): TStringArray;
 ```
 Recognizes multiple lines of text, returning each line as a separate string.
 *)
-function TOCR.RecognizeLines(bounds: TBox; font: TPixelFont; colors: TColorArray; tolerance: Single): TStringArray;
+function TOCR.RecognizeLines(bounds: TBox; constref font: TPixelFont; colors: TColorArray; tolerance: Single): TStringArray;
 var
   img: TImage;
 begin
@@ -82,11 +82,11 @@ end;
 (*
 ## OCR.RecognizeShadow
 ```pascal
-function TOCR.RecognizeShadow(bounds: TBox; font: TPixelFont; tolerance: Single): String;
+function TOCR.RecognizeShadow(bounds: TBox; constref font: TPixelFont; tolerance: Single): String;
 ```
 Recognizes text by detecting shadow pixels and finding adjacent text colors.
 *)
-function TOCR.RecognizeShadow(bounds: TBox; font: TPixelFont; tolerance: Single): String;
+function TOCR.RecognizeShadow(bounds: TBox; constref font: TPixelFont; tolerance: Single): String;
 var
   img: TImage;
   shadows: TPointArray;
@@ -105,16 +105,16 @@ end;
 (*
 ## OCR.RecognizeNumber
 ```pascal
-function TOCR.RecognizeNumber(bounds: TBox; font: TPixelFont; colors: TColorArray; tolerance: Single): Integer;
+function TOCR.RecognizeNumber(bounds: TBox; constref font: TPixelFont; colors: TColorArray; tolerance: Single): Integer;
 ```
 Recognizes and extracts an integer from text within bounds.
 *)
-function TOCR.RecognizeNumber(bounds: TBox; font: TPixelFont; colors: TColorArray; tolerance: Single): Integer;
+function TOCR.RecognizeNumber(bounds: TBox; constref font: TPixelFont; colors: TColorArray; tolerance: Single): Integer;
 begin
   Result := Self.Recognize(bounds, font, colors, tolerance).ExtractInteger();
 end;
 
-function TOCR.Locate(bounds: TBox; Text: String; colors: TColorArray; tolerance: Single; font: TPixelFont): Single;
+function TOCR.Locate(bounds: TBox; Text: String; colors: TColorArray; tolerance: Single; constref font: TPixelFont): Single;
 var
   img: TImage;
 begin
@@ -123,7 +123,7 @@ begin
   Result := Self.Engine.Locate(img, font, Text);
 end;
 
-function TOCR.LocateInvert(bounds: TBox; Text: String; colors: TColorArray; tolerance: Single; font: TPixelFont): Single;
+function TOCR.LocateInvert(bounds: TBox; Text: String; colors: TColorArray; tolerance: Single; constref font: TPixelFont): Single;
 var
   img: TImage;
 begin

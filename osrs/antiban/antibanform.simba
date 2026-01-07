@@ -45,6 +45,7 @@ Do feel free to read the source code though if you so desire.
     Config: TConfigJSON;
   end;
 
+procedure TAntibanFormHelper.OnSleepChange(sender: TLazObject); forward;
 
 function TAntibanFormHelper.GetTaskListString(a, b, c: String): String;
 begin
@@ -218,7 +219,6 @@ procedure TAntibanFormHelper.SetDefaultSleep();
 var
   sleepObj: TJSONObject;
   i: integer;
-  event: TLazNotifyEvent;
   len: Double;
 begin
   Antiban.Sleeps := [];
@@ -241,7 +241,6 @@ begin
 
   Self.Config.Data.Add('sleep', sleepObj);
 
-  event := Self.SleepTimeEdit.OnChange;
   Self.SleepTimeEdit.OnChange         := nil;
   Self.SleepLengthSpinner.OnChange    := nil;
   Self.SleepVariationSpinner.OnChange := nil;
@@ -252,10 +251,11 @@ begin
   Self.SleepVariationSpinner.Value := Round(Antiban.Sleeps[0].StdVar * 100);
   Self.SleepLogoutSpinner.Value    := Round(Antiban.Sleeps[0].LogoutChance * 100);
 
-  Self.SleepTimeEdit.OnChange         := event;
-  Self.SleepLengthSpinner.OnChange    := event;
-  Self.SleepVariationSpinner.OnChange := event;
-  Self.SleepLogoutSpinner.OnChange    := event;
+  Self.SleepTimeEdit.OnChange         := @Self.OnSleepChange;
+  Self.SleepLengthSpinner.OnChange    := @Self.OnSleepChange;
+  Self.SleepVariationSpinner.OnChange := @Self.OnSleepChange;
+  Self.SleepLogoutSpinner.OnChange    := @Self.OnSleepChange;
+  Self.OnSleepChange(nil);
 end;
 
 
@@ -345,8 +345,6 @@ begin
 end;
 
 procedure TAntibanFormHelper.LoadSleep(obj: TJSONObject; updateList: Boolean = True);
-var
-  event: TLazNotifyEvent;
 begin
   Antiban.AddSleep(
     obj.Item['time'].AsString, obj.Item['length'].AsFloat * ONE_HOUR,
@@ -355,7 +353,6 @@ begin
 
   if updateList then
   begin
-    event := Self.SleepTimeEdit.OnChange;
     Self.SleepTimeEdit.OnChange         := nil;
     Self.SleepLengthSpinner.OnChange    := nil;
     Self.SleepVariationSpinner.OnChange := nil;
@@ -367,10 +364,11 @@ begin
     Self.SleepVariationSpinner.Value := Round(obj.Item['variation'].AsFloat * 100);
     Self.SleepLogoutSpinner.Value    := Round(obj.Item['logout'].AsFloat * 100);
 
-    Self.SleepTimeEdit.OnChange         := event;
-    Self.SleepLengthSpinner.OnChange    := event;
-    Self.SleepVariationSpinner.OnChange := event;
-    Self.SleepLogoutSpinner.OnChange    := event;
+    Self.SleepTimeEdit.OnChange         := @Self.OnSleepChange;
+    Self.SleepLengthSpinner.OnChange    := @Self.OnSleepChange;
+    Self.SleepVariationSpinner.OnChange := @Self.OnSleepChange;
+    Self.SleepLogoutSpinner.OnChange    := @Self.OnSleepChange;
+    Self.OnSleepChange(nil);
   end;
 end;
 
@@ -685,15 +683,16 @@ end;
 
 procedure TAntibanFormHelper.OnSleepChange(sender: TLazObject);
 var
-  time: String;
+  str: String;
 begin
-  time := Self.SleepTimeEdit.Text.Trim().PadLeft(5, '0');
+  str := Self.SleepTimeEdit.Text;
+
   Antiban._UpdateSleep(
-    0, time, Self.SleepLengthSpinner.Value * ONE_HOUR,
+    0, str, Self.SleepLengthSpinner.Value * ONE_HOUR,
     Self.SleepVariationSpinner.Value/100, Self.SleepLogoutSpinner.Value/100
   );
 
-  Self.Config.Data.Item['sleep'].Item['time'].AsString     := time;
+  Self.Config.Data.Item['sleep'].Item['time'].AsString     := str;
   Self.Config.Data.Item['sleep'].Item['length'].AsFloat    := Self.SleepLengthSpinner.Value;
   Self.Config.Data.Item['sleep'].Item['variation'].AsFloat := Self.SleepVariationSpinner.Value/100;
   Self.Config.Data.Item['sleep'].Item['logout'].AsFloat    := Self.SleepLogoutSpinner.Value/100;
@@ -992,10 +991,9 @@ begin
   lbl.AnchorVertically(Self.SleepCheckbox, 60);
 
   Self.SleepTimeEdit := TLazTimeEdit.CreateEx(parent, '', 'Pick an aproximated day time for your sleeps.', 0, 0, 120);
-  Self.SleepTimeEdit.DefaultNow := True;
   Self.SleepTimeEdit.DirectInput := False;
+  Self.SleepTimeEdit.TimeFormat := 'hh:mm:ss';
   Self.SleepTimeEdit.OnChange := @Self.OnSleepChange;
-  Self.SleepTimeEdit.NumbersOnly := True;
   Self.SleepTimeEdit.AnchorVertically(lbl);
 
   Self.SleepLengthSpinner := TLazFloatSpinEdit.CreateEx(parent, 'Sleep Length (hours):', 'Pick an aproximated length of sleep.', 0, 0, 120);
