@@ -395,7 +395,6 @@ begin
 
   b.X2 := b.X1 + 35;
   b.Y2 := b.Y1 + 31;
-
   Result := ItemFinder.GetHash(Target.GetImage(b));
 end;
 

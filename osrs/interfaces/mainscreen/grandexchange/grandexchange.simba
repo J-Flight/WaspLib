@@ -117,10 +117,10 @@ begin
 
     Self.SellButton := Self.BuyButton.Offset([56,0]);
 
-    Self.ItemBox.X1 := X1+5;
-    Self.ItemBox.Y1 := Y1+33;
-    Self.ItemBox.X2 := Self.ItemBox.X1+36;
-    Self.ItemBox.Y2 := Self.ItemBox.Y1+34;
+    Self.ItemBox.X1 := X1+6;
+    Self.ItemBox.Y1 := Y1+34;
+    Self.ItemBox.X2 := Self.ItemBox.X1+35;
+    Self.ItemBox.Y2 := Self.ItemBox.Y1+31;
 
     Self.ItemNameBox.X1 := X1+44;
     Self.ItemNameBox.Y1 := Y1+33;
@@ -215,11 +215,9 @@ WriteLn GrandExchange.Slots[5].Discover();
 *)
 function TRSGrandExchangeSlot.Discover(): TRSItemArray;
 var
-  img: TImage;
   hash: String;
 begin
-  img := Target.GetImage(Self.ItemBox);
-  hash := ItemFinder.GetHash(img);
+  hash := ItemFinder.GetHash(Target.GetImage(Self.ItemBox));
   if hash = '' then Exit;
   Result := ItemFinder.GetHashItems(hash);
 end;
