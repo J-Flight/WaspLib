@@ -65,7 +65,7 @@ end;
 (*
 ## RSTranslator.Global2Chunk
 ```pascal
-function TRSTranslator.Global2Chunk(p: TPoint): TPoint;
+function TRSTranslator.Global2Chunk(pt: TPoint): TPoint;
 function TRSTranslator.Global2Chunk(b: TBox): TBox; overload;
 ```
 Converts a "Global" coordinate to a chunk number.
@@ -75,11 +75,12 @@ Example:
 WriteLn RSTranslator.Global2Chunk(Point(2000, 2000));
 ```
 *)
-function TRSTranslator.Global2Chunk(p: TPoint): TPoint;
+function TRSTranslator.Global2Chunk(pt: TPoint): TPoint;
 begin
-  while p.X > Self.MapWidth do p.X -= Self.MapWidth;
-  Result.X := Self.RSMap.Scope.X1 + Floor(p.X / Self.MapChunkSide);
-  Result.Y := Self.RSMap.Scope.Y2 - Floor(p.Y / Self.MapChunkSide);
+  while pt.X > Self.MapWidth do
+    pt.X -= Self.MapWidth;
+  Result.X := Self.RSMap.Scope.X1 + Floor(pt.X / Self.MapChunkSide);
+  Result.Y := Self.RSMap.Scope.Y2 - Floor(pt.Y / Self.MapChunkSide);
 end;
 
 function TRSTranslator.Global2Chunk(b: TBox): TBox; overload;

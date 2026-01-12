@@ -296,13 +296,13 @@ end;
 (*
 ## NPCsJSON.GetByName
 ```pascal
-function TMapNPCJSON.GetByName(name: String; amount: Integer = 0): TJSONItem;
+function TMapNPCJSON.GetByName(name: String; amount: Integer = 0): TJSONArray;
 ```
-Returns a `TJSONItem` JSON array of a map npcs that matches the specified `name`.
+Returns a `TJSONArray` of a map npcs that matches the specified `name`.
 By default you get all npcs that match the `name`, however,
 if you want you can specify how many you want through `amount`.
 *)
-function TMapNPCJSON.GetByName(name: String; amount: Integer = 0): TJSONItem;
+function TMapNPCJSON.GetByName(name: String; amount: Integer = 0): TJSONArray;
 var
   i, found: Integer;
 begin
@@ -317,17 +317,17 @@ begin
     end;
 
   if found = 0 then
-    raise GetDebugLn('Object with name ' + name + ' doesn''t exist on the loaded maps.');
+    raise GetDebugLn('NPC with name ' + name + ' doesn''t exist on the loaded maps.');
 end;
 
 (*
 ## NPCsJSON.GetByID
 ```pascal
-function TMapNPCJSON.GetByID(id: Integer): TJSONItem;
+function TMapNPCJSON.GetByID(id: Integer): TJSONObject;
 ```
-Returns a `TJSONItem` JSON object of a map npcs that matches the specified `id`.
+Returns a `TJSONObject` of a map npcs that matches the specified `id`.
 *)
-function TMapNPCJSON.GetByID(id: Integer): TJSONItem;
+function TMapNPCJSON.GetByID(id: Integer): TJSONObject;
 var
   i: Integer;
 begin
@@ -336,20 +336,20 @@ begin
   for i := 0 to  Self.Data.Count-1 do
     if Self.Data.Item[i].Item[0].AsInt = id then
       Exit(Self.Data.Item[i].Clone());
-  raise GetDebugLn('Object with ID ' + ToStr(id) + ' doesn''t exist on the loaded maps.');
+  raise GetDebugLn('NPC with ID ' + ToStr(id) + ' doesn''t exist on the loaded maps.');
 end;
 
 (*
 ## NPCsJSON.GetByAction
 ```pascal
-function TMapNPCJSON.GetByAction(action: String; amount: Integer = 0): TJSONItem;
+function TMapNPCJSON.GetByAction(action: String; amount: Integer = 0): TJSONArray;
 ```
-Returns a `TJSONItem` JSON array of a map npcs that has an action that matches
+Returns a `TJSONArray` of a map npcs that has an action that matches
 the specified `action`.
 By default you get all npcs that match the `action`, however, if you want
 you can specify how many you want through `amount`.
 *)
-function TMapNPCJSON.GetByAction(action: String; amount: Integer = 0): TJSONItem;
+function TMapNPCJSON.GetByAction(action: String; amount: Integer = 0): TJSONArray;
 var
   i, j, found: Integer;
 begin
@@ -366,7 +366,7 @@ begin
       end;
 
   if found = 0 then
-    raise GetDebugLn('Object with action ' + action + ' doesn''t exist on the loaded maps.');
+    raise GetDebugLn('NPC with action ' + action + ' doesn''t exist on the loaded maps.');
 end;
 
 

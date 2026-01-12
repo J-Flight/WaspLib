@@ -91,7 +91,7 @@ begin
   Self.JSON := Self.GetJSON('https://db.waspscripts.dev/storage/v1/object/public/data/');
 
   if Self.JSON = nil then
-    Self.JSON := Self.GetJSON('https://raw.githubusercontent.com/WaspScripts/wasp-data/refs/heads/main/');
+    Self.JSON := Self.GetJSON('https://raw.githubusercontent.com/WaspScripts/wasp-assets/refs/heads/main/');
 
   if Self.JSON = nil then
   begin
@@ -120,7 +120,7 @@ begin
   end;
 
   timer.Start(8 * ONE_SECOND);
-  while Length(Self.Queue) > 0 do
+  while Self.Queue <> [] do
   begin
     Sleep(100);
 
