@@ -15,6 +15,7 @@ Record for managing WaspLib asset downloads and updates.
     Queue: TStringArray;
     URL: String;
     Timeout: TCountDown;
+    Lock: TLock;
   end;
 
 function TWLAssets.GetJSON(url: String): TJSONObject;
@@ -75,20 +76,30 @@ begin
     WriteLn GetDebugLn('WLAssets', result.Exception, ELogLevel.ERROR);
     raise GetDebugLn('WLAssets', 'If you keep having issues please delete your Assets and Cache folders.');
   end;
+
+  Self.Lock.Enter();
   idx := Self.Queue.IndexOf(result.Data);
   if idx = -1 then
     raise GetDebugLn('WLAssets', 'Can''t find ' + result.Data + ' in the download queue.');
   Delete(Self.Queue, idx, 1);
   Self.Timeout.Extend(-18 * ONE_SECOND);
+  Self.Lock.Leave();
 end;
 
+(*
+## TWLAssets.Update
+```pascal
+procedure TWLAssets.Update();
+```
+Internal method used to update [WaspLib Assets]('https://github.com/WaspScripts/wasp-assets/).
+*)
 procedure TWLAssets.Update();
 var
   i: Integer;
   timer: TCountDown;
   key, path: String;
 begin
-  Self.JSON := Self.GetJSON('https://db.waspscripts.dev/storage/v1/object/public/data/');
+  Self.JSON := Self.GetJSON('https://db.waspscripts.dev/storage/v1/object/public/assets/');
 
   if Self.JSON = nil then
     Self.JSON := Self.GetJSON('https://raw.githubusercontent.com/WaspScripts/wasp-assets/refs/heads/main/');
@@ -102,42 +113,49 @@ begin
   FileDelete(WLEnv.AssetsDir + 'hashes.json');
   TJSONParser(Self.JSON).Save(WLEnv.AssetsDir + 'hashes.json');
 
-  Self.Timeout.Start(1);
-  for i := 0 to Self.JSON.Count-1 do
-  begin
-    key := Self.JSON.Key[i];
-    path := WLEnv.AssetsDir + key;
-    if HashFile(EHashAlgo.CRC32, path) <> Self.JSON.Item[i].AsString then
-    begin
-      key := key.Replace('\', '/');
-      WriteLn GetDebugLn('WLAssets', 'Updating ' + key, ELogLevel.WARN);
-      FileDelete(path);
-      DirCreate(PathExtractDir(path));
-      Self.Queue += path;
-      Self.Timeout.Extend(20 * ONE_SECOND);
-      Async.HTTPGetFile(Self.URL + key, path, @Self.DownloadFinished);
-    end;
-  end;
+  Self.Lock := TLock.Create();
 
-  timer.Start(8 * ONE_SECOND);
-  while Self.Queue <> [] do
-  begin
-    Sleep(100);
-
-    if timer.IsFinished then
+  try
+    Self.Timeout.Start(1);
+    for i := 0 to Self.JSON.Count-1 do
     begin
-      WriteLn GetDebugLn('WLAssets', 'Downloading files. ' + ToStr(Length(Self.Queue)) + ' files left, please wait.');
-      WriteLn GetDebugLn('WLAssets', 'Files left: ' + ToStr(Self.Queue).Replace(WLEnv.AssetsDir, ''));
-      timer.Restart();
+      key := Self.JSON.Key[i];
+      path := WLEnv.AssetsDir + key;
+      if HashFile(EHashAlgo.CRC32, path) <> Self.JSON.Item[i].AsString then
+      begin
+        key := key.Replace('\', '/');
+        WriteLn GetDebugLn('WLAssets', 'Updating ' + key, ELogLevel.WARN);
+        FileDelete(path);
+        DirCreate(PathExtractDir(path));
+        Self.Queue += path;
+        Self.Timeout.Extend(20 * ONE_SECOND);
+        Async.HTTPGetFile(Self.URL + key, path, @Self.DownloadFinished);
+      end;
     end;
 
-    if Self.Timeout.IsFinished then
+    timer.Start(8 * ONE_SECOND);
+    while Self.Queue <> [] do
     begin
-      if Self.Queue = [] then Exit;
-      for i := 0 to High(Self.Queue) do
-        FileDelete(Self.Queue[i]);
-      raise GetDebugLn('WLAssets', 'Timed out downloading assets: ' + ToStr(Self.Queue));
+      Sleep(100);
+
+      if timer.IsFinished then
+      begin
+        WriteLn GetDebugLn('WLAssets', 'Downloading files. ' + ToStr(Length(Self.Queue)) + ' files left, please wait.');
+        WriteLn GetDebugLn('WLAssets', 'Files left: ' + ToStr(Self.Queue).Replace(WLEnv.AssetsDir, ''));
+        timer.Restart();
+      end;
+
+      if Self.Timeout.IsFinished then
+      begin
+        if Self.Queue = [] then
+          Exit;
+        for i := 0 to High(Self.Queue) do
+          FileDelete(Self.Queue[i]);
+        raise GetDebugLn('WLAssets', 'Timed out downloading assets: ' + ToStr(Self.Queue));
+      end;
     end;
+  finally
+    Self.Lock.Free();
   end;
 end;
 

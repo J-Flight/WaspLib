@@ -182,9 +182,8 @@ begin
   Antiban.Zoom.Max := 100;
 
   ItemData.Setup();
-  ObjectsJSON.Data := new TJSONArray();
-  NPCsJSON.Data := new TJSONArray();
-
+  ObjectsJSON.Setup(EMapJSON.OBJECTS);
+  NPCsJSON.Setup(EMapJSON.NPCS);
   Profiles.Load();
 
   RSFonts.WaitUnzipping();

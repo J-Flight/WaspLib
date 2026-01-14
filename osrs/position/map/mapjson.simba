@@ -6,376 +6,260 @@ Utilities to help load and parse json files related to {ref}`Map`.
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
-  TMapObjectJSON = record
-    Data: TJSONItem;
+  EMapJSON = enum(OBJECTS, NPCS);
+
+  TMapJSON = record
+    Data: TJSONArray;
+    Version, CacheDir: String;
+    Unzipping: Boolean;
+    Timeout: TCountDown;
+    Typ: EMapJSON;
+    const ZIP: String = WLEnv.AssetsDir + 'map' + PATH_SEP;
   end;
 
+procedure TMapJSON.Unzipped(constref result: TASyncUnzipResult);
+var
+  name, msg: String;
+begin
+  if not result.Success then
+  begin
+    DirDelete(Self.CacheDir, False);
+    raise GetDebugLn('MapJSON', result.Exception);
+  end;
+  name := PathExtractName(result.ZipFile);
+  msg := 'Finished async unzip of ' +  name + ' in ' + ToStr(Round(result.TimeUsed, 2)) + 'ms.';
+  WriteLn GetDebugLn('MapJSON', msg, ELogLevel.SUCCESS);
+  Self.Unzipping := False;
+end;
+
+procedure TMapJSON.Setup(typ: EMapJSON);
+var
+  path, tmp, filename: String;
+begin
+  Self.Typ := typ;
+  case Self.Typ of
+    EMapJSON.OBJECTS:
+    begin
+      Self.Version := WLAssets.JSON.Item['map/objects.zip'].AsString;
+      Self.CacheDir := WLEnv.CacheDir + 'map' + PATH_SEP + 'objects' + PATH_SEP;
+      filename := Self.ZIP + 'objects.zip';
+    end;
+    EMapJSON.NPCS:
+    begin
+      Self.Version := WLAssets.JSON.Item['map/npcs.zip'].AsString;
+      Self.CacheDir := WLEnv.CacheDir + 'map' + PATH_SEP + 'npcs' + PATH_SEP;
+      filename := Self.ZIP + 'npcs.zip';
+    end;
+  end;
+  //Delete old cache files if they exist
+  for path in DirList(Self.CacheDir) do
+  begin
+    tmp := Copy(path, Length(path) - Length(Self.Version) + 1, Length(path));
+    if tmp = Self.Version then Continue;
+    DirDelete(path, False);
+  end;
+
+  Self.CacheDir += Self.Version + PATH_SEP;
+
+  if not DirCreate(Self.CacheDir) then
+    raise GetDebugLn('MapJSON', 'Failed to create cache directory: ' + Self.CacheDir);
+
+  Self.Data := new TJSONArray();
+  if not DirIsEmpty(Self.CacheDir) then
+    Exit;
+
+  Self.Unzipping := True;
+  Self.Timeout.Start(ONE_MINUTE);
+  Async.FileUnZip(filename, Self.CacheDir, @Self.Unzipped);
+end;
+
 (*
-## ObjectsJSON.GetFile
+## MapJSON.GetFile
 ```pascal
-function TMapObjectJSON.GetFile(chunk: TPoint; plane: Integer): TJSONItem;
+function MapJSON.GetFile(cachedir: String; chunk: TPoint; plane: Integer): TJSONArray;
 ```
-Internal method to return a objects JSON file associated with the specified `chunk` and `plane`.
+Internal function to return a `JSONArray` of objects or npcs associated with the
+specified `chunk` and `plane`.
 *)
-function TMapObjectJSON.GetFile(chunk: TPoint; plane: Integer): TJSONParser;
+function TMapJSON.GetFile(cacheDir: String; chunk: TPoint; plane: Integer): TJSONArray;
 var
   filename, cachename: String;
 begin
-  filename := PATH_SEP + ToStr(chunk.X) + '-' + ToStr(chunk.Y) + '.json';
-  cachename := Map.Loader.CacheDir + 'objects' + PATH_SEP + ToStr(plane) + filename;
+  filename := ToStr(plane) + '-' + ToStr(chunk.X) + '-' + ToStr(chunk.Y) + '.json';
+  cachename := cacheDir + filename;
 
   if not FileExists(cachename) then
     Exit(nil);
 
-  Result := new TJSONParser();
-  Result.Load(cachename);
+  Result := new TJSONArray();
+  TJSONParser(Result).Load(cachename);
 end;
 
 (*
-## ObjectsJSON.GetJSON
+## MapJSON.Load
 ```pascal
-function TMapObjectJSON.GetJSON(chunks: TPointArray; plane: Integer): TJSONItem;
+procedure TMapJSON.Load(regions: array of TRSMapRegion = []);
 ```
-Internal method to return all objects JSON data associated with the specified
-`chunks` and `plane` merged into a single `TJSONItem`.
+Internal method to load all objects or npcs JSON data associated with the
+specified `regions` merged into a single `TJSONArray`.
 *)
-function TMapObjectJSON.GetJSON(chunks: TPointArray; plane: Integer): TJSONItem;
-var
-  i, j, n, l: Integer;
-  json: TJSONItem;
-  id: Integer;
-begin
-  Result := new TJSONArray;
-
-  for i := 0 to High(chunks) do
-  begin
-    json := Self.GetFile(chunks[i], plane);
-
-    if json = nil then Continue;
-
-    for j := 0 to json.Count-1 do
-    begin
-      id := json.Item[j].Item[0].AsInt;
-      for n := 0 to Result.Count-1 do
-        if Result.Item[n].Item[0].AsInt = id then
-        begin
-          for l := 0 to json.Item[j].Item[5].Count-1 do
-            Result.Item[n].Item[5].AddArray('', json.Item[j].Item[5].Item[l].Clone());
-          Continue(2);
-        end;
-      Result.Add('', json.Item[j].Clone());
-    end;
-  end;
-end;
-
-(*
-## ObjectsJSON.Load
-```pascal
-function TMapObjectJSON.Load(regions: array of TRSMapRegion): TJSONItem;
-```
-Internal method to load all objects JSON data associated into the `TMapObjectJSON`
-with the specified `regions` merged into a single `TJSONItem`.
-*)
-procedure TMapObjectJSON.Load(regions: array of TRSMapRegion = []);
+procedure TMapJSON.Load(regions: array of TRSMapRegion = []);
 var
   region: TRSMapRegion;
-  json: TJSONItem;
-  i, j, n, id: Integer;
+  json: TJSONArray;
+  i, idx: Integer;
 begin
-  if regions = [] then regions := Map.Loader.Regions;
+  if regions = [] then
+    regions := Map.Loader.Regions;
 
   for region in regions do
-  begin
-    json := Self.GetJSON(region.Chunks, region.Plane);
-
-    for i := 0 to json.Count-1 do
+    for i := 0 to High(region.Chunks) do
     begin
-      id := json.Item[i].Item[0].AsInt;
-      for j := 0 to Self.Data.Count-1 do
-        if Self.Data.Item[j].Item[0].AsInt = id then
-        begin
-          for n := 0 to json.Item[i].Item[5].Count-1 do
-            Self.Data.Item[j].Item[5].AddArray('', json.Item[i].Item[5].Item[n].Clone());
-          Continue(2);
-        end;
-      Self.Data.Add('', json.Item[i].Clone());
+      json := Self.GetFile(Self.CacheDir, region.Chunks[i], region.Plane);
+      if json = nil then Continue;
+      for idx := 0 to json.Count - 1 do
+        Self.Data.AddObject('data', json.Item[idx].Clone());
     end;
-  end;
 end;
 
 
 (*
-## ObjectsJSON.GetByName
+## MapJSON.GetByName
 ```pascal
-function TMapObjectJSON.GetByName(name: String; amount: Integer = 0): TJSONArray;
+function TMapJSON.GetByName(name: String; amount: Integer = 0): TJSONArray;
 ```
-Returns a `TJSONArray` of JSON Objects of a map object that matches the
+Returns a `TJSONArray` of `JSONObjects` of a map object or npc that matches the
 specified `name`.
 
-By default you get all objects that match the `name`, however, if you want you
-can specify how many you want through `amount`.
+By default you get all entries that match the `name`, however, if you want you
+can specify how many unique IDs you want through `amount`.
 *)
-function TMapObjectJSON.GetByName(name: String; amount: Integer = 0): TJSONArray;
+function TMapJSON.GetByName(name: String; amount: Integer = 0): TJSONArray;
 var
-  i, found: Integer;
+  i, idx, id: Integer;
+  ids: TIntegerArray;
 begin
-  if Self.Data.Count = 0 then Self.Load();
+  if Self.Data.Count = 0 then
+    Self.Load();
 
   Result := new TJSONArray();
-  for i := 0 to  Self.Data.Count-1 do
-    if Self.Data.Item[i].Item[1].AsString = name then
+  for i := 0 to Self.Data.Count-1 do
+    if Self.Data.Item[i].Item['name'].AsString = name then
     begin
-      Result.AddObject('', Self.Data.Item[i].Clone());
-      if Inc(found) = amount then Exit;
+      idx := i;
+      Result.AddObject('result', Self.Data.Item[idx].Clone());
+      id := Self.Data.Item[idx].Item['id'].AsInt;
+      if not ids.Contains(id) then
+      begin
+        ids += id;
+        if Length(ids) = amount then
+          Break;
+      end;
     end;
 
-  if found = 0 then
-    raise GetDebugLn('Object with name ' + name + ' doesn''t exist on the loaded maps.');
+  if ids = [] then
+    raise GetDebugLn('MapJSON', 'Entry with name ' + name + ' doesn''t exist on the loaded maps.');
+
+  if amount = 0 then
+    Exit;
+
+  for i := idx+1 to Self.Data.Count - 1 do
+    if Self.Data.Item[i].Item['id'].AsInt in ids then
+      Result.AddObject('result', Self.Data.Item[i].Clone());
 end;
 
 (*
-## ObjectsJSON.GetByID
+## MapJSON.GetByID
 ```pascal
-function TMapObjectJSON.GetByID(id: Integer): TJSONObject;
+function TMapJSON.GetByID(id: Integer): TJSONObject;
 ```
 Returns a `TJSONObject` of a map object that matches the specified `id`.
 *)
-function TMapObjectJSON.GetByID(id: Integer): TJSONObject;
+function TMapJSON.GetByID(id: Integer): TJSONObject;
 var
-  i: Integer;
+  i, idx: Integer;
 begin
-  if Self.Data.Count = 0 then Self.Load();
+  if Self.Data.Count = 0 then
+    Self.Load();
 
-  for i := 0 to  Self.Data.Count-1 do
-    if Self.Data.Item[i].Item[0].AsInt = id then
-      Exit(Self.Data.Item[i].Clone());
-  raise GetDebugLn('Object with ID ' + ToStr(id) + ' doesn''t exist on the loaded maps.');
+  idx := -1;
+  for i := 0 to Self.Data.Count - 1 do
+    if Self.Data.Item[i].Item['id'].AsInt = id then
+    begin
+      idx := i;
+      Break;
+    end;
+
+  if idx = -1 then
+    raise GetDebugLn('MapJSON', 'Entry with ID ' + ToStr(id) + ' doesn''t exist on the loaded maps.');
+
+  Result := Self.Data.Item[idx].Clone();
+
+  for i := idx+1 to Self.Data.Count - 1 do
+    if Self.Data.Item[i].Item['id'].AsInt = id then
+      for idx := 0 to Self.Data.Item[i].Item['coordinates'].Count - 1 do
+      begin
+        Result.Item['coordinates'].AddArray(
+          'coordinate',
+          Self.Data.Item[i].Item['coordinates'].Item[idx].Clone()
+        );
+      end;
 end;
 
 (*
-## ObjectsJSON.GetByAction
+## MapJSON.GetByAction
 ```pascal
-function TMapObjectJSON.GetByAction(action: String; amount: Integer = 0): TJSONArray;
+function TMapJSON.GetByAction(action: String; amount: Integer = 0): TJSONArray;
 ```
-Returns a `TJSONArray` of JSON Objects of a map object that has an action that
-matches the specified `action`.
-By default you get all objects that match the `action`, however, if you want
-you can specify how many you want through `amount`.
+Returns a `TJSONArray` of `JSONObjects` of a map object or npc that has an
+action that matches the specified `action`.
+
+By default you get all entries that match the `action`, however, if you want
+you can specify how many unique IDs you want through `amount`.
 *)
-function TMapObjectJSON.GetByAction(action: String; amount: Integer = 0): TJSONArray;
+function TMapJSON.GetByAction(action: String; amount: Integer = 0): TJSONArray;
 var
-  i, j, found: Integer;
+  i, j, idx, id: Integer;
+  ids: TIntegerArray;
 begin
-  if Self.Data.Count = 0 then Self.Load();
+  if Self.Data.Count = 0 then
+    Self.Load();
 
   Result := new TJSONArray();
-  for i := 0 to  Self.Data.Count-1 do
-    for j := 0 to Self.Data.Item[i].Item[4].Count-1 do
-      if Self.Data.Item[i].Item[4].Item[j].AsString = action then
+  for i := 0 to Self.Data.Count-1 do
+    for j := 0 to Self.Data.Item[i].Item['actions'].Count-1 do
+      if Self.Data.Item[i].Item['actions'].Item[j].AsString = action then
       begin
-        Result.AddObject('', Self.Data.Item[i].Clone());
-        if Inc(found) = amount then
-          Exit;
-        Continue(2);
+        idx := i;
+        Result.AddObject('result', Self.Data.Item[idx].Clone());
+        id := Self.Data.Item[idx].Item['id'].AsInt;
+        if not ids.Contains(id) then
+        begin
+          ids += id;
+          if Length(ids) = amount then
+            Break(2);
+        end;
+        Break;
       end;
 
-  if found = 0 then
-    raise GetDebugLn('Object with action ' + action + ' doesn''t exist on the loaded maps.');
+  if ids = [] then
+    raise GetDebugLn('MapJSON', 'Entry with action ' + action + ' doesn''t exist on the loaded maps.');
+
+  if amount = 0 then
+    Exit;
+
+  for i := idx+1 to Self.Data.Count - 1 do
+    if Self.Data.Item[i].Item['id'].AsInt in ids then
+      Result.AddObject('result', Self.Data.Item[i].Clone());
 end;
 
 
-procedure TMapObjectJSON.Print();
+procedure TMapJSON.Print();
 begin
-  if Self.Data.Count = 0 then Self.Load();
-  WriteLn Self.Data.Format([EJSONFormatOption.NO_QUOTE_MEMBERS, EJSONFormatOption.SINGLE_LINE_ARR]);
-end;
-
-
-var
-  ObjectsJSON: TMapObjectJSON;
-
-type
-  TMapNPCJSON = record
-    Data: TJSONItem;
-  end;
-
-(*
-## NPCsJSON.GetFile
-```pascal
-function TMapNPCJSON.GetFile(chunk: TPoint; plane: Integer): TJSONItem;
-```
-Internal method to return a npcs JSON file associated with the specified
-`chunk` and `plane`.
-*)
-function TMapNPCJSON.GetFile(chunk: TPoint; plane: Integer): TJSONParser;
-var
-  filename, cachename: String;
-begin
-  filename := PATH_SEP + ToStr(chunk.X) + '-' + ToStr(chunk.Y) + '.json';
-  cachename := Map.Loader.CacheDir + 'npcs' + PATH_SEP + ToStr(plane) + filename;
-
-  if not FileExists(cachename) then
-    Exit(nil);
-
-  Result := new TJSONParser();
-  Result.Load(cachename);
-end;
-
-(*
-## NPCsJSON.GetJSON
-```pascal
-function TMapNPCJSON.GetJSON(chunks: TPointArray; plane: Integer): TJSONItem;
-```
-Internal method to return all npcs JSON data associated with the specified
-`chunks` and `plane` merged into a single `TJSONItem`.
-*)
-function TMapNPCJSON.GetJSON(chunks: TPointArray; plane: Integer): TJSONItem;
-var
-  i, j, n, l: Integer;
-  json: TJSONItem;
-  id: Integer;
-begin
-  Result := new TJSONArray();
-
-  for i := 0 to High(chunks) do
-  begin
-    json := Self.GetFile(chunks[i], plane);
-    if json = nil then Continue;
-
-    for j := 0 to json.Count-1 do
-    begin
-      id := json.Item[j].Item[0].AsInt;
-      for n := 0 to Result.Count-1 do
-        if Result.Item[n].Item[0].AsInt = id then
-        begin
-          for l := 0 to json.Item[j].Item[7].Count-1 do
-            Result.Item[n].Item[7].AddArray('', json.Item[j].Item[7].Item[l].Clone());
-          Continue(2);
-        end;
-      Result.Add('', json.Item[j].Clone());
-    end;
-  end;
-end;
-
-(*
-## NPCsJSON.Load
-```pascal
-function TMapNPCJSON.Load(regions: array of TRSMapRegion): TJSONItem;
-```
-Internal method to load all npcs JSON data associated into the `TMapNPCJSON`
-with the specified `regions` merged into a single `TJSONItem`.
-*)
-procedure TMapNPCJSON.Load(regions: array of TRSMapRegion = []);
-var
-  region: TRSMapRegion;
-  json: TJSONItem;
-  i, j, n, id: Integer;
-begin
-  if regions = [] then regions := Map.Loader.Regions;
-
-  for region in regions do
-  begin
-    json := Self.GetJSON(region.Chunks, region.Plane);
-
-    for i := 0 to json.Count-1 do
-    begin
-      id := json.Item[i].Item[0].AsInt;
-      for j := 0 to Self.Data.Count-1 do
-        if Self.Data.Item[j].Item[0].AsInt = id then
-        begin
-          for n := 0 to json.Item[i].Item[7].Count-1 do
-            Self.Data.Item[j].Item[7].AddArray('', json.Item[i].Item[7].Item[n].Clone());
-          Continue(2);
-        end;
-      Self.Data.Add('', json.Item[i].Clone());
-    end;
-  end;
-end;
-
-
-(*
-## NPCsJSON.GetByName
-```pascal
-function TMapNPCJSON.GetByName(name: String; amount: Integer = 0): TJSONArray;
-```
-Returns a `TJSONArray` of a map npcs that matches the specified `name`.
-By default you get all npcs that match the `name`, however,
-if you want you can specify how many you want through `amount`.
-*)
-function TMapNPCJSON.GetByName(name: String; amount: Integer = 0): TJSONArray;
-var
-  i, found: Integer;
-begin
-  if Self.Data.Count = 0 then Self.Load();
-
-  Result := new TJSONArray();
-  for i := 0 to  Self.Data.Count-1 do
-    if Self.Data.Item[i].Item[1].AsString = name then
-    begin
-      Result.AddObject('', Self.Data.Item[i].Clone());
-      if Inc(found) = amount then Exit;
-    end;
-
-  if found = 0 then
-    raise GetDebugLn('NPC with name ' + name + ' doesn''t exist on the loaded maps.');
-end;
-
-(*
-## NPCsJSON.GetByID
-```pascal
-function TMapNPCJSON.GetByID(id: Integer): TJSONObject;
-```
-Returns a `TJSONObject` of a map npcs that matches the specified `id`.
-*)
-function TMapNPCJSON.GetByID(id: Integer): TJSONObject;
-var
-  i: Integer;
-begin
-  if Self.Data.Count = 0 then Self.Load();
-
-  for i := 0 to  Self.Data.Count-1 do
-    if Self.Data.Item[i].Item[0].AsInt = id then
-      Exit(Self.Data.Item[i].Clone());
-  raise GetDebugLn('NPC with ID ' + ToStr(id) + ' doesn''t exist on the loaded maps.');
-end;
-
-(*
-## NPCsJSON.GetByAction
-```pascal
-function TMapNPCJSON.GetByAction(action: String; amount: Integer = 0): TJSONArray;
-```
-Returns a `TJSONArray` of a map npcs that has an action that matches
-the specified `action`.
-By default you get all npcs that match the `action`, however, if you want
-you can specify how many you want through `amount`.
-*)
-function TMapNPCJSON.GetByAction(action: String; amount: Integer = 0): TJSONArray;
-var
-  i, j, found: Integer;
-begin
-  if Self.Data.Count = 0 then Self.Load();
-
-  Result := new TJSONArray();
-  for i := 0 to  Self.Data.Count-1 do
-    for j := 0 to Self.Data.Item[i].Item[5].Count-1 do
-      if Self.Data.Item[i].Item[5].Item[j].AsString = action then
-      begin
-        Result.AddObject('', Self.Data.Item[i].Clone());
-        if Inc(found) = amount then Exit;
-        Continue(2);
-      end;
-
-  if found = 0 then
-    raise GetDebugLn('NPC with action ' + action + ' doesn''t exist on the loaded maps.');
-end;
-
-
-procedure TMapNPCJSON.Print();
-begin
-  if Self.Data.Count = 0 then Self.Load();
-
+  if Self.Data.Count = 0 then
+    Self.Load();
   WriteLn Self.Data.Format([EJSONFormatOption.NO_QUOTE_MEMBERS, EJSONFormatOption.SINGLE_LINE_ARR]);
 end;
 
 var
-  NPCsJSON: TMapNPCJSON;
+  ObjectsJSON, NPCsJSON: TMapJSON;
