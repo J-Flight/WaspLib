@@ -221,6 +221,69 @@ end;
 
 
 (*
+## Antiban Callbacks
+{ref}`TAntiban` has the following callbacks to handle specific antiban events
+(Task/Break/Sleep):
+```pascal
+OnStartTask,  OnFinishTask:  procedure(task: PAntibanTask) of object;
+OnStartBreak, OnFinishBreak: procedure(task: PBreakTask)   of object;
+OnStartSleep, OnFinishSleep: procedure(task: PSleepTask)   of object;
+OnBreaking: procedure(task: PBreakTask; var countdown: TCountdown) of object;
+OnSleeping: procedure(task: PSleepTask; var countdown: TCountdown) of object;
+```
+Their names are self explanatory when you understand them but:
+ - `OnStart` callbacks are ran only once per event at the start.
+ - `OnFinish` callbacks are ran only once per event at the end.
+ - `OnBreaking` callbacks are ran every 5 seconds during a `Break` event.
+ - `OnSleeping` callbacks are ran every 5 minutes during a `Sleep` event.
+
+The usage of these is up to your creativity and they can be very useful for
+things like:
+- Letting you know an event has started or finished. This can be useful if you
+need to go to a safe place before you go on a break for example.
+- Doing misc tasks during breaks or sleeps, for example, you could have a script
+occasionally hover stats during a break. Or login and do stuff during sleeps.
+You could for example, have a timer on your script for farm runs and login
+during a break or sleep to do the farm run and log back out.
+
+Example usage from Wasp Wintertodt which walks you to safety before breaks and
+sleeps:
+```pascal
+procedure TWintertodt.SafeBreak(task: PBreakTask);
+begin
+  if not RSClient.IsLoggedIn() then
+    Exit;
+
+  if not Self.HallTiles.Contains(Map.Position()) then
+    Map.Walker.WebWalk(Self.HallTiles.RandomPoint(), 8, 0.2);
+end;
+
+procedure TWintertodt.SafeSleep(task: PSleepTask);
+begin
+  if not RSClient.IsLoggedIn() then
+    Exit;
+
+  if not Self.HallTiles.Contains(Map.Position()) then
+    Map.Walker.WebWalk(Self.HallTiles.RandomPoint(), 8, 0.2);
+end;
+
+procedure TWintertodt.Init();
+begin
+  //...
+  //...
+  Antiban.OnStartBreak := @Self.SafeBreak;
+  Antiban.OnStartSleep := @Self.SafeSleep;
+  //...
+  Self.HallTiles := [6508, 34490, 6532, 34514];
+  //...
+end;
+```
+With the code above accounts will always walk to safety at the start of breaks
+and sleeps if they are logged in.
+*)
+
+
+(*
 ## Antiban.TakeBreak
 ```pascal
 procedure TAntiban.TakeBreak(var task: TBreakTask);
@@ -246,13 +309,15 @@ begin
   if (@Self.OnStartBreak <> nil) then
     Self.OnStartBreak(@task);
 
+  //User picked, we respect it as is.
   if RandomBoolean(task.LogoutChance) then
   begin
     WriteLn GetDebugLn('Antiban', 'Logging out.');
     Logout.Logout();
   end;
 
-  if RandomBoolean(0.50) then
+  //Not user picked, we influence it with biometrics
+  if Biometrics.RandomBoolean(0.5) then
     RSClient.LoseFocus();
 
   repeat
