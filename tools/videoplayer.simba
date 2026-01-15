@@ -1,5 +1,6 @@
 (*
-# VideoPlayer
+(Video Player)=
+# Tool: Video Player
 Displays image sequences rapidly to create smooth motion, like a flipbook.
 Works with image frame sequences (not video files) and provides interactive controls.
 

@@ -1,5 +1,6 @@
 (*
-# Frame Recorder
+(Frame Recorder)=
+# Tool: Frame Recorder
 Simple utility for recording frame sequences at a specified FPS.
 Useful for creating frame sequences for {ref}`videoplayer` or debugging.
 
