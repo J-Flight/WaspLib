@@ -103,7 +103,8 @@ var
   i: Integer;
 begin
   pt := TPoint.Create(x,y);
-  g := Self.GetGlobal(pt);
+  g := Self.GetGlobal([pt.X div 4 * 4, pt.Y div 4 * 4]);
+
   Self.Coordinate.Caption := Format('[%d, %d]', [g.X, g.Y]);
 
   Self.Path := [];
@@ -325,63 +326,61 @@ end;
 (*
 ## MapDebugger.Setup
 ```pascal
-procedure TMapDebugger.Setup(loader: ^TRSMapLoader);
+procedure TMapDebugger.Setup(var loader: TRSMapLoader);
 ```
 Setup method for the `MapDebugger` form.
-A pointer to a {ref}`TRSMapLoader` must be passed into this as `loader`.
+A {ref}`TRSMapLoader` must be passed into this as `loader`.
 
 Example:
 ```pascal
 MapDebugger.Setup(@Map.Loader);
 ```
 *)
-procedure TMapDebugger.Setup(loader: ^TRSMapLoader);
+procedure TMapDebugger.Setup(var loader: TRSMapLoader);
 var
-  map, heightmap, collision: TImage;
-  p: TPoint;
+  collision: TImage;
+  pt: TPoint;
   x, y, i: Integer;
   node: TGraphNode;
 begin
-  map := loader^.Map.Copy();
-  heightmap := loader^.Heightmap.Copy();
-  collision := loader^.Collision.Copy();
+  collision := loader.Collision.Copy();
 
-  for p in collision.FindColor($FFFFFF, 0) do
+  for pt in collision.FindColor($FFFFFF, 0) do
   begin
-    x := (p.X div 4) mod 2;
-    y := (p.Y div 4) mod 2;
+    x := (pt.X div 4) mod 2;
+    y := (pt.Y div 4) mod 2;
     if x = y then Continue;
-    collision.Pixel[p.X, p.Y] := $F5F5F5;
+    collision.Pixel[pt.X, pt.Y] := $F5F5F5;
   end;
 
-  Self.Images := [map, heightmap, collision];
+  Self.Images := [loader.Map.Copy(), loader.Heightmap.Copy(), collision];
 
-  Self.GetGlobal := @loader^.GetGlobal;
-  Self.GetLocal  := @loader^.GetLocal;
+  Self.GetGlobal := @loader.GetGlobal;
+  Self.GetLocal  := @loader.GetLocal;
 
   Self.Graph.Nodes := [];
-  for node in loader^.Graph.Nodes do
+  for node in loader.Graph.Nodes do
     Self.Graph.Nodes += TGraphNode.Create(Self.GetLocal(node.Node), node.Typ);
 
-  Self.Graph.Paths := Copy(loader^.Graph.Paths);
+  Self.Graph.Paths := Copy(loader.Graph.Paths);
 
   Self.Graph.WalkableSpace := [];
-  for p in loader^.Graph.WalkableSpace do
-    Self.Graph.WalkableSpace += Self.GetLocal(p);
+  for pt in loader.Graph.WalkableSpace do
+    Self.Graph.WalkableSpace += Self.GetLocal(pt);
 
   Self.Graph.WalkableClusters := [];
-  SetLength(Self.Graph.WalkableClusters, loader^.Graph.WalkableClusters.Length);
-  for i := 0 to High(loader^.Graph.WalkableClusters) do
-    for p in loader^.Graph.WalkableClusters[i] do
-      Self.Graph.WalkableClusters[i] += Self.GetLocal(p);
+  SetLength(Self.Graph.WalkableClusters, loader.Graph.WalkableClusters.Length);
+  for i := 0 to High(loader.Graph.WalkableClusters) do
+    for pt in loader.Graph.WalkableClusters[i] do
+      Self.Graph.WalkableClusters[i] += Self.GetLocal(pt);
 
   Self.Graph.ObjectClusters := [];
-  SetLength(Self.Graph.ObjectClusters, loader^.Graph.ObjectClusters.Length);
-  for i := 0 to High(loader^.Graph.ObjectClusters) do
-    for p in loader^.Graph.ObjectClusters[i] do
-      Self.Graph.ObjectClusters[i] += Self.GetLocal(p);
+  SetLength(Self.Graph.ObjectClusters, loader.Graph.ObjectClusters.Length);
+  for i := 0 to High(loader.Graph.ObjectClusters) do
+    for pt in loader.Graph.ObjectClusters[i] do
+      Self.Graph.ObjectClusters[i] += Self.GetLocal(pt);
 
-  for i := 0 to Max(Length(loader^.Graph.WalkableClusters), Length(loader^.Graph.ObjectClusters)) do
+  for i := 0 to Max(Length(loader.Graph.WalkableClusters), Length(loader.Graph.ObjectClusters)) do
     Self.ColorArray += TColor.Random();
 
   Self.Graph.Setup();
@@ -399,5 +398,5 @@ Global {ref}`TMapDebugger` variable.
 
 procedure TRSMap.Debug();
 begin
-  MapDebugger.Setup(@Self.Loader);
+  MapDebugger.Setup(Self.Loader);
 end;

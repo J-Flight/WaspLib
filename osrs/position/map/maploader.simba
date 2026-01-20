@@ -78,8 +78,6 @@ This is an internal type. Don't use it if you don't know what you are doing.
     const BINS: TStringArray = ['map.bin', 'heightmap.bin', 'collision.bin'];
   end;
 
-  PRSMapLoader = ^TRSMapLoader;
-
 (*
 ## Points Translation
 This might be the only thing you need to use from time to time from the
@@ -649,7 +647,6 @@ begin
 
   Self.Graph.Setup();
 end;
-
 
 (*
 ## MapLoader.Load

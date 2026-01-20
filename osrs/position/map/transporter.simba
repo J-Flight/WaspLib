@@ -9,6 +9,13 @@ This is not meant to be used directly but through {ref}`TRSWalker` WebWalking.
 
 {.$DEFINE WL_TRANSPORTER_DEBUG}
 
+{$R-}
+{$IFDEF RANGECHECKS}
+begin
+  WriteLn GetDebugLn('Transporter', 'Range checks are enabled for Transporter, these should be disabled in production!', ELogLevel.WARN);
+end;
+{$ENDIF}
+
 type
 (*
 ## TTransporter type
@@ -16,6 +23,7 @@ Main record responsible for transporting the player from one place to another.
 *)
   TTransporter = record
     Position: TWalkerPositionFunction;
+    Shortcuts: TRSObjectArray;
   end;
 
 function TTransporter.CheckTeleportGrandExchange(): Boolean;
@@ -95,47 +103,118 @@ begin
 end;
 
 
+function TTransporter.CheckFaladorCrumblingWall(): Boolean;
+begin
+  Result := Stats.GetLevel(ERSSkill.AGILITY) >= 5;
+end;
 
-procedure TTransporter.AddTeleports(graph: PWebGraph; chunk: TPoint);
+function TTransporter.DoFaladorCrumblingWall(): Boolean;
+var
+  i: Integer;
+begin
+  {$IFDEF WL_TRANSPORTER_DEBUG}
+  WriteLn GetDebugLn('Transporter', 'Attempting to climb over falador crumbling wall.');
+  {$ENDIF}
+
+  for i := 0 to High(Self.Shortcuts) do
+    if Self.Shortcuts[i].Coordinates = [[11740, 37008]] then
+    begin
+      if Self.Shortcuts[i].WalkInteract(['Climb-over']) then
+      begin
+        Minimap.WaitMoving();
+        Result := True;
+      end;
+
+      Exit;
+    end;
+end;
+
+function TTransporter.CheckDarkEssenceMineNorthRocks(): Boolean;
+begin
+  Result := Stats.GetLevel(ERSSkill.AGILITY) >= 69;
+end;
+
+function TTransporter.DoDarkEssenceMineNorthRocks(): Boolean;
+var
+  i: Integer;
+begin
+  {$IFDEF WL_TRANSPORTER_DEBUG}
+  WriteLn GetDebugLn('Transporter', 'Attempting to climb over falador crumbling wall.');
+  {$ENDIF}
+
+  for i := 0 to High(Self.Shortcuts) do
+    if Self.Shortcuts[i].Coordinates = [[7044, 34936]] then
+    begin
+      if Self.Shortcuts[i].WalkInteract(['Climb']) then
+      begin
+        Minimap.WaitMoving();
+        Result := True;
+      end;
+
+      Exit;
+    end;
+end;
+
+
+
+procedure TTransporter.AddTeleports(var graph: TWebGraph; chunk: TPoint);
 begin
   case chunk of
     [46,52]:
     begin
-      graph^.AddTeleport([7764, 36906], @Self.CheckTeleportFalador, @Self.DoTeleportFalador);
+      graph.AddTeleport([7764, 36906], @Self.CheckTeleportFalador, @Self.DoTeleportFalador);
     end;
 
     [49,54]:
     begin
-      graph^.AddTeleport([8565, 36522], @Self.CheckTeleportGrandExchange, @Self.DoTeleportGrandExchange);
+      graph.AddTeleport([8565, 36522], @Self.CheckTeleportGrandExchange, @Self.DoTeleportGrandExchange);
     end;
 
     [50,50]:
     begin
-      graph^.AddTeleport([8792, 37554], @Self.CheckTeleportLumbridge, @Self.DoTeleportLumbridge);
+      graph.AddTeleport([8792, 37554], @Self.CheckTeleportLumbridge, @Self.DoTeleportLumbridge);
     end;
 
     [50,53]:
     begin
-      graph^.AddTeleport([8752, 36716], @Self.CheckTeleportVarrock, @Self.DoTeleportVarrock);
+      graph.AddTeleport([8752, 36716], @Self.CheckTeleportVarrock, @Self.DoTeleportVarrock);
     end;
   end;
 end;
 
-procedure TTransporter.Setup(position: TWalkerPositionFunction; mapLoader: PRSMapLoader);
+procedure TTransporter.AddShortcuts(var graph: TWebGraph; chunk: TPoint);
+begin
+  case chunk of
+    [45,52]:
+    begin
+      Self.Shortcuts += TRSObject.Create(Map.Walker, ObjectsJSON.GetByID(24222));
+      graph.AddDualLink([11736, 37008], [11744, 37008], EGraphNode.SHORTCUT, @Self.CheckFaladorCrumblingWall, @Self.DoFaladorCrumblingWall);
+    end;
+
+    [27,60]:
+    begin
+      Self.Shortcuts += TRSObject.Create(Map.Walker, ObjectsJSON.GetByID(34741));
+      graph.AddDualLink([7044, 34932], [7044, 34940], EGraphNode.SHORTCUT, @Self.CheckDarkEssenceMineNorthRocks, @Self.DoDarkEssenceMineNorthRocks);
+    end;
+  end;
+end;
+
+procedure TTransporter.Setup(position: TWalkerPositionFunction; var mapLoader: TRSMapLoader);
 var
   chunk: TPoint;
   region: TRSMapRegion;
 begin
   Self.Position := @position;
 
-  for region in mapLoader^.Regions do
+  for region in mapLoader.Regions do
     for chunk in region.Chunks do
     begin
-      Self.AddTeleports(@mapLoader^.Graph, chunk);
-      //Self.AddShortcuts(graph, chunk);
-      //Self.AddWhatever(graph, chunk);
+      Self.AddTeleports(mapLoader.Graph, chunk);
+      Self.AddShortcuts(mapLoader.Graph, chunk);
+      //Self.AddWhatever(mapLoader.Graph, chunk);
     end;
 end;
+{$R+}
 
 {$H-}
 var
@@ -145,3 +224,4 @@ Global {ref}`TTransporter` variable.
 *)
   Transporter: TTransporter;
 {$H+}
+

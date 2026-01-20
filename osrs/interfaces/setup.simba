@@ -135,14 +135,7 @@ begin
   RSClient.Client := ERSClient.RUNELITE;
   {$ELSE}
   RSClient.Client := RSClient.GetClient();
-  {$IFNDEF WL_DISABLE_FAKE_INPUT}
-  case RSClient.Client of
-    {$IFDEF WINDOWS}
-    ERSClient.OFFICIAL: WaspInput.Setup();
-    {$ENDIF}
-    ERSClient.LEGACY, ERSClient.RUNELITE: RemoteInput.Setup();
-  end;
-  {$ENDIF}
+  RSClient.InjectInput();
   {$ENDIF}
 
   Mouse.Setup();

@@ -33,15 +33,15 @@ Array of {ref}`TRSObject`.
   TRSObjectArray = array of TRSObject;
 
 (*
-## RSObject.Create
+## TRSObject.Create
 ```pascal
-function TRSObject.Create(walker: PRSWalker; size: TVector3; coordinates: TPointArray; uptext: TStringArray = []): TRSObject; static;
-function TRSObject.Create(json: TJSONObject): TRSObject; static; overload;
+function TRSObject.Create(var walker: TRSWalker; size: TVector3; coordinates: TPointArray; uptext: TStringArray = []): TRSObject; static;
+function TRSObject.Create(var walker: TRSWalker; json: TJSONObject): TRSObject; static; overload;
 ```
-Createors to create your {ref}`TRSObject`.
+Create function to create your {ref}`TRSObject`.
 
-Assuming you create the `RSObject` manually, the Createor will provide you
-with a fully built `TRSObject` without a finder.
+Assuming you create the `RSObject` manually, the create function will provide
+you with a fully built `TRSObject` without a finder.
 
 You may optionally assign one later if you want:
 ```pascal
@@ -50,7 +50,7 @@ var
   obj: TRSObject;
 begin
   Map.Setup([ERSChunk.VARROCK]);
-  obj := TRSObject.Create(@Map.Walker, [1,1,7], [[8648,36686]], ['Bank booth']);
+  obj := TRSObject.Create(Map.Walker, [1,1,7], [[8648,36686]], ['Bank booth']);
   //obj.Finder.Colors += $FFFFFF;
 end;
 ```
@@ -64,21 +64,21 @@ var
 begin
   Map.Setup([ERSChunk.VARROCK]);
   //Item[0] because this returns a JSON array. For more info read Map JSONs documentation.
-  obj := TRSObject.Create(ObjectsJSON.GetByName('bank', 1).Item[0]);
+  obj := TRSObject.Create(Map.Walker, ObjectsJSON.GetByName('bank', 1).Item[0]);
 end;
 ```
 *)
-function TRSObject.Create(walker: PRSWalker; size: TVector3; coordinates: TPointArray; uptext: TStringArray = []): TRSObject; static;
+function TRSObject.Create(var walker: TRSWalker; size: TVector3; coordinates: TPointArray; uptext: TStringArray = []): TRSObject; static;
 begin
   Result.Coordinates := coordinates;
   SetLength(Result.Rotations, Length(coordinates));
   Result.Size := size;
   if uptext <> [] then
     Result.UpText := uptext;
-  Result.Walker := walker;
+  Result.Walker := @walker;
 end;
 
-function TRSObject.Create(json: TJSONObject): TRSObject; static; overload;
+function TRSObject.Create(var walker: TRSWalker; json: TJSONObject): TRSObject; static; overload;
 var
   i, j, l: Integer;
   unique: array of TColorArray;
@@ -136,13 +136,13 @@ begin
     Result.Finder.Colors += [best.Color, best.Tolerance*1.5, EColorSpace.HSL, [best.Mods[0]*1.5, best.Mods[1]*1.5, best.Mods[2]*1.5]];
   end;
 
-  Result.Walker := @Map.Walker;
+  Result.Walker := @walker;
 end;
 
 (*
-## RSObjectArray.Create
+## TRSObjectArray.Create
 ```pascal
-function TRSObjectArray.Create(json: TJSONArray): TRSObjectArray; static; overload;
+function TRSObjectArray.Create(var walker: TRSWalker; json: TJSONArray): TRSObjectArray; static; overload;
 ```
 Create function to build your {ref}`TRSObjectArray`.
 
@@ -157,11 +157,11 @@ var
   objs: TRSObjectArray;
 begin
   Map.Setup([ERSChunk.VARROCK]);
-  objs := TRSObjectArray.Create(ObjectsJSON.GetByName('Bank booth')); 
+  objs := TRSObjectArray.Create(Map.Walker, ObjectsJSON.GetByName('Bank booth'));
 end;
 ```
 *)
-function TRSObjectArray.Create(json: TJSONArray): TRSObjectArray; static;
+function TRSObjectArray.Create(var walker: TRSWalker; json: TJSONArray): TRSObjectArray; static;
 var
   i: Integer;
 begin
@@ -170,7 +170,7 @@ begin
 
   SetLength(Result, json.Count);
   for i := 0 to High(Result) do
-    Result[i] := TRSObject.Create(json.Item[i]);
+    Result[i] := TRSObject.Create(walker, json.Item[i]);
 end;
 
 (*
@@ -432,6 +432,23 @@ function TRSObject.Find(out atpa: T2DPointArray): Boolean; overload;
 var
   coordinates: TPointArray;
   boundsArray: TPolygonArray;
+begin
+  Result := Self.FindEx(Self.Walker^.Position(), boundsArray, coordinates, atpa);
+end;
+
+
+(*
+## RSObject.IsVisible
+```pascal
+function TRSObject.IsVisible(): Boolean;
+```
+Returns a boolean whether the object is currently visible or not.
+*)
+function TRSObject.IsVisible(): Boolean;
+var
+  coordinates: TPointArray;
+  boundsArray: TPolygonArray;
+  atpa: T2DPointArray;
 begin
   Result := Self.FindEx(Self.Walker^.Position(), boundsArray, coordinates, atpa);
 end;

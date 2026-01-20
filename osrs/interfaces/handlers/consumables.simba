@@ -62,15 +62,15 @@ Represents a single consumable item with its properties.
 Manages all aspects of item consumption.
 *)
   TRSConsumables = record
-    Name: String;
     Consumables: TRSConsumableItemArray;
     IsSetup: Boolean;
     MinInvPoints: Int64;
     ActiveConsumables: TRSConsumableItemArray;
     Timers: array of TCountDown;
     CooldownTimers: array [ERSConsumable] of TCountDown;
+    const JSON: String = WLEnv.AssetsDir + 'jsons' + PATH_SEP + 'consumables.json';
   end;
-{%codetools off}
+
 function TRSConsumables.CalculatePoints(itemJSON: TJSONItem; category: ERSConsumable): Int64;
 var
   i: Integer;
@@ -144,7 +144,7 @@ begin
   end;
 end;
 
-function TRSConsumables.LoadFromJSON(jsonData: TJSONItem): TRSConsumableItemArray;
+function TRSConsumables.LoadFromJSON(jsonData: TJSONArray): TRSConsumableItemArray;
 var
   i: Integer;
   consumable: TRSConsumableItem;
@@ -153,28 +153,23 @@ var
   enumCategory: ERSConsumable;
 begin
   if (jsonData = nil) or (jsonData.Typ <> EJSONType.ARR) then
-    Exit;
-  Self.Name := 'Consumehandler';
+  begin
+    FileDelete(Self.JSON);
+    raise GetDebugLn('Consumables', 'Something is wrong with your consumables.json, delete your cache and data if this keeps happening.');
+  end;
+
   Stats.CacheStats();
 
   for i := 0 to jsonData.Count - 1 do
   begin
     itemJSON := jsonData.Item[i];
-    consumable.Category := ERSConsumable(-1);
 
-    if itemJSON.Has('category') then
+    if not itemJSON.Has('category') then
     begin
-      categoryStr := itemJSON.Item['category'].AsString.ToUpper();
-      for enumCategory := Low(ERSConsumable) to High(ERSConsumable) do
-        if ToStr(enumCategory).After('ERSConsumable.') = categoryStr then
-        begin
-          consumable.Category := enumCategory;
-          Break;
-        end;
+      FileDelete(Self.JSON);
+      raise GetDebugLn('Consumables', 'Something is wrong with your consumables.json, delete your cache and data if this keeps happening.');
     end;
-
-    if consumable.Category = ERSConsumable(-1) then
-      Continue;
+    consumable.Category := ERSConsumable(itemJSON.Item['category'].AsInt);
 
     itemJSON.GetString('name', consumable.Name);
     itemJSON.GetInt('cooldown_ms', consumable.CooldownMs);
@@ -247,7 +242,6 @@ begin
     end;
 end;
 
-{%codetools on}
 (*
 ## TRSConsumables.Setup
 ```pascal
@@ -261,7 +255,8 @@ var
   json: TJSONParser;
   consumableType: ERSConsumable;
 begin
-  if Self.IsSetup then Exit;
+  if Self.IsSetup then
+    Exit;
 
   for consumableType := Low(ERSConsumable) to High(ERSConsumable) do
     Self.CooldownTimers[consumableType].Start(0);
@@ -270,9 +265,9 @@ begin
   json.Load(WLEnv.AssetsDir + 'jsons' + PATH_SEP + 'consumables.json');
 
   Self.Consumables := Self.LoadFromJSON(json);
-  if Length(Self.Consumables) = 0 then
+  if Self.Consumables = [] then
   begin
-    FileDelete(WLEnv.AssetsDir + 'jsons' + PATH_SEP + 'consumables.json');
+    FileDelete(Self.JSON);
     Logger.Exception('Failed to parse consumables configuration');
   end;
 

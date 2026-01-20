@@ -298,7 +298,7 @@ var
   obj: TRSObject;
 begin
   if Self.Anvils = [] then
-    Self.Anvils := TRSObjectArray.Create(ObjectsJSON.GetByAction('Smith'));
+    Self.Anvils := TRSObjectArray.Create(Map.Walker, ObjectsJSON.GetByAction('Smith'));
 
   obj := Self.Anvils[Self.Anvils.ClosestIndex(Map.Position())];
   if walk then
@@ -361,7 +361,7 @@ begin
   end;
 
   if Self.Anvils = [] then
-    Self.Anvils := TRSObjectArray.Create(ObjectsJSON.GetByAction('Smith'));
+    Self.Anvils := TRSObjectArray.Create(Map.Walker, ObjectsJSON.GetByAction('Smith'));
 
   obj := Self.Anvils[Self.Anvils.ClosestIndex(Map.Position())];
   Result := Self.Open(obj, walk);

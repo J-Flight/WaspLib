@@ -322,8 +322,8 @@ end;
 
 procedure TRSShop._SetupMapObjects();
 begin
-  Self.Shops     := TRSObjectArray.Create(ObjectsJSON.GetByAction('Buy-food'));
-  Self.Merchants := TRSEntityArray.Create(NPCsJSON.GetByAction('Trade'));
+  Self.Shops     := TRSObjectArray.Create(Map.Walker, ObjectsJSON.GetByAction('Buy-food'));
+  Self.Merchants := TRSEntityArray.Create(Map.Walker, NPCsJSON.GetByAction('Trade'));
 end;
 
 (*

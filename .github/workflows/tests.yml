@@ -44,13 +44,13 @@ jobs:
           Remove-Item -Path $outputFile -Force
 
       - name: Checkout wasp-plugins
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v5
         with:
           repository: WaspScripts/wasp-plugins
           path: ./Plugins/wasp-plugins
         
       - name: Checkout WaspLib
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v5
         with:
           path: ./Includes/WaspLib
     

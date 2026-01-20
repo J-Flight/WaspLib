@@ -233,23 +233,18 @@ begin
   {$IFNDEF WL_DISABLE_FAKE_INPUT}
   case RSClient.Client of
     {$IFDEF WINDOWS}
-    ERSClient.OFFICIAL:
-      if WaspInput.Target <> nil then
-      begin
-        SetInputState(False);
-        Exit;
-      end;
+    ERSClient.OFFICIAL: if WaspInput.Target <> nil then SetInputState(False);
     {$ENDIF}
     ERSClient.LEGACY, ERSClient.RUNELITE:
       if RemoteInput.Target <> nil then
       begin
         EIOS_SetMouseInputEnabled(RemoteInput.Target, False);
         EIOS_SetKeyboardInputEnabled(RemoteInput.Target, False);
-        Exit;
       end;
   end;
-  {$ENDIF}
+  {$ELSE}
   WriteLn(GetDebugLn('RSClient', 'DisableRealInput method is not implemented without a fake input tool.', ELogLevel.WARN));
+  {$ENDIF}
 end;
 
 (*
@@ -269,23 +264,47 @@ begin
   {$IFNDEF WL_DISABLE_FAKE_INPUT}
   case RSClient.Client of
     {$IFDEF WINDOWS}
-    ERSClient.OFFICIAL:
-      if WaspInput.Target <> nil then
-      begin
-        SetInputState(True);
-        Exit;
-      end;
+    ERSClient.OFFICIAL: if WaspInput.Target <> nil then SetInputState(True);
     {$ENDIF}
     ERSClient.LEGACY, ERSClient.RUNELITE:
       if RemoteInput.Target <> nil then
       begin
         EIOS_SetMouseInputEnabled(RemoteInput.Target, True);
         EIOS_SetKeyboardInputEnabled(RemoteInput.Target, True);
-        Exit;
       end;
   end;
-  {$ENDIF}
+  {$ELSE}
   WriteLn(GetDebugLn('RSClient', 'EnableRealInput method is not implemented without a fake input tool.', ELogLevel.WARN));
+  {$ENDIF}
 end;
 
+(*
+## TRSClient.InjectInput
+```pascal
+procedure TRSClient.InjectInput();
+```
+Injects the client with one of the fake input tools:
+- {ref}`RemoteInput`
+- {ref}`WaspInput`
 
+Example:
+```pascal
+RSClient.InjectInput();
+```
+*)
+procedure TRSClient.InjectInput();
+begin
+  {$IFNDEF WL_DISABLE_FAKE_INPUT}
+  case Self.Client of
+    {$IFDEF WINDOWS}
+    ERSClient.OFFICIAL: WaspInput.Setup();
+    {$ENDIF}
+    ERSClient.LEGACY, ERSClient.RUNELITE: RemoteInput.Setup();
+  end;
+
+  AddOnTerminate(@Self.Canvas.Clear);
+  AddOnTerminate(@Self.EnableRealInput);
+  {$ELSE}
+  WriteLn(GetDebugLn('RSClient', 'InjectInput method is not implemented without a fake input tool.', ELogLevel.WARN));
+  {$ENDIF}
+end;

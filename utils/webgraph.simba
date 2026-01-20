@@ -4,6 +4,9 @@ Responsible for handling webwalking or any other graph logic you may need.
 
 It's partially based on the original webgraph logic by [slacky](https://slacky.one/)
 but it was written from scratch by Torwent.
+
+It's important to note that most types and methods are for internal usage and
+you shouldn't really have to interact with it.
 *)
 
 {$DEFINE WL_WEBGRAPH_INCLUDED}
@@ -19,12 +22,10 @@ end;
 
 type
 (*
-## EGraphNode
+(EGraphNode)=
+## type EGraphNode
 ```pascal
-EGraphNode = enum(
-  NORMAL, DOOR, STAIRS, SHORTCUT, OBSTACLE, TRANSPORT, TELEPORT, FAIRYRING,
-  BLOCKED
-);
+EGraphNode = enum(NORMAL, DOOR, STAIRS, SHORTCUT, OBSTACLE, TRANSPORT, TELEPORT, FAIRYRING, BLOCKED);
 ```
 Enum representing the type of nodes in a `TWebGraph`.
 *)
@@ -33,14 +34,50 @@ Enum representing the type of nodes in a `TWebGraph`.
     BLOCKED
   );
 
+(*
+(TGraphNodeFunction)=
+## type TGraphNodeFunction
+Boolean method type for a {ref}`TGraphNode` `Check` and `Handle` functions.
+
+These are functions a {ref}`TGraphNode` can have to:
+- `Check` to check if we can go through the node, e.g. check a level requirement
+- `Handle` to handle going through the node, e.g. cast a teleport.
+
+Here is a simple example of a `Check` and a `Handle` functions for a falador teleport:
+```pascal
+function TTransporter.CheckTeleportFalador(): Boolean;
+begin
+  if Stats.GetLevel(ERSSkill.MAGIC) < 31 then Exit;
+  Result := Magic.Open() and Magic.ContainsSpell(ERSSpell.FALADOR_TELEPORT);
+end;
+
+function TTransporter.DoTeleportFalador(): Boolean;
+begin
+  if Magic.CastSpell(ERSSpell.FALADOR_TELEPORT, 'Cast') then
+    Result := SleepUntil(Self.Position().InRange([8752, 36716], 60), 300, 5000);
+end;
+```
+*)
   TGraphNodeFunction = function (): Boolean  of object;
 
+(*
+(TGraphNode)=
+## type TGraphNode
+Type representing a {ref}`TWebGraph` node.
+*)
   TGraphNode = record
     Node: TPoint;
     Typ: EGraphNode;
     Check, Handle: TGraphNodeFunction;
   end;
 
+(*
+## TGraphNode.Create
+```pascal
+function TGraphNode.Create(pt: TPoint; typ: EGraphNode = EGraphNode.NORMAL; check, handle: TGraphNodeFunction = nil): TGraphNode; static;
+```
+Function to create a {ref}`TGraphNode`.
+*)
 function TGraphNode.Create(pt: TPoint; typ: EGraphNode = EGraphNode.NORMAL; check, handle: TGraphNodeFunction = nil): TGraphNode; static;
 begin
   Result.Node := pt;
@@ -96,6 +133,12 @@ begin
 end;
 
 type
+(*
+(TWebGraph)=
+## type TWebGraph
+Type representing a webgraph, for more information on what a graph is in this
+context visit this [wikipedia page](https://en.wikipedia.org/wiki/Graph_(discrete_mathematics))
+*)
   TWebGraph = record
     Nodes: TGraphNodeArray;
     Paths: T2DIntegerArray;
@@ -107,6 +150,14 @@ type
 
   PWebGraph = ^TWebGraph;
 
+(*
+## TWebGraph.Setup
+```pascal
+procedure TWebGraph.Setup();
+```
+It sets up `TWebGraph.Tree`, a {ref}`TKDPointTree` used to compare distances between
+nodes very fast.
+*)
 procedure TWebGraph.Setup();
 var
   tpa: TPointArray;
@@ -117,6 +168,16 @@ begin
   Self.Tree := TKDPointTree.Create(tpa);
 end;
 
+
+(*
+## TWebGraph.Copy
+```pascal
+function TWebGraph.Copy(): TWebGraph;
+```
+Performs a unique copy of the `TWebGraph` which you can modify without modifying the original.
+Useful for debugging graphs when you need to keep the original unchanged, e.g.
+with the {ref}`Map Debugger`.
+*)
 function TWebGraph.Copy(): TWebGraph;
 begin
   Result.Nodes := System.Copy(Self.Nodes);
@@ -126,6 +187,22 @@ begin
   Result.Setup();
 end;
 
+
+(*
+## TWebGraph.BlockArea
+```pascal
+procedure TWebGraph.BlockArea(area: TBox; inside: Boolean = True);
+```
+Blocks an area of the `TWebGraph` so no nodes in the specified `area` are returned
+when finding paths.
+
+For example, this is how you could block the space where wintertodt is so
+you don't get paths through the chasm:
+```pascal
+Map.Setup([ERSChunk.WINTERTODT]);
+Map.Loader.Graph.BlockArea([6478, 34358, 6565, 34445]);
+```
+*)
 procedure TWebGraph.BlockArea(area: TBox; inside: Boolean = True);
 var
   i: Integer;
@@ -144,6 +221,16 @@ begin
 end;
 
 
+(*
+## TWebGraph.NearNodesIndices
+```pascal
+function TWebGraph.NearNodesIndices(pt: TPoint; amount: Integer): TIntegerArray;
+```
+Returns the indices of the `amount` of nearest nodes to `pt` on the webgraph
+that can be walked to to and from `pt`.
+
+The result returned is sorted by shortest distance to `pt`.
+*)
 function TWebGraph.NearNodesIndices(pt: TPoint; amount: Integer): TIntegerArray;
 var
   i, n: Integer;
@@ -151,7 +238,6 @@ var
   tpa: TPointArray;
 begin
   tpa := Self.Tree.KNearest(pt, amount);
-
   for i := 0 to High(tpa) do
     if Self.WalkableClusters.InSameTPA(pt, tpa[i]) then
     begin
@@ -174,6 +260,18 @@ begin
 end;
 
 
+(*
+## TWebGraph.FindPath
+```pascal
+function TWebGraph.FindPath(start, finish: Integer; rnd: Double = 0): TIntegerArray;
+```
+Finds a path between `start` and `finish` with the ability to introduce some
+randomness through `rnd`.
+
+This is basically a weighted BFS algorithm.
+
+For more information on the algorithm read the [wikipedia page on breadth-first search](https://en.wikipedia.org/wiki/Breadth-first_search).
+*)
 function TWebGraph.FindPath(start, finish: Integer; rnd: Double = 0): TIntegerArray;
 type TNode = record Indices: TIntegerArray; Score: Double; end;
 var queue: array of TNode;
@@ -259,7 +357,16 @@ begin
   end;
 end;
 
+(*
+## TWebGraph.PathBetween
+```pascal
+function TWebGraph.PathBetween(a, b: TPoint; rnd: Double = 0; attempts: Integer = 3): TGraphNodeArray;
+```
+Returns a path between `a` and `b` with the ability to introduce some randomness
+through `rnd`.
 
+The returned path comes in the form of a `TGraphNodeArray`.
+*)
 function TWebGraph.PathBetween(a, b: TPoint; rnd: Double = 0; attempts: Integer = 3): TGraphNodeArray;
 var
   nodeA, nodeB: TGraphNode;
@@ -304,6 +411,18 @@ begin
 end;
 
 
+(*
+## TWebGraph.PathToNear
+```pascal
+function TWebGraph.PathToNear(a: TPoint; out b: TPoint; rnd: Double = 0): TGraphNodeArray;
+```
+Returns a path between `a` and and whatever the nearest node to `b` is with the
+ability to introduce some randomness through `rnd`.
+
+The nearest node to `b` is also returned through `b`.
+
+The returned path comes in the form of a `TGraphNodeArray`.
+*)
 function TWebGraph.PathToNear(a: TPoint; out b: TPoint; rnd: Double = 0): TGraphNodeArray;
 var
   i: Integer;
@@ -330,6 +449,15 @@ begin
 end;
 
 
+(*
+## TWebGraph.AddNode
+```pascal
+function TWebGraph.AddNode(pt: TPoint; typ: EGraphNode; fromNode: Integer): Boolean;
+```
+Adds a new node to the `TWebGraph` with a connection to `fromNode`.
+
+You can specify it's coordinate through `pt` and it's type through `typ`.
+*)
 function TWebGraph.AddNode(pt: TPoint; typ: EGraphNode; fromNode: Integer): Boolean;
 var
   i: Integer;
@@ -348,6 +476,21 @@ begin
 end;
 
 
+(*
+## TWebGraph.ConnectNodes
+```pascal
+procedure TWebGraph.ConnectNodes(a,b: Integer);
+procedure TWebGraph.ConnectNodes(a,b: TPoint); overload;
+procedure TWebGraph.ConnectNodes(a: Integer; b: TPoint); overload;
+```
+Connects nodes `a` and `b`.
+
+If either `a` or `b` are `TPoints`, they must match exactly the coordinates of a
+node in the graph.
+
+Using indices is always better for performance but overtime they may change if
+the shape of the graph changes.
+*)
 procedure TWebGraph.ConnectNodes(a,b: Integer);
 begin
   if not Self.Paths[a].Contains(b) then
@@ -390,6 +533,19 @@ begin
   Self.ConnectNodes(a, i);
 end;
 
+(*
+## TWebGraph.ConnectNodesEx
+```pascal
+procedure TWebGraph.ConnectNodesEx(a,b: TPoint);
+```
+Connects the closest node to `a` to the closest node to `b`.
+
+This is similar to {ref}`TWebGraph.ConnectNodes` when using `TPoints` but unlike
+it, your points don't have to be the exact same as the nodes in the graph.
+
+Overall, this is the most flexible and easiest method to use but it might not
+connect exactly the nodes you want at times.
+*)
 procedure TWebGraph.ConnectNodesEx(a,b: TPoint);
 var
   p, q: TPoint;
@@ -400,6 +556,13 @@ begin
 end;
 
 
+(*
+## TWebGraph.DeleteNode
+```pascal
+function TWebGraph.DeleteNode(node: Integer): Integer;
+```
+Deletes a `TGraphNode` from a `TWebGraph` along with all the connections to it.
+*)
 function TWebGraph.DeleteNode(node: Integer): Integer;
 var
   i,j,n,curr: Integer;
@@ -432,6 +595,22 @@ begin
   until Length(marked) = 0;
 end;
 
+(*
+## TWebGraph.DeleteNodes
+```pascal
+procedure TWebGraph.DeleteNodes(b: TBox);
+```
+It's very similar to {ref}`TWebGraph.BlockNodes` but unlike it, what this does
+is permanent. Blocking nodes could be used to selectively toggle nodes on/off,
+this permanently removes them.
+
+For example, this is how you could block the space where wintertodt is so
+you don't get paths through the chasm:
+```pascal
+Map.Setup([ERSChunk.WINTERTODT]);
+Map.Loader.Graph.DeleteNodes([6478, 34358, 6565, 34445]);
+```
+*)
 procedure TWebGraph.DeleteNodes(b: TBox);
 var
   i: Integer;
@@ -442,7 +621,17 @@ begin
 end;
 
 
-procedure TWebGraph.AddLink(a, b: TPoint; typ: EGraphNode; handle: TGraphNodeFunction);
+(*
+## TWebGraph.AddLinkEx
+```pascal
+procedure TWebGraph.AddLinkEx(a, b: TPoint; typeA, typeB: EGraphNode; checkA, checkB, handleA, handleB: TGraphNodeFunction; connectA, connectB: Boolean);
+```
+Adds 2 nodes and a connection between them to the `TWebGraph`.
+
+This differs from {ref}`TWebGraph.ConnectNodes` in that you can make the nodes
+have `Check` and `Handle` {ref}`TGraphNodeFunction`s.
+*)
+procedure TWebGraph.AddLinkEx(a, b: TPoint; typeA, typeB: EGraphNode; checkA, checkB, handleA, handleB: TGraphNodeFunction; connectA, connectB: Boolean);
 var
   i, j, n: Integer;
   tpa: TPointArray;
@@ -451,109 +640,93 @@ begin
   SetLength(Self.Nodes, i+2);
   SetLength(Self.Paths, i+2);
 
-  Self.Nodes[i]   := TGraphNode.Create(a, typ, @handle);
-  Self.Nodes[i+1] := TGraphNode.Create(b, typ, @handle);
-  Self.ConnectNodes(i, i+1);
+  Self.Nodes[i]   := TGraphNode.Create(a, typeA, @checkA, @handleA);
+  Self.Nodes[i+1] := TGraphNode.Create(b, typeB, @checkB, @handleB);
 
-  tpa := Self.Tree.KNearest(a, 8);
+  if connectA then
+    Self.Paths[i] += i+1;
+  if connectB then
+    Self.Paths[i+1] += i;
+
+  tpa := Self.Tree.KNearest(a, 8, True);
   for j := 0 to High(tpa) do
   begin
-    if tpa[j] = b then Continue;
-    if not Self.WalkableClusters.InSameTPA(a, tpa[j]) then Continue;
+    if tpa[j] = b then
+      Continue;
+    if not Self.WalkableClusters.InSameTPA(a, tpa[j]) then
+      Continue;
 
     n := Self.Nodes.IndexOf(tpa[j]);
-    if n = -1 then Continue;
+    if n = -1 then
+      Continue;
     Self.Paths[i] += n;
     Self.Paths[n] += i;
   end;
 
-  tpa := Self.Tree.KNearest(b, 8);
+  tpa := Self.Tree.KNearest(b, 8, True);
   for j := 0 to High(tpa) do
   begin
-    if tpa[j] = a then Continue;
-    if not Self.WalkableClusters.InSameTPA(b, tpa[j]) then Continue;
+    if tpa[j] = a then
+      Continue;
+    if not Self.WalkableClusters.InSameTPA(b, tpa[j]) then
+      Continue;
 
     n := Self.Nodes.IndexOf(tpa[j]);
-    if n = -1 then Continue;
+    if n = -1 then
+      Continue;
     Self.Paths[i+1] += n;
     Self.Paths[n] += i+1;
   end;
 end;
 
-procedure TWebGraph.AddLink(a, b: TPoint; typ: EGraphNode; handleA, handleB: TGraphNodeFunction); overload;
-var
-  i, j, n: Integer;
-  tpa: TPointArray;
+
+(*
+## TWebGraph.AddUniLink
+```pascal
+procedure TWebGraph.AddUniLink(a, b: TPoint; typ: EGraphNode; check, handle: TGraphNodeFunction);
+procedure TWebGraph.AddUniLink(a, b: TPoint; typ: EGraphNode; checkA, checkB, handleA, handleB: TGraphNodeFunction); overload;
+```
+Wrapper around {ref}`TWebGraph.AddLinkEx` to add 2 nodes with a single way
+connection from `a` to `b` like a teleport for example.
+*)
+procedure TWebGraph.AddUniLink(a, b: TPoint; typ: EGraphNode; check, handle: TGraphNodeFunction);
 begin
-  i := Length(Self.Nodes);
-  SetLength(Self.Nodes, i+2);
-  SetLength(Self.Paths, i+2);
-
-  Self.Nodes[i]   := TGraphNode.Create(a, typ, @handleA);
-  Self.Nodes[i+1] := TGraphNode.Create(b, typ, @handleB);
-  Self.ConnectNodes(i, i+1);
-
-  tpa := Self.Tree.KNearest(a, 8);
-  for j := 0 to High(tpa) do
-  begin
-    if tpa[j] = b then Continue;
-    if not Self.WalkableClusters.InSameTPA(a, tpa[j]) then Continue;
-
-    n := Self.Nodes.IndexOf(tpa[j]);
-    if n = -1 then Continue;
-    Self.Paths[i] += n;
-    Self.Paths[n] += i;
-  end;
-
-  tpa := Self.Tree.KNearest(b, 8);
-  for j := 0 to High(tpa) do
-  begin
-    if tpa[j] = a then Continue;
-    if not Self.WalkableClusters.InSameTPA(b, tpa[j]) then Continue;
-
-    n := Self.Nodes.IndexOf(tpa[j]);
-    if n = -1 then Continue;
-    Self.Paths[i+1] += n;
-    Self.Paths[n] += i+1;
-  end;
+  Self.AddLinkEx(a, b, typ, typ, @check, @check, @handle, @handle, True, False);
 end;
 
-procedure TWebGraph.AddLink(pt, a, b: TPoint; typ: EGraphNode; handle: TGraphNodeFunction); overload;
-var
-  i, j, n: Integer;
-  tpa: TPointArray;
+procedure TWebGraph.AddUniLink(a, b: TPoint; typ: EGraphNode; checkA, checkB, handleA, handleB: TGraphNodeFunction); overload;
 begin
-  i := Length(Self.Nodes);
-  SetLength(Self.Nodes, i+1);
-  SetLength(Self.Paths, i+1);
-
-  tpa := Self.Tree.KNearest(b, 8);
-  for j := 0 to High(tpa) do
-  begin
-    if tpa[j] = b then Continue;
-    if not Self.WalkableClusters.InSameTPA(a, tpa[j]) then Continue;
-
-    n := Self.Nodes.IndexOf(tpa[j]);
-    if n = -1 then Continue;
-    Self.Paths[i] += n;
-    Self.Paths[n] += i;
-  end;
-
-  tpa := Self.Tree.KNearest(b, 8);
-  for j := 0 to High(tpa) do
-  begin
-    if tpa[j] = a then Continue;
-    if not Self.WalkableClusters.InSameTPA(b, tpa[j]) then Continue;
-
-    n := Self.Nodes.IndexOf(tpa[j]);
-    if n = -1 then Continue;
-    Self.Paths[i] += n;
-    Self.Paths[n] += i;
-  end;
-
-  Self.Nodes[i] := TGraphNode.Create(pt, typ, @handle);
+  Self.AddLinkEx(a, b, typ, typ, @checkA, @checkB, @handleA, @handleB, True, False);
 end;
 
+
+(*
+## TWebGraph.AddUniLink
+```pascal
+procedure TWebGraph.AddDualLink(a, b: TPoint; typ: EGraphNode; check, handle: TGraphNodeFunction);
+procedure TWebGraph.AddDualLink(a, b: TPoint; typ: EGraphNode; checkA, checkB, handleA, handleB: TGraphNodeFunction); overload;
+```
+Wrapper around {ref}`TWebGraph.AddLinkEx` to add 2 nodes with a two way
+connection between `a` and `b` like an agility shortcut or a door for example.
+*)
+procedure TWebGraph.AddDualLink(a, b: TPoint; typ: EGraphNode; check, handle: TGraphNodeFunction);
+begin
+  Self.AddLinkEx(a, b, typ, typ, @check, @check, @handle, @handle, True, True);
+end;
+
+procedure TWebGraph.AddDualLink(a, b: TPoint; typ: EGraphNode; checkA, checkB, handleA, handleB: TGraphNodeFunction); overload;
+begin
+  Self.AddLinkEx(a, b, typ, typ, @checkA, @checkB, @handleA, @handleB, True, True);
+end;
+
+
+(*
+## TWebGraph.AddTeleport
+```pascal
+procedure TWebGraph.AddTeleport(pt: TPoint; check, handle: TGraphNodeFunction);
+```
+Similar to {ref}`TWebGraph.AddUniLink` but made specifically for teleports.
+*)
 procedure TWebGraph.AddTeleport(pt: TPoint; check, handle: TGraphNodeFunction);
 var
   i, j, n: Integer;
@@ -583,6 +756,14 @@ begin
   end;
 end;
 
+
+(*
+## TWebGraph.AddFairyRing
+```pascal
+procedure TWebGraph.AddFairyRing(pt: TPoint);
+```
+Similar to {ref}`TWebGraph.AddDualLink` but made specifically for fairy rings.
+*)
 procedure TWebGraph.AddFairyRing(pt: TPoint);
 var
   i, j, n: Integer;
@@ -613,6 +794,13 @@ begin
 end;
 
 
+(*
+## TWebGraph.Merge
+```pascal
+procedure TWebGraph.Merge(graph: TWebGraph);
+```
+Merges `graph` into the current `TWebGraph`.
+*)
 procedure TWebGraph.Merge(graph: TWebGraph);
 var
   i, j, len: Integer;
@@ -633,6 +821,15 @@ begin
   Self.ObjectClusters   += graph.ObjectClusters;
 end;
 
+
+(*
+## TWebGraph.Draw
+```pascal
+procedure TWebGraph.Draw(img: TImage);
+procedure TWebGraph.Draw(canvas: TImageBoxCanvas); overload;
+```
+Used for `TWebGraph` debugging.
+*)
 procedure TWebGraph.Draw(img: TImage);
 var
   i,j: Integer;
