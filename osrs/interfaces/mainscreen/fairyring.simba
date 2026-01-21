@@ -32,6 +32,7 @@ Record responsible with interacting with the {ref}`FairyRing`.
     Dials: array [ERSFairyRingDial] of String;
     DialBoxes, DialHoles, RotateLeftBoxes, RotateRightBoxes: TBoxArray;
     Item: TRSItem;
+    FairyRings: TRSObjectArray;
   end;
 
 (*
@@ -107,7 +108,11 @@ WriteLn FairyRing.IsOpen();
 *)
 function TRSFairyRing.IsOpen(): Boolean;
 begin
-  Result := Self.Title.IsTitle('Choose a combination');
+  Result := InRange(
+    Target.CountColor([$4950AC, 7.491, EColorSpace.RGB, [0.566, 1.199, 1.237]], Self.Bounds),
+    17000,
+    18000
+  );
 end;
 
 (*
@@ -673,11 +678,16 @@ begin
   Result := Self.ClickTeleport(); //TODO: Add some kind of teleport confirmation
 end;
 
+procedure TRSFairyRing._SetupMapObjects();
+begin
+  Self.FairyRings := TRSObjectArray.Create(Map.Walker, ObjectsJSON.GetByName('Fairy ring'));
+end;
 
 (*
 ## FairyRing.Teleport
 ```pascal
-function TRSFairyRing.Teleport(fairyCode: String; cuboid: TCuboid): Boolean;
+function TRSFairyRing.Teleport(fairyCode: String; obj: TRSObject; walk: Boolean = True): Boolean;
+function TRSFairyRing.Teleport(fairyCode: String; walk: Boolean = True): Boolean; overload;
 ```
 Teleports the user to the specified fairy ring code.
 If the fairy ring interface is not open, the `RSObject` will be used to find the closest one and open it.
@@ -689,9 +699,11 @@ Example:
 WriteLn FairyRing.Teleport('cip');
 ```
 *)
-function TRSFairyRing.Teleport(fairyCode: String; cuboid: TCuboid): Boolean;
+function TRSFairyRing.Teleport(fairyCode: String; obj: TRSObject; walk: Boolean = True): Boolean;
 var
+  hover: function(action: TStringArray = []; attempts: Integer = 2): Boolean of object;
   contextMenuTeleport: Boolean;
+
 begin
   if MSInterface.IsOpen() and not MSInterface.Close() then
     Exit;
@@ -706,9 +718,9 @@ begin
   if fairyCode = 'BKS' then
     fairyCode := 'Zanaris';
 
-  Mouse.Move(cuboid.ShapeFill().RandomMean());
-  if not MainScreen.IsUpText('Fairy ring') then
-    Exit;
+  if walk then hover := @obj.WalkHover
+  else hover := @obj.Hover;
+  if not hover() then Exit;
 
   contextMenuTeleport := ChooseOption.Select(fairyCode, False, False);
   if not contextMenuTeleport then
@@ -724,6 +736,26 @@ begin
     Result := Self.HandleInterface(fairyCode);
 end;
 
+function TRSFairyRing.Teleport(fairyCode: String; walk: Boolean = True): Boolean; overload;
+var
+  i: Integer;
+begin
+  if MSInterface.IsOpen() and not MSInterface.Close() then
+    Exit;
+
+  fairyCode := fairyCode.Replace(' ', '',).ToUpper();
+  if fairyCode = 'ZANARIS' then
+    fairyCode := 'BKS';
+
+  if Self.IsOpen() then
+    Exit(Self.HandleInterface(fairyCode));
+
+  if Self.FairyRings = [] then
+   Self._SetupMapObjects();
+
+  i := Self.FairyRings.ClosestIndex(Map.Position());
+  Result := Self.Teleport(fairyCode, Self.FairyRings[i], walk);
+end;
 
 var
 (*

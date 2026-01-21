@@ -1325,7 +1325,6 @@ begin
   Self.Bankers := TRSEntityArray.Create(Map.Walker, NPCsJSON.GetByAction('Bank'));
 end;
 
-
 (*
 ## Bank.Hover
 ```pascal
@@ -1485,6 +1484,29 @@ begin
   Result := Target.FindColor($0000ff, 4, box.Expand(2, 1)).Intersection(box.Expand(1, 0).Corners).Length = 4;
 end;
 
+(*
+## Bank.GetLockedSlots
+```pascal
+function TRSBank.GetLockedSlots(): TIntegerArray;
+```
+Returns all inventory slots that are locked.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+begin
+  WriteLn(Bank.GetLockedSlots());
+end.
+```
+*)
+function TRSBank.GetLockedSlots(): TIntegerArray;
+var
+  slot: Integer;
+begin
+  for slot := Inventory.Slots.Boxes().Low to Inventory.Slots.Boxes().High do
+    if Self.IsSlotLocked(slot) then
+      Result += slot;
+end;
 
 (*
 ## Bank.LockSlot
