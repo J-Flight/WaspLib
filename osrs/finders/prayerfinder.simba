@@ -128,7 +128,7 @@ begin
   path := Self.CacheDir + name;
 
   if not FileExists(path) then
-    ZipExtractEntry(WLEnv.AssetsDir + 'finders' + PATH_SEP + 'prayer.zip', name, Self.CacheDir);
+    ZipExtract(WLEnv.AssetsDir + 'finders' + PATH_SEP + 'prayer.zip', Self.CacheDir, [name]);
 
   Self.PrayerImages[prayer] := new TImage(path);
 

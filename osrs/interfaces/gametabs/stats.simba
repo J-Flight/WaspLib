@@ -9,35 +9,28 @@ Methods responsible for dealing with the stats tab.
 
 type
 (*
-## ERSSkill
+(ERSSkill)=
+## Enum ERSSkill
 ```pascal
-ERSSkill = enum(
-  ATTACK, HITPOINTS, MINING,
-  STRENGTH, AGILITY, SMITHING,
-  DEFENCE, HERBLORE, FISHING,
-  RANGED, THIEVING, COOKING,
-  PRAYER, CRAFTING, FIREMAKING,
-  MAGIC, FLETCHING, WOODCUTTING,
-  RUNECRAFTING, SLAYER, FARMING,
-  CONSTRUCTION, HUNTER, TOTAL
-);
+ERSSkill = enum(ATTACK, HITPOINTS, MINING, ..., CONSTRUCTION, HUNTER, TOTAL);
 ```
 Enum representing all skills in oldschool runescape.
 *)
   ERSSkill = enum(
-    ATTACK, HITPOINTS, MINING,
-    STRENGTH, AGILITY, SMITHING,
-    DEFENCE, HERBLORE, FISHING,
-    RANGED, THIEVING, COOKING,
-    PRAYER, CRAFTING, FIREMAKING,
-    MAGIC, FLETCHING, WOODCUTTING,
-    RUNECRAFTING, SLAYER, FARMING,
-    CONSTRUCTION, HUNTER, SAILING,
+    ATTACK,       HITPOINTS, MINING,
+    STRENGTH,     AGILITY,   SMITHING,
+    DEFENCE,      HERBLORE,  FISHING,
+    RANGED,       THIEVING,  COOKING,
+    PRAYER,       CRAFTING,  FIREMAKING,
+    MAGIC,        FLETCHING, WOODCUTTING,
+    RUNECRAFTING, SLAYER,    FARMING,
+    CONSTRUCTION, HUNTER,    SAILING,
     TOTAL
   );
 
 (*
-## TRSSkillInfo
+(TRSSkillInfo)=
+## type TRSSkillInfo
 Helper record to read skill information when you hover them in the {ref}`Stats` gametab.
 *)
   TRSSkillInfo = record
@@ -45,7 +38,8 @@ Helper record to read skill information when you hover them in the {ref}`Stats` 
   end;
 
 (*
-## TRSStats
+(TRSStats)=
+## type TRSStats
 Main record used to interact with the {ref}`Stats` gametab.
 *)
   TRSStats = record

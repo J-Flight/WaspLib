@@ -70,7 +70,7 @@ begin
     path := Self.CacheDir + name;
 
     if not FileExists(path) then
-      ZipExtractEntry(WLEnv.AssetsDir + 'finders' + PATH_SEP + 'spells.zip', name, Self.CacheDir);
+      ZipExtract(WLEnv.AssetsDir + 'finders' + PATH_SEP + 'spells.zip', Self.CacheDir, [name]);
 
     Self.SpellImages[spell][i] := new TImage(path);
   end;

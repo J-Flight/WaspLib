@@ -188,7 +188,7 @@ begin
   path := Self.CacheDir  + 'items' + PATH_SEP;
   filename := path + itemID + '.json';
   if not FileExists(filename) then
-    if not ZipExtractEntry(WLEnv.AssetsDir + 'jsons' + PATH_SEP + 'item-definitions.zip', itemID +'.json', path) then
+    if not ZipExtract(WLEnv.AssetsDir + 'jsons' + PATH_SEP + 'item-definitions.zip', path, [itemID +'.json']) then
       raise  GetDebugLn('ItemData', 'Couldn''t find ' + itemID + '.json');
 
   Result := new TJSONParser();

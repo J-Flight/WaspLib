@@ -139,7 +139,7 @@ begin
   name := ToStr(overhead).ToLower().After('.') + '.png';
   path := Self.CacheDir + name;
 
-  if not (FileExists(path) or ZipExtractEntry(WLEnv.AssetsDir + 'finders' + PATH_SEP + 'overheads.zip', name, Self.CacheDir)) then
+  if not (FileExists(path) or ZipExtract(WLEnv.AssetsDir + 'finders' + PATH_SEP + 'overheads.zip', Self.CacheDir, [name])) then
     raise GetDebugLn('OverheadFinder', Format('Failed to unzip overhead image %s', [name]));
 
   Result := Self.Images[overhead] := new TImage(path);
