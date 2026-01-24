@@ -686,6 +686,6 @@ begin
   if (option <> '') and not MainScreen.IsUpText(option) then
     Exit(ChooseOption.Select(option));
 
-  Target.MouseClick(EMouseButton.LEFT);
+  Mouse.Click(EMouseButton.LEFT);
   Result := True;
 end;

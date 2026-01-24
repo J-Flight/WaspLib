@@ -149,6 +149,7 @@ begin
   PrayerFinder.Setup();
   OverheadFinder.Setup();
   HouseLayoutFinder.Setup();
+  Consumables.Init();
 
   GameTabs.KeybindsEnabled := True;
   GameTabs.AvailableKeys := [
