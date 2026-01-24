@@ -1,0 +1,250 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  tests:
+    runs-on: windows-latest
+    outputs:
+        simba_build_hash: ${{ steps.simba-url.outputs.buildHash }}
+    steps:
+      - name: Fetch Simba 2 download URL
+        id: simba-url
+        run: |
+          $url = "https://raw.githubusercontent.com/Villavu/Simba-Build-Archive/refs/heads/main/latest.win64"
+          $response = Invoke-WebRequest -Uri $url -UseBasicParsing
+          $fullUrl = $response.Content.Trim()
+          if ($fullUrl -match 'simba2000%20([^/]+)/Win64\.zip\?raw=true') {
+            $buildHash = $matches[1]
+          } else {
+            Write-Error "Could not extract build hash"
+            exit 1
+          }
+          
+          $baseUrl = $fullUrl -replace 'Win64\.zip\?raw=true$', ''
+          
+          Write-Output "Base URL: $baseUrl"
+          Write-Output "Build hash: $buildHash"
+          
+          "baseUrl=$baseUrl" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          New-Item -Path ".\Includes" -ItemType Directory
+          New-Item -Path ".\Plugins" -ItemType Directory
+          "buildHash=$buildHash" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Download Simba 2.0 (64-bit)
+        run: |
+          $baseUrl = "${{ steps.simba-url.outputs.baseUrl }}"
+          $downloadUrl = "$baseUrl" + "Win64.zip?raw=true"
+          Write-Output "Download URL (64-bit): $downloadUrl"
+          $outputFile = ".\download.zip"
+          Invoke-WebRequest -Uri $downloadUrl -OutFile $outputFile
+          Expand-Archive -Path $outputFile -DestinationPath . -Force
+          Remove-Item -Path $outputFile -Force
+
+      - name: Download Simba 2.0 (32-bit)
+        run: |
+          $baseUrl = "${{ steps.simba-url.outputs.baseUrl }}"
+          $downloadUrl = "$baseUrl" + "Win32.zip?raw=true"
+          Write-Output "Download URL (32-bit): $downloadUrl"
+          $outputFile = ".\download.zip"
+          Invoke-WebRequest -Uri $downloadUrl -OutFile $outputFile
+          Expand-Archive -Path $outputFile -DestinationPath . -Force
+          Remove-Item -Path $outputFile -Force
+
+      - name: Checkout wasp-plugins
+        uses: actions/checkout@v5
+        with:
+          repository: WaspScripts/wasp-plugins
+          path: ./Plugins/wasp-plugins
+        
+      - name: Checkout WaspLib
+        uses: actions/checkout@v5
+        with:
+          path: ./Includes/WaspLib
+    
+      - name: Run tests
+        shell: bash
+        run: |
+          testFiles=(./Includes/WaspLib/tests/*.simba)
+
+          for testFile in "${testFiles[@]}"; do
+              echo "Running test: $testFile" on 32 bits
+              ./Simba-Win32.exe --extractopenssl --run "$testFile"
+              echo "Running test: $testFile" on 64 bits
+              ./Simba-Win64.exe --extractopenssl --run "$testFile"
+          done
+          
+  release:
+    needs: tests
+    if: ${{ github.repository_owner == 'WaspScripts' && github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      
+      - name: Set up Git
+        run: |
+          git config --global user.name "Wasp Bot"
+          git config --global user.email "waspbot@waspcripts.com"
+          
+      - name: Recreate release branch
+        run: |
+          git fetch --all
+          git branch -D release || true
+          git checkout -b release origin/main
+
+      - name: Remove unwanted files
+        run: rm -rf tests
+ 
+      - name: Strip multi-line comments
+        run: find . -name "*.simba" -type f -exec perl -0777 -i -pe 's/\(\*.*?\*\)//gs' {} +
+        
+      - name: Commit and push to release
+        run: |
+          git add .
+          git commit -m "Sync release with main and strip comments" || echo "No changes to commit"
+          git push origin release --force
+          
+      - name: Check release branch size
+        run: |
+          echo "Release branch size:"
+          du -sh .
+          
+      - name: Check main branch size
+        run: |
+          git fetch origin main
+          git checkout -b temp-main origin/main
+          echo "Main branch size:"
+          du -sh .
+  
+  version:
+    needs: [tests, release]
+    if: ${{ github.repository_owner == 'WaspScripts' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          ref: main
+
+      - name: Set up Git
+        run: |
+          git config --global user.name "Wasp Bot"
+          git config --global user.email "waspbot@waspcripts.com"
+          
+      - name: Get current date
+        id: date
+        run: |
+          echo "CURRENT_YEAR=$(date +'%Y')" >> $GITHUB_ENV
+          echo "CURRENT_MONTH=$(date +'%m')" >> $GITHUB_ENV
+          echo "CURRENT_DAY=$(date +'%d')" >> $GITHUB_ENV
+
+      - name: Get commit hash
+        id: commit-hash
+        run: echo "COMMIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      - name: Update version.simba on main branch
+        run: |
+          sed -i "s/WL_VERSION_YEAR: Integer = .*/WL_VERSION_YEAR: Integer = $CURRENT_YEAR;/" version.simba
+          sed -i "s/WL_VERSION_MONTH: Integer = .*/WL_VERSION_MONTH: Integer = $CURRENT_MONTH;/" version.simba
+          sed -i "s/WL_VERSION_DAY: Integer = .*/WL_VERSION_DAY: Integer = $CURRENT_DAY;/" version.simba
+          sed -i "s/WL_VERSION_COMMIT_HASH: String = .*/WL_VERSION_COMMIT_HASH: String = '$COMMIT_HASH';/" version.simba
+
+      - name: Push changes to main branch
+        run: |
+          git add version.simba
+          git commit -m "Automatic version bump to $CURRENT_YEAR.$CURRENT_MONTH.$CURRENT_DAY-$COMMIT_HASH" || echo "No changes to commit on main"
+          git push
+          
+      - name: Switch to release branch
+        run: |
+          git fetch origin release
+          git checkout release
+
+      - name: Update version.simba on release branch
+        run: |
+          sed -i "s/WL_VERSION_YEAR: Integer = .*/WL_VERSION_YEAR: Integer = $CURRENT_YEAR;/" version.simba
+          sed -i "s/WL_VERSION_MONTH: Integer = .*/WL_VERSION_MONTH: Integer = $CURRENT_MONTH;/" version.simba
+          sed -i "s/WL_VERSION_DAY: Integer = .*/WL_VERSION_DAY: Integer = $CURRENT_DAY;/" version.simba
+          sed -i "s/WL_VERSION_COMMIT_HASH: String = .*/WL_VERSION_COMMIT_HASH: String = '$COMMIT_HASH';/" version.simba  
+
+      - name: Push changes to release branch
+        run: |
+          git add version.simba
+          git commit -m "Automatic version bump to $CURRENT_YEAR.$CURRENT_MONTH.$CURRENT_DAY-$COMMIT_HASH" || echo "No changes to commit on release"
+          git push origin release
+          
+      - name: Create git tag
+        id: tag
+        run: |
+          TAG_NAME="$CURRENT_YEAR.$CURRENT_MONTH.$CURRENT_DAY-$COMMIT_HASH"
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+          git tag $TAG_NAME
+          git push origin $TAG_NAME
+
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create $TAG_NAME --generate-notes
+      
+      - name: Create Uploaded Release
+        run: |
+          ZIP_NAME="$TAG_NAME.zip"
+          git archive --format zip --output "$ZIP_NAME" HEAD
+          echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
+          
+      - name: Upload release to Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          curl -X POST "$SUPABASE_URL/storage/v1/object/wasplib/$ZIP_NAME" \
+            -H "Authorization: Bearer $SUPABASE_KEY" \
+            -H "Content-Type: application/zip" \
+            --data-binary @"$ZIP_NAME"
+          curl -X PUT "$SUPABASE_URL/storage/v1/object/wasplib/latest.zip" \
+            -H "Authorization: Bearer $SUPABASE_KEY" \
+            -H "Content-Type: application/zip" \
+            --data-binary @"$ZIP_NAME"
+            
+      - name: Insert release metadata
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SIMBA_BUILD_HASH: ${{ needs.tests.outputs.simba_build_hash }}
+        run: |
+          DATA=$(jq -nc \
+            --arg version "$TAG_NAME" \
+            --arg simba "$SIMBA_BUILD_HASH" \
+            '{version: $version, simba: $simba}'
+          )
+          curl -X POST "$SUPABASE_URL/rest/v1/wasplib" \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY" \
+            -H "Content-Type: application/json" \
+            -H "Content-Profile: scripts" \
+            -d "$DATA"
+            
+      - name: Discord notification
+        shell: bash
+        run: |
+            BODY=$(jq -nc \
+              --arg title "WaspLib Version $TAG_NAME" \
+              --arg desc "${{ github.event.head_commit.message || 'No commit message available' }}
+              
+              Download: https://github.com/WaspScripts/WaspLib/releases/tag/$TAG_NAME" \
+              --arg url  "https://github.com/WaspScripts/WaspLib/commit/${{ github.sha }}" \
+              --arg foot "Author: ${{ github.event.head_commit.author.name }}" \
+              --argjson color 16742912 \
+              '{embeds:[{title:$title,description:$desc,url:$url,color:$color,footer:{text:$foot}}]}')
+            curl \
+                -H "Content-Type: application/json" \
+                -d "$BODY" \
+                ${{ secrets.UPDATES_WEBHOOK }}

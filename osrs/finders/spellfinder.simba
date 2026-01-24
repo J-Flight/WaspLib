@@ -21,12 +21,9 @@ type
 
   TRSSpellFinder = record
     SpellImages: array [ERSSpell] of array [0..1] of TImage;
-
-    Version: String;
     Similarity: Single;
     ImageCompare: TImageCompareUtils;
-
-    CacheDir: String;
+    Version, CacheDir: String;
   end;
 
 procedure TRSSpellFinder.Setup();
