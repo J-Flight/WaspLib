@@ -190,7 +190,8 @@ Manages all aspects of item consumption.
       Names: TStringArray;
       Items, Active: TRSBoostItemArray;
       MinInvPoints: Integer;
-      Timers: array of TCountDown;
+      Timer: TCountDown;
+      Points: Integer;
       IsSetup: Boolean;
     end;
 
@@ -198,12 +199,11 @@ Manages all aspects of item consumption.
       Names: TStringArray;
       Items, Active: TRSConsumableItemArray;
       MinInvPoints: Integer;
-      Timers: array of TCountDown;
+      Timer: TCountDown;
       IsSetup: Boolean;
     end;
 
     Cooldowns: array [0..2] of TCountDown;
-
     Version, CacheDir: String;
   end;
 
@@ -295,7 +295,7 @@ begin
       raise GetDebugLn('Consumables', 'File does not exist: ' + filename);
 
   json := new TJSONParser();
-  json.Load(filename);
+  json.Load(Self.CacheDir + filename);
 
   if json.Typ <> EJSONType.ARR then
     raise GetDebugLn('Consumables', 'Unexpected JSON format in: ' + filename);
@@ -307,6 +307,50 @@ begin
   end;
 
   Self.Boosts[skill].IsSetup := True;
+end;
+
+
+(*
+## TRSConsumables.Enable
+```pascal
+procedure TRSConsumables.Enable(consumable: ERSConsumable; item: TRSItem);
+procedure TRSConsumables.Enable(boost: ERSSkill; item: TRSItem); overload;
+```
+Enabled a specific item to use for a category.
+
+If this is not used any item available will that is valid for the category will
+be used.
+*)
+procedure TRSConsumables.Enable(consumable: ERSConsumable; item: TRSItem);
+var
+  name: TRSItem;
+  i, j: Integer;
+begin
+  j := -1;
+  for name in item.Spread() do
+    for i := j+1 to High(Self.Consumables[consumable].Items) do
+      if name = Self.Consumables[consumable].Items[i].Item then
+      begin
+        Self.Consumables[consumable].Active += Self.Consumables[consumable].Items[i];
+        j := i;
+        Continue(2);
+      end;
+end;
+
+procedure TRSConsumables.Enable(boost: ERSSkill; item: TRSItem); overload;
+var
+  name: TRSItem;
+  i, j: Integer;
+begin
+  j := -1;
+  for name in item.Spread() do
+    for i := j+1 to High(Self.Boosts[boost].Items) do
+      if name = Self.Boosts[boost].Items[i].Item then
+      begin
+        Self.Boosts[boost].Active += Self.Boosts[boost].Items[i];
+        j := i;
+        Continue(2);
+      end;
 end;
 
 
@@ -334,7 +378,9 @@ begin
     if items[i].EndsWith(')') then
       items[i] := items[i].Before('(');
 
-  Result := Self.Consumables[consumable].Items.Intersection(items);
+  if Self.Consumables[consumable].Active = [] then
+    Self.Consumables[consumable].Active := Self.Consumables[consumable].Items;
+  Result := Self.Consumables[consumable].Active.Intersection(items);
 end;
 
 function TRSConsumables.Find(boost: ERSSkill): TRSBoostItemArray; overload;
@@ -352,6 +398,9 @@ begin
   for i := 0 to High(items) do
     if items[i].EndsWith(')') then
       items[i] := items[i].Before('(');
+
+  if Self.Boosts[boost].Active = [] then
+    Self.Boosts[boost].Active := Self.Boosts[boost].Items;
 
   Result := Self.Boosts[boost].Items.Intersection(items);
 end;
@@ -407,37 +456,13 @@ function TRSConsumables.CanConsume(boost: ERSSkill): Boolean; overload;
 Checks if a consumable can be used, considering active effects.
 *)
 function TRSConsumables.CanConsume(consumable: ERSConsumable): Boolean;
-var
-  i: Integer;
 begin
-  for i := High(Self.Consumables[consumable].Active) downto 0 do
-  begin
-    if Self.Consumables[consumable].Timers[i].IsFinished then
-    begin
-      Delete(Self.Consumables[consumable].Active, i, 1);
-      Delete(Self.Consumables[consumable].Timers, i, 1);
-      Continue;
-    end;
-  end;
-
-  Result := Self.Consumables[consumable].Active = [];
+  Result := Self.Consumables[consumable].Timer.IsFinished;
 end;
 
 function TRSConsumables.CanConsume(boost: ERSSkill): Boolean; overload;
-var
-  i: Integer;
 begin
-  for i := High(Self.Boosts[boost].Active) downto 0 do
-  begin
-    if Self.Boosts[boost].Timers[i].IsFinished then
-    begin
-      Delete(Self.Boosts[boost].Active, i, 1);
-      Delete(Self.Boosts[boost].Timers, i, 1);
-      Continue;
-    end;
-  end;
-
-  Result := Self.Boosts[boost].Active = [];
+  Result := Self.Boosts[boost].Timer.IsFinished;
 end;
 
 
@@ -454,6 +479,9 @@ var
   consumables: TRSConsumableItemArray;
   i, j, slot: Integer;
 begin
+  if not Self.Consumables[consumable].Timer.IsFinished then
+    Exit;
+
   for i := 0 to 2 do
     if Self.Cooldowns[i].IsFinished then
     begin
@@ -462,7 +490,8 @@ begin
 
       for j := 0 to High(consumables) do
       begin
-        if consumables[j].Order <> i then Continue;
+        if consumables[j].Order <> i then
+          Continue;
 
         if Inventory.Items.Find(consumables[j].Item, slot) then
           raise GetDebugLn('Consumables', 'Something went wrong, can''t find consumable that was found previously.');
@@ -480,20 +509,26 @@ end;
 
 function TRSConsumables.Consume(boost: ERSSkill): Boolean; overload;
 var
-  consumables: TRSBoostItemArray;
+  boosts: TRSBoostItemArray;
   i, j, slot: Integer;
+  skill: ERSSkill;
 begin
   for i := 0 to 2 do
     if Self.Cooldowns[i].IsFinished then
     begin
-      if consumables = [] then
-        consumables := Self.Find(boost).SortByPoints(False);
+      if boosts = [] then
+        boosts := Self.Find(boost).SortByPoints(False);
 
-      for j := 0 to High(consumables) do
+      for j := 0 to High(boosts) do
       begin
-        if consumables[j].Order <> i then Continue;
+        if boosts[j].Order <> i then
+          Continue;
 
-        if Inventory.Items.Find(consumables[j].Item, slot) then
+        if not Self.Boosts[boost].Timer.IsFinished then
+          if boosts[j]._Points <= Self.Boosts[boost].Points then
+            Continue;
+
+        if Inventory.Items.Find(boosts[j].Item, slot) then
           raise GetDebugLn('Consumables', 'Something went wrong, can''t find consumable that was found previously.');
 
         Inventory.Slots.Hover(slot);
@@ -502,6 +537,15 @@ begin
           if not ChooseOption.Hover(['Eat', 'Drink']) then Continue;
         Mouse.Click(EMouseButton.LEFT);
         Self.Cooldowns[i].Restart();
+
+        Self.Boosts[boost].Timer.Start(boosts[j].Duration);
+        Self.Boosts[boost].Points := boosts[j]._Points;
+
+        for skill in boosts[j].Skills do
+        begin
+          //TODO... Cache other boosted skills
+        end;
+
         Exit(True);
       end;
     end;
