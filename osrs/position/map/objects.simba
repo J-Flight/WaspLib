@@ -24,6 +24,7 @@ Main type to handle {ref}`RSObjects`.
     Finder: TColorFinder;
     Track: Boolean;
     Walker: PRSWalker;
+    MinDistance: Integer;
   end;
 
 (*
@@ -76,6 +77,7 @@ begin
   if uptext <> [] then
     Result.UpText := uptext;
   Result.Walker := @walker;
+  Result.MinDistance := 32;
 end;
 
 function TRSObject.Create(var walker: TRSWalker; json: TJSONObject): TRSObject; static; overload;
@@ -137,6 +139,7 @@ begin
   end;
 
   Result.Walker := @walker;
+  Result.MinDistance := 32;
 end;
 
 (*
@@ -777,11 +780,11 @@ begin
   //check if doors need to be passed to reach target
     if hasPath or Self.Walker^.WebGraph^.WalkableClusters.InSameTPA(me, closest) then
     begin
-      if not Self.Walker^.MakePointVisible(closest) and not Self.Walker^.WebWalkEx(me, closest, 32, 0.33) then
+      if not Self.Walker^.MakePointVisible(closest) and not Self.Walker^.WebWalkEx(me, closest, Self.MinDistance, 0.33) then
         Exit;
     end
     else
-    if not Self.Walker^.WebWalk(closest, 32, 0.33) then
+    if not Self.Walker^.WebWalk(closest, Self.MinDistance, 0.33) then
       Exit;
 
     Result := Self._UpTextCheck(shouldExit, action) or Self.Walker^.RedClicked;
@@ -818,17 +821,17 @@ begin
           raise GetDebugLn('TRSObject', 'Can''t path to object.');
       end;
 
-      if me.DistanceTo(closest) > 50 then
+      if me.DistanceTo(closest) > Self.MinDistance then
       begin
-        Self.Walker^.WebWalkEx(me, closest, 30, 0.15);
+        Self.Walker^.WebWalkEx(me, closest, Self.MinDistance, 0.15);
         Continue;
       end;
 
       if attempt <> (attempts - 1) then Continue;
 
-      if me.DistanceTo(closest) > 25 then
+      if me.DistanceTo(closest) > (Self.MinDistance div 2) then
       begin
-        Self.Walker^.WebWalkEx(me, closest, 25, 0.15);
+        Self.Walker^.WebWalkEx(me, closest, (Self.MinDistance div 2), 0.15);
         Continue;
       end;
 

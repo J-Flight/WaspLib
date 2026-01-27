@@ -35,6 +35,7 @@ Main type to handle {ref}`RSEntity`.
     MinimapDots: ERSMinimapDots;
     LastCoordinate: TPoint;
     Walker: PRSWalker;
+    MinDistance: Integer;
   end;
 
 (*
@@ -93,6 +94,7 @@ begin
 
   Result.Finder := Default(TColorFinder);
   Result.Walker := @walker;
+  Result.MinDistance := 32;
 
   for pt in coordinates do
     Result.Filter += TRSDotFilter.Create([], TCircle.Create(pt.X, pt.Y, radius), True);
@@ -159,6 +161,7 @@ begin
   end;
 
   Result.Walker := @walker;
+  Result.MinDistance := 32;
 end;
 
 (*
@@ -527,15 +530,15 @@ begin
 
     if me.DistanceTo(closest) > 50 then
     begin
-      Self.Walker^.WebWalkEx(me, closest, 30, 0.15);
+      Self.Walker^.WebWalkEx(me, closest, Self.MinDistance, 0.15);
       Continue;
     end;
 
     if attempt <> (attempts - 1) then Continue;
 
-    if me.DistanceTo(closest) > 25 then
+    if me.DistanceTo(closest) > (Self.MinDistance div 2) then
     begin
-      Self.Walker^.WebWalkEx(me, closest, 25, 0.15);
+      Self.Walker^.WebWalkEx(me, closest, Self.MinDistance div 2, 0.15);
       Continue;
     end;
 
@@ -701,11 +704,11 @@ begin
   // check if doors need to be passed to reach target
     if hasPath or Self.Walker^.WebGraph^.WalkableClusters.InSameTPA(me, closest) then
     begin
-      if not Self.Walker^.MakePointVisible(closest) and not Self.Walker^.WebWalkEx(me, closest, 30, 0.15) then
+      if not Self.Walker^.MakePointVisible(closest) and not Self.Walker^.WebWalkEx(me, closest, Self.MinDistance, 0.15) then
         Exit;
     end
     else
-    if not Self.Walker^.WebWalk(closest, 30, 0.15) then
+    if not Self.Walker^.WebWalk(closest, Self.MinDistance, 0.15) then
       Exit;
 
     Result := Self._WalkHoverHelper(action, attempts);
