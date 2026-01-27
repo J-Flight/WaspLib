@@ -170,6 +170,18 @@ begin
     Self.Vertices[i] := Self.Vertices[i].Rotate(radians, center);
 end;
 
+procedure TModel.Offset(value: TVector3);
+var
+  i: Integer;
+begin
+  for i := 0 to High(Self.Vertices) do
+  begin
+    Self.Vertices[i].X += value.X;
+    Self.Vertices[i].Y += value.Y;
+    Self.Vertices[i].Z += value.Z;
+  end;
+end;
+
 
 function TModel.ProjectEx(minimapCoord: TVector3; heights: array [0..3] of Single; rotation, radians: Single): TPointArray;
 var

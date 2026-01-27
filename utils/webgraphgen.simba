@@ -558,6 +558,7 @@ begin
   Self.WhiteClusters := [];
   WriteLn GetDebugLn('WebGraphGenerator', 'Generating webgraph took ' + ToStr(Round(((GetTimeRunning()-t)/1000), 2)) + ' seconds.', ELogLevel.SUCCESS);
 end;
+{$R+}
 
 (*
 ## Webgraph Generation
@@ -672,4 +673,3 @@ var
 Global {ref}`TWebGraphGenerator` variable.
 *)
   WebGraphGenerator: TWebGraphGenerator;
-{$R+}

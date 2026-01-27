@@ -58,7 +58,7 @@ Record responsible for positioning.
 
     Filters: TBoxFilterArray;
 
-    IsSetup, DisableHeightmap: Boolean;
+    Normalize, DisableHeightmap, IsSetup: Boolean;
   end;
 
   PRSMap = ^TRSMap;
@@ -119,6 +119,7 @@ begin
     );
     Self.Walker.Name := 'Map.Walker';
 
+    Self.Normalize := True;
     Self.IsSetup := True;
   end;
 end;
@@ -329,7 +330,10 @@ begin
     Exit([0,0]);
 
   Self.Region := Self.Loader.Regions[Self.RegionIndex];
-  Result := RSTranslator.Normalize(Self.Loader.GetGlobal(Self.RegionIndex, Result));
+  Result := Self.Loader.GetGlobal(Self.RegionIndex, Result);
+
+  if Self.Normalize then
+    Result := RSTranslator.Normalize(Result);
   Self.Cache.Position := Result;
 end;
 
