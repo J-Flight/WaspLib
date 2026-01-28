@@ -19,7 +19,7 @@ var
   mode: String;
   img: TImage;
   digits: TIntegerArray = [0, 7, 9, 9];
-  slots: TIntegerArray = [29,56,56,57];
+  slots: TIntegerArray = [29,56,56,56];
 begin
   for mode in modes do
   begin
