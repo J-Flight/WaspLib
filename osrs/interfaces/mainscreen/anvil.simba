@@ -210,7 +210,7 @@ begin
   end;
 
   for i := 0 to High(btns) do
-    if OCR.RecognizeShadow(btns[i].Bounds, RSFonts.PLAIN_11, 0) = str then
+    if OCR.RecognizeShadow(btns[i].Bounds.Expand(-2), RSFonts.PLAIN_11, 0) = str then
       Exit(btns[i].Enable());
 end;
 
