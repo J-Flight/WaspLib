@@ -42,32 +42,11 @@ procedure TRSFriends.SetupGameTab();
 begin
   with GameTab.Bounds do
   begin
-    Self.Scroll.Area.X1 := X1 + 5;
-    Self.Scroll.Area.Y1 := Y1 + 38;
-    Self.Scroll.Area.X2 := X2 - 21;
-    Self.Scroll.Area.Y2 := Y2 - 42;
-
-    Self.Buttons[ERSFriendsButton.ADD].Bounds.X1 := X1 + 19;
-    Self.Buttons[ERSFriendsButton.ADD].Bounds.Y1 := Y1 + 230;
-    Self.Buttons[ERSFriendsButton.ADD].Bounds.X2 := X1 + 82;
-    Self.Buttons[ERSFriendsButton.ADD].Bounds.Y2 := Y1 + 257;
-
-    Self.Buttons[ERSFriendsButton.DEL].Bounds.X1 := X1 + 101;
-    Self.Buttons[ERSFriendsButton.DEL].Bounds.Y1 := Y1 + 230;
-    Self.Buttons[ERSFriendsButton.DEL].Bounds.X2 := X1 + 164;
-    Self.Buttons[ERSFriendsButton.DEL].Bounds.Y2 := Y1 + 257;
-
-    Self.Buttons[ERSFriendsButton.FRIENDS].Bounds.X1 := X1 + 170;
-    Self.Buttons[ERSFriendsButton.FRIENDS].Bounds.Y1 := Y1 + 5;
-    Self.Buttons[ERSFriendsButton.FRIENDS].Bounds.X2 := X1 + 181;
-    Self.Buttons[ERSFriendsButton.FRIENDS].Bounds.Y2 := Y1 + 16;
-    Self.Buttons[ERSFriendsButton.FRIENDS].EnabledColors := [[$233EFB, 0], [$2C41B3, 0]];
-
-    Self.Buttons[ERSFriendsButton.IGNORE].Bounds.X1 := X1 + 170;
-    Self.Buttons[ERSFriendsButton.IGNORE].Bounds.Y1 := Y1 + 5;
-    Self.Buttons[ERSFriendsButton.IGNORE].Bounds.X2 := X1 + 181;
-    Self.Buttons[ERSFriendsButton.IGNORE].Bounds.Y2 := Y1 + 16;
-    Self.Buttons[ERSFriendsButton.IGNORE].EnabledColors := [[$3AC8FF, 0], [$3791B6, 0]];
+    Self.Scroll.Area := [X1+5, Y1+38, X2-21, Y2-42];
+    Self.Buttons[ERSFriendsButton.ADD]:= new TRSButton([X1+19, Y1+230, X1+82, Y1+257]);
+    Self.Buttons[ERSFriendsButton.DEL] := new TRSButton([X1+101, Y1+230, X1+164, Y1+257]);
+    Self.Buttons[ERSFriendsButton.FRIENDS] := new TRSButton([X1+170, Y1+5, X1+181, Y1+16], [[$233EFB, 0], [$2C41B3, 0]]);
+    Self.Buttons[ERSFriendsButton.IGNORE] := new TRSButton([X1+170, Y1+5, X1+181, Y1+16], [[$3AC8FF, 0], [$3791B6, 0]]);
   end;
 
   Self.Scroll.Setup();
@@ -211,8 +190,10 @@ WriteLn Friends.AddFriend('SomePlayer');
 *)
 function TRSFriends.AddFriend(name: String): Boolean;
 begin
-  if not Self.Open() then Exit;
-  if not Self.Buttons[ERSFriendsButton.FRIENDS].Enable() then Exit;
+  if not Self.Open() then
+    Exit;
+  if not Self.Buttons[ERSFriendsButton.FRIENDS].Enabled[True] then
+    Exit;
 
   Self.Buttons[ERSFriendsButton.ADD].Click(EMouseButton.LEFT);
   Result := Chat.AnswerQuery('Enter name of friend to add to list', name, 2000, 250);
@@ -235,8 +216,10 @@ function TRSFriends.DeleteFriend(name: String): Boolean;
 var
   friend: TRSFriend;
 begin
-  if not Self.Open() then Exit;
-  if not Self.Buttons[ERSFriendsButton.FRIENDS].Enable() then Exit;
+  if not Self.Open() then
+    Exit;
+  if not Self.Buttons[ERSFriendsButton.FRIENDS].Enabled[True] then
+    Exit;
 
   if Biometrics.RandomBoolean() then
   begin
@@ -297,8 +280,10 @@ WriteLn Friends.AddIgnore('SomePlayer');
 *)
 function TRSFriends.AddIgnore(name: String): Boolean;
 begin
-  if not Self.Open() then Exit;
-  if not Self.Buttons[ERSFriendsButton.IGNORE].Enable() then Exit;
+  if not Self.Open() then
+    Exit;
+  if not Self.Buttons[ERSFriendsButton.IGNORE].Enabled[True] then
+    Exit;
 
   Self.Buttons[ERSFriendsButton.ADD].Click(EMouseButton.LEFT);
   Result := Chat.AnswerQuery('Enter name of player to add to list', name, 2000, 250);
@@ -321,8 +306,10 @@ function TRSFriends.DeleteIgnore(name: String): Boolean;
 var
   friend: TRSFriend;
 begin
-  if not Self.Open() then Exit;
-  if not Self.Buttons[ERSFriendsButton.IGNORE].Enable() then Exit;
+  if not Self.Open() then
+    Exit;
+  if not Self.Buttons[ERSFriendsButton.IGNORE].Enabled[True] then
+    Exit;
 
   if Biometrics.RandomBoolean() then
   begin

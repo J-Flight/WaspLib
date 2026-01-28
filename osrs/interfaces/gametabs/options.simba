@@ -109,11 +109,11 @@ begin
   boxes := TBoxArray.Create(GameTab.BottomLeft.Offset(9, -85), 4, 1, 39, 39, [3,0]);
 
   for i := 0 to High(boxes) do
-    Self.Buttons[i].Bounds := boxes[i];
+    Self.Buttons[i] := new TRSButton(boxes[i]);
 
   with GameTab.Bounds do
   begin
-    Self.Buttons[4].Bounds := TBox.Create(X1 + 22, Y2 - 32, X2 - 22, Y2 - 3);
+    Self.Buttons[4] := new TRSButton([X1 + 22, Y2 - 32, X2 - 22, Y2 - 3]);
 
     Self.DropDowns[0].Bounds := [X1 + 11, Y1 + 111, X2 - 11, Y1 + 130];
     Self.DropDowns[0].Setup(['Depends on combat levels', 'Always right-click', 'Left-click where available', 'Hidden', 'Right-click for clanmates']);

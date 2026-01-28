@@ -109,13 +109,7 @@ begin
 
   with Self.Bounds do
     boxes := TBoxArray.Create([X2-43, Y1+36], 1, 6, 36, 36, [0,9]);
-
-  SetLength(Self.QuantityButtons, 6);
-  for i := 0 to High(boxes) do
-  begin
-    Self.QuantityButtons[i].Bounds := boxes[i];
-    Self.QuantityButtons[i].EnabledColors := [[RSFonts.WHITE]];
-  end;
+  Self.QuantityButtons := TRSButtonArray.Create(boxes, [[RSFonts.WHITE]]);
 end;
 
 (*
@@ -177,7 +171,7 @@ var
   str: String;
 begin
   if value = 1 then
-    Exit(Self.QuantityButtons[0].Enable());
+    Exit(Self.QuantityButtons[0].Enabled[True]);
 
   for i := 1 to High(Self.QuantityButtons) do
     if Target.HasColor(RSFonts.BLACK, 0,  1, Self.QuantityButtons[i].Bounds) then
@@ -197,7 +191,7 @@ begin
       str := ToStr(value);
       i := High(btns);
       if OCR.RecognizeShadow(btns[i].Bounds, RSFonts.PLAIN_11, 0) = str then
-        Exit(btns[i].Enabled());
+        Exit(btns[i].Enabled);
 
       case OCR.RecognizeShadow(btns[Dec(i)].Bounds, RSFonts.PLAIN_11, 0) of
         'X': Mouse.Click(btns[i].Bounds, EMouseButton.LEFT);
@@ -211,7 +205,7 @@ begin
 
   for i := 0 to High(btns) do
     if OCR.RecognizeShadow(btns[i].Bounds.Expand(-2), RSFonts.PLAIN_11, 0) = str then
-      Exit(btns[i].Enable());
+      Exit(btns[i].Enabled[True]);
 end;
 
 

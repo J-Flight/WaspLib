@@ -40,28 +40,6 @@ Main record to interact with the {ref}`SilverScreen` interface.
     Buttons   : array[ERSItemQuantity] of TRSButton;
   end;
 
-function TRSSilverScreen.GetButtons(): TRSButtonArray;
-var
-  buttonGrid : TBoxArray;
-begin
-  if Self.Buttons[0].Bounds.Area = 1 then
-  begin
-    buttonGrid := TBoxArray.Create(
-                    [Self.Bounds.X1 + 134,              // right‑align row
-                     Self.Bounds.Y2 - 45],            // vertical position
-                    5, 1,                             // 1 column × 5 rows
-                    36, 36,                           // width × height
-                    [14,0]);                           // 4 px vertical gap
-    Exit(TRSButtonArray.Create([[$25323B, 1.30]], buttonGrid));
-  end;
-  Result := Self.Buttons;
-end;
-
-function TRSSilverScreen.GetButton(b: ERSItemQuantity) : TRSButton;
-begin
-  Result := Self.Buttons[b];
-end;
-
 function TRSSilverScreen.IsOpen(): Boolean; forward;
 
 (*
@@ -74,10 +52,9 @@ This is automatically called for you on the {ref}`SilverScreen variable`.
 *)
 procedure TRSSilverScreen.SetupInterface();
 var
-  leftSlots, rightSlots : TBoxArray;
-  leftClickBoxes, rightClickBoxes : TBoxArray;
-  btns                  : TRSButtonArray;
-  i                     : Integer;
+  btnGrid, leftSlots, rightSlots,
+  leftClickBoxes, rightClickBoxes: TBoxArray;
+  i: Integer;
 begin
   case RSClient.Mode of
     ERSMode.FIXED:
@@ -118,10 +95,15 @@ begin
   Self.Slots.Setup('SilverScreen.Slots', Self.SlotBoxes);
   Self.Items.Setup('SilverScreen.Items', @Self.Slots, [0,10], @Self.IsOpen);
 
-  btns := Self.GetButtons();
-  if Length(btns) = Length(ERSItemQuantity) then
-    for i := 0 to High(btns) do
-      Self.Buttons[ERSItemQuantity(i)] := btns[i];
+
+  btnGrid := TBoxArray.Create(
+                    [Self.Bounds.X1 + 134,            // right‑align row
+                     Self.Bounds.Y2 - 45],            // vertical position
+                    5, 1,                             // 1 column × 5 rows
+                    36, 36,                           // width × height
+                    [14,0]);                          // 4 px vertical gap
+  for i := 0 to 4 do
+    Self.Buttons[i] := new TRSButton(btnGrid[i], [[$25323B, 1.30]]);
 end;
 
 (*
@@ -220,13 +202,13 @@ begin
     txt := 'All';
 
   { already selected? }
-  for btn in Self.GetButtons do
+  for btn in Self.Buttons do
     if (OCR.Locate(btn.Bounds, txt, [ENABLED_COLOR], 1, RSFonts.PLAIN_11) > 0.85)
-    and btn.Enabled() then
+    and btn.Enabled then
       Exit(True);
 
   { preset button available? }
-  for btn in Self.GetButtons do
+  for btn in Self.Buttons do
     if OCR.Locate(btn.Bounds, txt, [DISABLED_COLOR], 1, RSFonts.PLAIN_11) > 0.85 then
     begin
       btn.Click();
@@ -234,7 +216,7 @@ begin
     end;
 
   { custom amount via “X” }
-  for btn in Self.GetButtons do
+  for btn in Self.Buttons do
     if OCR.Locate(btn.Bounds, 'X', [DISABLED_COLOR], 1, RSFonts.PLAIN_11) > 0.85 then
     begin
       btn.Click();

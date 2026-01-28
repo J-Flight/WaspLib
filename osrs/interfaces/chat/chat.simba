@@ -62,11 +62,10 @@ This is automatically called for you on the {ref}`Chat variable`.
 procedure TRSChat.SetupInterface();
 begin
   Self.Tabs.SetupInterface();
-  Self.ReportButton.EnabledColors := [[1555,6], [5399922, 0], [795452, 0]];
 
   with Self.Tabs.Bounds do
   begin
-    Self.ReportButton.Bounds := TBox.Create(X1 + 436, Y1,  X1 + 515, Y2 - 1);
+    Self.ReportButton := new TRSButton([X1 + 436, Y1,  X1 + 515, Y2 - 1], [[1555,6], [5399922, 0], [795452, 0]]);
     Self.Bounds.X1 := X1;
     Self.Bounds.X2 := X2;
     Self.Bounds.Y1 := Y1 - 142;

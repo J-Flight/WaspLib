@@ -240,7 +240,7 @@ begin
   else
   begin
     // Just click the random button
-    randomBtn.Button.Enable();
+    randomBtn.Button.Enabled := True;
     Biometrics.Sleep(1000, 3000, ERandomDir.LEFT);
   end;
 
@@ -433,7 +433,7 @@ begin
   totalButtons := Length(DepositBox.QuantityButtons);
 
   for currentIdx := 0 to totalButtons-1 do
-    if DepositBox.QuantityButtons[ERSItemQuantity(currentIdx)].Enabled() then
+    if DepositBox.QuantityButtons[ERSItemQuantity(currentIdx)].Enabled then
       Break;
 
   newIdx := (currentIdx + Random(1, totalButtons-1)) mod totalButtons;

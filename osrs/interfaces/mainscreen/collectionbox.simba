@@ -74,10 +74,8 @@ begin
   begin
     boxes := TBoxArray.Create([X1 + 15, Y1 + 44], 4, 2, 100, 74, [10, 10]);
 
-    Self.Buttons[ERSCollectButton.INVENTORY].Bounds := TBox.Create(X1 + 140, Y2 - 33, X1 + 223, Y2 - 15);
-    Self.Buttons[ERSCollectButton.INVENTORY].EnabledColors := [[$0F1043, 0], [$23269F, 0.227]];
-    Self.Buttons[ERSCollectButton.BANK].Bounds := TBox.Create(X1 + 236, Y2 - 33, X1 + 318, Y2 - 15);
-    Self.Buttons[ERSCollectButton.INVENTORY].EnabledColors := [[$0F1043, 0], [$23269F, 0.227]];
+    Self.Buttons[ERSCollectButton.INVENTORY] := new TRSButton([X1+140, Y2-33, X1+223, Y2-15], [[$0F1043, 0], [$23269F, 0.227]]);
+    Self.Buttons[ERSCollectButton.BANK] := new TRSButton([X1+236, Y2-33, X1+318, Y2-15], [[$0F1043, 0], [$23269F, 0.227]]);
   end;
 
   SetLength(Self.SlotBoxes, 8);

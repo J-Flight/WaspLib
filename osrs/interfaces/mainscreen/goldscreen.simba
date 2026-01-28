@@ -113,9 +113,8 @@ Automatically called for you on the `GoldScreen` variable.
 *)
 procedure TRSGoldScreen.SetupInterface();
 var
-  topRow, gridBelow : TBoxArray;
-  btns              : TRSButtonArray;
-  i                 : Integer;
+  btnGrid, topRow, gridBelow: TBoxArray;
+  i: Integer;
 begin
   {─ outer bounds ─}
   case RSClient.Mode of
@@ -140,43 +139,10 @@ begin
   Self.Items.Setup('GoldScreen.Items', @Self.Slots, [0,10]);
   Self.Title.Setup(Self.Bounds);
   {─ quantity buttons ─}
-  btns := Self.GetButtons();
-  if Length(btns) = Length(ERSItemQuantity) then
-    for i := 0 to High(btns) do
-      Self.Buttons[ERSItemQuantity(i)] := btns[i];
-end;
 
-(*
-## GoldScreen.GetButtons
-```pascal
-function TRSGoldScreen.GetButtons(): TRSButtonArray;
-```
-Returns an array with all cached quantity‑selection buttons.
-Or caches it.
-*)
-function TRSGoldScreen.GetButtons(): TRSButtonArray;
-var
-  buttonGrid: TBoxArray;
-begin
-  if (Self.Buttons[0].Bounds.Area = 1) then
-  begin
-    buttonGrid := TBoxArray.Create([Self.Bounds.X1 + 445, Self.Bounds.Y1 + 38], 1, 5, 36, 36, [0,4]);
-    Exit(TRSButtonArray.Create([[$25323B, 1.294]], buttonGrid));
-  end;
-
-  Result := Self.Buttons;
-end;
-
-(*
-## GoldScreen.GetButton
-```pascal
-function TRSGoldScreen.GetButton(B: ERSGoldScreenButton): TRSButton;
-```
-Returns the specific quantity button requested.
-*)
-function TRSGoldScreen.GetButton(b: ERSItemQuantity): TRSButton;
-begin
-  Result := Self.Buttons[B];
+  btnGrid := TBoxArray.Create([Self.Bounds.X1 + 445, Self.Bounds.Y1 + 38], 1, 5, 36, 36, [0,4]);
+  for i := 0 to 4 do
+    Self.Buttons[i] := new TRSButton(btnGrid[i], [[$25323B, 1.294]]);
 end;
 
 (*
@@ -254,18 +220,18 @@ begin
   if Amount = -1 then
     txt := 'All';
 
-  for btn in Self.GetButtons() do
-    if (OCR.Locate(btn.Bounds, txt, [$FFFFFF], 1, RSFonts.PLAIN_11) > 0.85) and btn.Enabled() then
+  for btn in Self.Buttons do
+    if (OCR.Locate(btn.Bounds, txt, [$FFFFFF], 1, RSFonts.PLAIN_11) > 0.85) and btn.Enabled then
       Exit(True);
 
-  for btn in Self.GetButtons() do
+  for btn in Self.Buttons do
     if OCR.Locate(btn.Bounds, txt, [$1F98FF], 1, RSFonts.PLAIN_11) > 0.85 then
     begin
       btn.Click();
       Exit(True);
     end;
 
-  for btn in Self.GetButtons() do
+  for btn in Self.Buttons do
     if OCR.Locate(btn.Bounds, 'X', [$1F98FF], 1, RSFonts.PLAIN_11) > 0.85 then
     begin
       btn.Click();

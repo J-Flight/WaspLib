@@ -7,6 +7,13 @@ These can be buttons, scrollbars, dropdowns, checkboxes, etc.
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
+  TRSButtonEnabledColor = record
+    Color: Integer;
+    Tolerance: Single;
+  end;
+
+  TRSButtonEnabledColorArray = array of TRSButtonEnabledColor;
+
 (*
 ## TRSButton type
 RuneScape has several types of buttons, {ref}`TRSButton` can be used for
@@ -23,54 +30,17 @@ You can also use them for other types of buttons and imagination is the limit
 but in a lot of cases you won't be able to make use of the {ref}`TRSButton`
 methods.
 *)
-  TRSButton = record
-    EnabledColors: array of record
-      Color: Integer;
-      Tolerance: Single;
-    end;
-
+  TRSButton = object
+    EnabledColors: TRSButtonEnabledColorArray;
     Bounds: TBox;
   end;
 
   TRSButtonArray = array of TRSButton;
 
-(*
-### TRSButton.Enabled
-```pascal
-function TRSButton.Enabled(): Boolean;
-```
-Returns True/False if the button is enabled.
-
-Example:
-```pascal
-WriteLn Button.Enabled();
-```
-*)
-function TRSButton.Enabled(): Boolean;
-var
-  i: Integer;
+function TRSButton.Construct(bounds: TBox; enabledColors: TRSButtonEnabledColorArray = []): TRSButton; static;
 begin
-  for i := 0 to High(Self.EnabledColors) do
-    if Target.HasColor(Self.EnabledColors[i].Color, Self.EnabledColors[i].Tolerance, 1, Self.Bounds) then
-      Exit(True);
-end;
-
-(*
-### TRSButton.WaitEnabled
-```pascal
-function TRSButton.WaitEnabled(time: Integer = 600; interval: Integer = -1): Boolean;
-```
-Returns True if the button is enabled within `time` milliseconds.
-
-Example:
-```pascal
-WriteLn Button.WaitEnabled();
-```
-*)
-function TRSButton.WaitEnabled(time: Integer = 600; interval: Integer = -1): Boolean;
-begin
-  if interval < 0 then interval := RandomMode(100, 50, 1500);
-  Result := SleepUntil(Self.Enabled(), interval, time);
+  Result.Bounds := bounds;
+  Result.EnabledColors := enabledColors;
 end;
 
 (*
@@ -91,52 +61,62 @@ begin
 end;
 
 (*
-### TRSButton.Enable
+### TRSButton.Enabled
 ```pascal
-function TRSButton.Enable(): Boolean;
+property TRSButton.Enabled: Boolean;
+property TRSButton.Enabled(value: Boolean);
 ```
-Attempts to enable a {ref]`TRSButton`. This is done with the left mouse click
-and the function returns true if {ref}`TRSButton.Enabled` returns true.
+Property to get/set a {ref}`TRSButton` `Enabled` state.
 
 Example:
 ```pascal
-WriteLn Button.Enable();
+WriteLn Button.Enabled;
+Button.Enabled := True;
+WriteLn Button.Enabled;
 ```
 *)
-function TRSButton.Enable(): Boolean;
+property TRSButton.Enabled: Boolean;
+var
+  i: Integer;
 begin
-  if Self.Enabled() then Exit(True);
+  for i := 0 to High(Self.EnabledColors) do
+    if Target.HasColor(Self.EnabledColors[i].Color, Self.EnabledColors[i].Tolerance, 1, Self.Bounds) then
+      Exit(True);
+end;
+
+property TRSButton.Enabled(value: Boolean): Boolean;
+begin
+  if value = Self.Enabled then
+    Exit(True);
   Self.Click();
-  Result := Self.WaitEnabled();
+  Result := SleepUntil(Self.Enabled = value, RandomMode(100, 50, 1500), time);
 end;
 
 (*
-### TRSButton.Disable
+### TRSButton.WaitEnabled
 ```pascal
-function TRSButton.Disable(): Boolean;
+function TRSButton.WaitEnabled(time: Integer = 600; interval: Integer = -1): Boolean;
 ```
-Attempts to disable a {ref]`TRSButton`. This is done with the left mouse click
-and the function returns true if {ref}`TRSButton.Enabled` returns false.
+Returns True if the button is enabled within `time` milliseconds.
 
 Example:
 ```pascal
-WriteLn Button.Disable();
+WriteLn Button.WaitEnabled();
 ```
 *)
-function TRSButton.Disable(): Boolean;
+function TRSButton.WaitEnabled(time: Integer = 600; interval: Integer = -1): Boolean;
 begin
-  if Self.Enabled() then Exit(True);
-  Self.Click();
-  Result := SleepUntil(Self.Enabled(), 50, 600);
+  if interval < 0 then interval := RandomMode(100, 50, 1500);
+  Result := SleepUntil(Self.Enabled, interval, time);
 end;
 
 
-function TRSButtonArray.Create(enabledColors: array of record Color: TColor; Tolerance: Single; end; boxes: TBoxArray): TRSButtonArray; static;
+function TRSButtonArray.Create(boxes: TBoxArray; enabledColors: TRSButtonEnabledColorArray): TRSButtonArray; static;
 var
   b: TBox;
 begin
   for b in boxes do
-    Result += [enabledColors, b];
+    Result += new TRSButton(b, enabledColors);
 end;
 
 

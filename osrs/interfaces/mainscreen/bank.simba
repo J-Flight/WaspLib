@@ -10,43 +10,62 @@ Methods to interact with the bank interface:
 
 type
 (*
-## ERSBankButtons enum
+(ERSBankButton)=
+## ERSBankButton enum
 ```pascal
-ERSBankButtons = enum(WORN, MENU);
+ERSBankButton = enum(SETTINGS, TUTORIAL);
 ```
 Enum representing the 2 top buttons of the {ref}`Bank` interface.
+The tutorial button can be hidden.
 *)
-  ERSBankButtons = enum(WORN, MENU);
+  ERSBankButton = enum(SETTINGS, TUTORIAL);
 
 (*
-## ERSBankArrangement enum
+(ERSBankSideButton)=
+## ERSBankSideButton enum
 ```pascal
-ERSBankArrangement = enum(SWAP, INSERT);
+ERSBankSideButton = enum(SETTINGS, TUTORIAL);
 ```
-Enum representing the 2 arrangement buttons of the {ref}`Bank` interface.
+Enum representing the side buttons of the {ref}`Bank` interface.
+The incinerator button can be hidden and the potion storage might not be
+unlocked.
 *)
-  ERSBankArrangement = enum(SWAP, INSERT);
+  ERSBankSideButton = enum(POTION_STORAGE, INCINERATOR);
 
 (*
-## ERSWithdrawMode enum
+(ERSBankModeButton)=
+## ERSBankModeButton enum
 ```pascal
-ERSWithdrawMode = enum(ITEM, NOTE);
+ERSBankModeButton = enum(ARRANGEMENT, NOTES);
 ```
-Enum representing the 2 withdraw mode buttons of the {ref}`Bank` interface.
+Enum representing the arrangement and notes buttons of the {ref}`Bank` interface.
 *)
-  ERSWithdrawMode = enum(ITEM, NOTE);
+  ERSBankModeButton = enum(ARRANGEMENT, NOTES);
 
 (*
-## ERSBankDynamicButtons enum
+(ERSBankMiscButton)=
+## ERSBankMiscButton enum
 ```pascal
-ERSBankDynamicButtons = enum(PLACEHOLDERS, SEARCH, DEPOSIT_INVENTORY, DEPOSIT_WORN);
+ERSBankMiscButton = enum(SEARCH, PLACEHOLDERS);
 ```
-Enum representing the 4 dynamic buttons on the right corner of the {ref}`Bank` interface.
+Enum representing the 2 misc buttons on the bottom of the {ref}`Bank` interface.
+These buttons can shift places because you can enable/disable {ref}`ERSBankDepositButton` buttons.
+*)
+  ERSBankMiscButton = enum(SEARCH, PLACEHOLDERS);
+
+(*
+(ERSBankDepositButton)=
+## ERSBankDepositButton enum
+```pascal
+ERSBankDepositButton = enum(CONTAINERS, INVENTORY, WORN);
+```
+Enum representing the 3 deposit buttons on the right bottom corner of the {ref}`Bank` interface.
 These buttons are dynamic because they can be enabled/disabled and shift places.
 *)
-  ERSBankDynamicButtons = enum(PLACEHOLDERS, SEARCH, DEPOSIT_INVENTORY, DEPOSIT_WORN);
+  ERSBankDepositButton = enum(CONTAINERS, INVENTORY, WORN);
 
 (*
+(ERSBankInteraction)=
 ## ERSBankInteraction enum
 ```pascal
 ERSBankInteraction = enum(WITHDRAW, DEPOSIT);
@@ -80,12 +99,15 @@ Record responsible to handle the {ref}`Bank` interface.
 
     Tabs, SlotBoxes: TBoxArray;
 
-    Buttons: array [ERSBankButtons] of TRSButton;
-    ArrangementButtons: array [ERSBankArrangement] of TRSButton;
-    WithdrawModeButtons: array [ERSWithdrawMode] of TRSButton;
+    Worn: TRSButton;
+    Buttons: array [ERSBankButton] of TRSButton;
+    SidebarButtons: array [ERSBankSideButton] of TRSButton;
+    ModeButtons: array [ERSBankModeButton] of TRSButton;
     QuantityButtons: array [ERSItemQuantity] of TRSButton;
-    DynamicButtons: array [ERSBankDynamicButtons] of TRSButton;
-    ButtonsOffset: Integer;
+    MiscButtons: array [ERSBankMiscButton] of TRSButton;
+    DepositButtons: array [ERSBankDepositButton] of TRSButton;
+
+    ButtonsOffset: Boolean;
 
     JagexAccountAd: record
       NotNow, MoreInfo: TBox;
@@ -168,6 +190,7 @@ This is automatically called for you on the {ref}`Bank variable`.
 procedure TRSBank.SetupInterface();
 var
   i: Integer;
+  btnColors: TRSButtonEnabledColorArray;
 begin
   case RSClient.Mode of
     ERSMode.FIXED: Self.Bounds := MSInterface.CreateBounds([0, 2, 0, -1], 488, 800);
@@ -215,43 +238,50 @@ begin
   Self._IsOpenHelperBox.X2 := Self.Bounds.X2 - 156;
   Self._IsOpenHelperBox.Y2 := Self.Bounds.Y2 - 26;
 
-  for i := 0 to 1 do
-  begin
-    Self.Buttons[i].EnabledColors             := [[$0F1043, 0], [$23269F, 0.227]];
-    Self.ArrangementButtons[i].EnabledColors  := [[$0F1043, 0], [$23269F, 0.227]];
-    Self.WithdrawModeButtons[i].EnabledColors := [[$0F1043, 0], [$23269F, 0.227]];
-  end;
-
-  for i := 0 to 4 do
-    Self.QuantityButtons[i].EnabledColors := [[$0F1043, 0], [$23269F, 0.227]];
-
-  for i := 0 to 3 do
-    Self.DynamicButtons[i].EnabledColors := [[$0F1043, 0], [$23269F, 0.227]];
-
+  btnColors := [[$0F1043, 0], [$23269F, 0.227]];
   with Self.Bounds do
   begin
-    Self.Buttons[ERSBankButtons.WORN].Bounds := TBox.Create(X1+12, Y1+43, X1+36, Y1+67);
-    Self.Buttons[ERSBankButtons.MENU].Bounds := TBox.Create(X2-36, Y1+43, X2-12, Y1+67);
+    Self.Worn := new TRSButton([X2-40, Y1+38, X2-7, Y1+71], btnColors);
 
-    Self.ArrangementButtons[ERSBankArrangement.SWAP].Bounds := TBox.Create(X1+5, Y2-26, X1+54, Y2-5);
-    Self.ArrangementButtons[ERSBankArrangement.INSERT].Bounds := TBox.Create(X1+55, Y2-26, X1+104, Y2-5);
+    Self.Buttons[ERSBankButton.SETTINGS] := new TRSButton([X1+34, Y1+7, X1+54, Y1+27]);
+    Self.Buttons[ERSBankButton.TUTORIAL] := new TRSButton([X1+58, Y1+7, X1+78, Y1+27]);
 
-    Self.WithdrawModeButtons[ERSWithdrawMode.ITEM].Bounds := TBox.Create(X1+105, Y2-26, X1+154, Y2-5);
-    Self.WithdrawModeButtons[ERSWithdrawMode.NOTE].Bounds := TBox.Create(X1+155, Y2-26, X1+204, Y2-5);
+    Self.SidebarButtons[ERSBankSideButton.POTION_STORAGE] := new TRSButton([X1+8, Y2-121, X1+41, Y2-88], btnColors);
+    Self.SidebarButtons[ERSBankSideButton.INCINERATOR] := new TRSButton([X1+8, Y2-85, X1+41, Y2-52]);
+
+    Self.ModeButtons[ERSBankModeButton.ARRANGEMENT] := new TRSButton([X1, Y2-41, X1+33, Y2-8]);
+    Self.ModeButtons[ERSBankModeButton.NOTES] := new TRSButton([X1, Y2-41, X1+33, Y2-8], btnColors);
 
     for i := 0 to 4 do
-      Self.QuantityButtons[i].Bounds := TBox.Create(X1+205 + 25 * i, Y2-26, X1+229 + 25 * i, Y2-5);
-
-    for i := 0 to 3 do
-      Self.DynamicButtons[i].Bounds := TBox.Create(X1+331 + 35 * i + 4 * i, Y2-41, X1+366 + 35 * i + 4 * i, Y2-6);
-    Self.DynamicButtons[ERSBankDynamicButtons.DEPOSIT_WORN].Bounds := Self.DynamicButtons[ERSBankDynamicButtons.DEPOSIT_WORN].Bounds.Offset([-2,0]);
+      Self.QuantityButtons[i] := new TRSButton([X1, Y2-41, X1+33, Y2-8], btnColors);
+    for i := 0 to 1 do
+      Self.MiscButtons[i] := new TRSButton([X1, Y2-41, X1+33, Y2-8], btnColors);
+    for i := 0 to 2 do
+      Self.DepositButtons[i] := new TRSButton([X1, Y2-41, X1+33, Y2-8]);
   end;
+
+  Self.ButtonsOffset := False;
+end;
+
+function TRSBank._GetButtonDividers(): TPointArray;
+var
+  tpa: TPointArray;
+  atpa: T2DPointArray;
+begin
+  with Self.Bounds do
+    tpa := Target.FindColor($232B2E, 1, [X1+6, Y2-43, X2-6, Y2-6]);
+  if tpa = [] then
+    Exit;
+  atpa := tpa.Cluster(1.5).ExtractDimensions(0, 0, 4, 30);
+  if Length(atpa) = 3 then
+    for tpa in atpa do
+      Result += tpa.First;
 end;
 
 (*
 ## Bank.UpdateButtons
 ```pascal
-procedure TRSBank.UpdateButtons(offset: Integer);
+procedure TRSBank.UpdateButtons(tpa: TPointArray);
 ```
 Internal helper method used to update the buttons coordinates.
 
@@ -261,25 +291,61 @@ All the bank's bottom buttons shift slightly on the X axis depending on how many
 This is automatically called for you with {ref}`Bank.IsOpen`.
 ```
 *)
-procedure TRSBank.UpdateButtons(offset: Integer);
+procedure TRSBank.UpdateButtons(tpa: TPointArray);
 var
   i: Integer;
+  boxes: TBoxArray;
 begin
-  if Self.ButtonsOffset = offset then Exit;
-  Self.ButtonsOffset := offset;
+  if Self.ButtonsOffset then Exit;
 
-  for i := 0 to 1 do
-  begin
-    Self.Buttons[i].Bounds            := Self.Buttons[i].Bounds.Offset([offset, 0]);
-    Self.ArrangementButtons[i].Bounds := Self.ArrangementButtons[i].Bounds.Offset([offset, 0]);
-    Self.WithdrawModeButtons[i].Bounds    := Self.WithdrawModeButtons[i].Bounds.Offset([offset, 0]);
-  end;
+  Self.ModeButtons[ERSBankModeButton.ARRANGEMENT].Bounds.X1 := tpa[0].X - 75;
+  Self.ModeButtons[ERSBankModeButton.ARRANGEMENT].Bounds.X2 := tpa[0].X - 42;
+  Self.ModeButtons[ERSBankModeButton.NOTES].Bounds.X1 := tpa[0].X - 38;
+  Self.ModeButtons[ERSBankModeButton.NOTES].Bounds.X2 := tpa[0].X - 5;
 
   for i := 0 to 4 do
-    Self.QuantityButtons[i].Bounds := Self.QuantityButtons[i].Bounds.Offset([offset, 0]);
+  begin
+    Self.QuantityButtons[i].Bounds.X1 := tpa[0].X + 5 + i*37;
+    Self.QuantityButtons[i].Bounds.X2 := tpa[0].X + 38 + i*37;
+  end;
 
-  for i := 0 to 3 do
-    Self.DynamicButtons[i].Bounds := Self.DynamicButtons[i].Bounds.Offset([offset, 0]);
+  Self.MiscButtons[ERSBankMiscButton.SEARCH].Bounds.X1 := tpa[1].X + 5;
+  Self.MiscButtons[ERSBankMiscButton.SEARCH].Bounds.X2 := tpa[1].X + 48;
+  Self.MiscButtons[ERSBankMiscButton.PLACEHOLDERS].Bounds.X1 := tpa[1].X + 55;
+  Self.MiscButtons[ERSBankMiscButton.PLACEHOLDERS].Bounds.X2 := tpa[1].X + 88;
+
+  boxes := TBoxArray.Create([tpa[2].X+5, Self.Bounds.Y2-41], 3, 1, 33, 33, [4,0]);
+  for i := High(boxes) downto 0 do
+    if not Target.HasColor($010202, 0, 1, boxes[i]) then
+      Delete(boxes, i, 1);
+
+  case Length(boxes) of
+    0: raise GetDebugLn('Bank', 'Something went wrong, couldn''f find any bank deposit button.');
+    1:
+    begin
+      Self.DepositButtons[ERSBankDepositButton.WORN].Bounds := boxes.Last;
+      Self.DepositButtons[ERSBankDepositButton.INVENTORY] := nil;
+      Self.DepositButtons[ERSBankDepositButton.CONTAINERS] := nil;
+    end;
+    2:
+    begin
+      Self.DepositButtons[ERSBankDepositButton.WORN].Bounds := boxes.Last;
+      if Target.HasColor([$0F3669, 2.705, EColorSpace.HSV, [1.943, 0.722, 0.336]], 4, boxes[0]) then
+      begin
+        Self.DepositButtons[ERSBankDepositButton.INVENTORY].Bounds := boxes[0];
+        Self.DepositButtons[ERSBankDepositButton.CONTAINERS] := nil;
+      end
+      else
+      begin
+        Self.DepositButtons[ERSBankDepositButton.INVENTORY] := nil;
+        Self.DepositButtons[ERSBankDepositButton.CONTAINERS].Bounds := boxes[0];
+      end;
+    end;
+    3: for i := 0 to High(boxes) do
+        Self.DepositButtons[i].Bounds := boxes[2];
+  end;
+
+  Self.ButtonsOffset := True;
 end;
 
 
@@ -335,9 +401,8 @@ WriteLn Bank.IsOpen();
 *)
 function TRSBank.IsOpen(): Boolean;
 var
-  count: Integer;
   tpa: TPointArray;
-  offset: Integer;
+  title: String;
 begin
   if BankPin.IsOpen() then
   begin
@@ -348,9 +413,14 @@ begin
       raise GetDebugLn('BankPin', 'Failed to enter bank pin.');
   end;
 
-  count := Target.CountColor($0, 0, Self._IsOpenHelperBox);
-  tpa := Target.FindColor(RSFonts.ORANGE, 0, Self._IsOpenHelperBox);
-  Result := ((count = 94) and (Length(tpa) = 116)) or Self.Title.IsTitle('Bank') or Self.Title.IsTitle('Equip');
+  tpa := Self._GetButtonDividers();
+  Result := (Length(tpa) = 3);
+
+  if not Result then
+  begin
+    title := Self.Title.GetTitle();
+    Result := title in ['Bank', 'Tab ', 'Equip'];
+  end;
 
   if Result then
   begin
@@ -361,9 +431,7 @@ begin
       Exit(Self.IsOpen()); //ad closed, restart
     end;
 
-    offset := tpa.First.X;
-    offset -= Self.Bounds.X1+244;
-    Self.UpdateButtons(offset);
+    Self.UpdateButtons(tpa);
   end;
 end;
 
@@ -504,51 +572,6 @@ begin
 end;
 
 
-
-(*
-## Bank.SetArrangement
-```pascal
-function TRSBank.SetArrangement(arrangement: ERSBankArrangement): Boolean;
-```
-Attempts to set the bank arrangement to `arrangement`, returns true if we succeed.
-
-Example:
-```pascal
-WriteLn Bank.SetArrangement(ERSBankArrangement.INSERT);
-```
-*)
-function TRSBank.SetArrangement(arrangement: ERSBankArrangement): Boolean;
-begin
-  if Self.ArrangementButtons[arrangement].Enabled() then Exit(True);
-  Result := Self.ArrangementButtons[arrangement].Enable();
-  if Result then Sleep(600, 800);
-end;
-
-(*
-## Bank.SetWithdrawMode
-```pascal
-function TRSBank.SetWithdrawMode(noted: Boolean): Boolean;
-```
-Attempts to set the bank withdraw mode to noted if `noted` is true or
-to item if it's false, returns true if we succeed.
-
-Example:
-```pascal
-WriteLn Bank.SetWithdrawMode(True);
-```
-*)
-function TRSBank.SetWithdrawMode(noted: Boolean): Boolean;
-var
-  btn: ERSWithdrawMode;
-begin
-  if noted then btn := ERSWithdrawMode.NOTE
-  else btn := ERSWithdrawMode.ITEM;
-
-  if Self.WithdrawModeButtons[btn].Enabled() then Exit(True);
-  Result := Self.WithdrawModeButtons[btn].Enable();
-  if Result then Sleep(600, 800);
-end;
-
 (*
 ## Bank.SetQuantity
 ```pascal
@@ -563,8 +586,9 @@ WriteLn Bank.SetQuantity(ERSItemQuantity.FIVE);
 *)
 function TRSBank.SetQuantity(quantity: ERSItemQuantity; amount: Integer = 0): Boolean;
 begin
-  if Self.QuantityButtons[quantity].Enabled() then Exit(True);
-  Result := Self.QuantityButtons[quantity].Enable();
+  if Self.QuantityButtons[quantity].Enabled then
+    Exit(True);
+  Result := Self.QuantityButtons[quantity].Enabled[True];
 
   if Result or (quantity <> ERSItemQuantity.CUSTOM) then
     Exit;
@@ -572,10 +596,9 @@ begin
   if Chat.AnswerQuery('Enter amount', ToString(amount), RandomLeft(1400, 2400)) then
   begin
     Self._Cache.Quantity := amount;
-    Result := Self.QuantityButtons[quantity].Enabled();
+    Result := Self.QuantityButtons[quantity].Enabled;
   end;
 end;
-
 
 
 (*
@@ -626,7 +649,7 @@ WriteLn Bank.OpenSearch();
 *)
 function TRSBank.OpenSearch(waitTime: Integer = 0): Boolean;
 begin
-  Self.DynamicButtons[ERSBankDynamicButtons.SEARCH].Click();
+  Self.MiscButtons[ERSBankMiscButton.SEARCH].Click();
   if waitTime <= 0 then
     Exit(Self.IsSearchOpen());
   Result := Self.WaitSearchOpen(waitTime);
@@ -650,7 +673,7 @@ begin
   if not Self.Title.IsTitle('Showing items:') then Exit(True);
 
   if Biometrics.RandomBoolean() then
-    Self.DynamicButtons[ERSBankDynamicButtons.SEARCH].Click()
+    Self.MiscButtons[ERSBankMiscButton.SEARCH].Click()
   else
     Mouse.Click(Self.Tabs[0], EMouseButton.LEFT);
   Result := SleepUntil(not Self.Title.IsTitle('Showing items:'), RandomMode(100, 50, 1500), 600);
@@ -1019,7 +1042,7 @@ begin
 
   if (quantity <> ERSItemQuantity.CUSTOM) then
   begin
-    if Self.QuantityButtons[quantity].Enabled() then
+    if Self.QuantityButtons[quantity].Enabled then
     begin
       Mouse.Click(EMouseButton.LEFT);
       Exit(True);
@@ -1056,7 +1079,7 @@ begin
 
   if Self.Items.Find(item, data.Slot) then
   begin
-    if not Self.DynamicButtons[ERSBankDynamicButtons.SEARCH].Enabled() then
+    if not Self.MiscButtons[ERSBankMiscButton.SEARCH].Enabled then
     begin
       data.Tab := Self.GetCurrentTab();
       data.Scroll := Self.Scroll.GetLevel();
@@ -1126,8 +1149,8 @@ begin
   for attempt := 0 to 2 do
   begin
     count := Self.Slots.ReadStack(data.Slot);
-
-    if not Self.SetWithdrawMode(item.Noted) then Continue;
+    if not Self.ModeButtons[ERSBankModeButton.NOTES].Enabled[item.Noted] then
+      Continue;
     if Self._InteractionHelper(ERSBankInteraction.WITHDRAW, data.Slot, item.Quantity, useQuantityButton) then
     begin
       if not waitConfirmation then
@@ -1177,6 +1200,32 @@ begin
 end;
 
 (*
+## Bank.DepositContainers
+```pascal
+function TRSbank.DepositContainers(): Boolean;
+```
+Deposits all items item containers in the {ref}`inventory` into the bank.
+Example of item containers:
+- Log basket
+- Plank sack
+- Gem bag
+- Coal bag
+- etc
+
+Example:
+```pascal
+WriteLn Bank.DepositContainers();
+```
+*)
+function TRSBank.DepositContainers(): Boolean;
+begin
+  if not Self.IsOpen() then
+    Exit;
+  Self.DepositButtons[ERSBankDepositButton.CONTAINERS].Click(EMouseButton.LEFT);
+  Result := True;
+end;
+
+(*
 ## Bank.DepositInventory
 ```pascal
 function TRSbank.DepositInventory(): Boolean;
@@ -1192,8 +1241,10 @@ function TRSBank.DepositInventory(): Boolean;
 var
   count: Integer;
 begin
+  if not Self.IsOpen() then
+    Exit;
   count := Inventory.Slots.Count();
-  Self.DynamicButtons[ERSBankDynamicButtons.DEPOSIT_INVENTORY].Click(EMouseButton.LEFT);
+  Self.DepositButtons[ERSBankDepositButton.INVENTORY].Click(EMouseButton.LEFT);
   Result := SleepUntil(Inventory.Slots.Count() < count, 200, 4*TICK);
 end;
 
@@ -1211,7 +1262,9 @@ WriteLn Bank.DepositEquipment();
 *)
 function TRSBank.DepositEquipment(): Boolean;
 begin
-  Self.DynamicButtons[ERSBankDynamicButtons.DEPOSIT_WORN].Click(EMouseButton.LEFT);
+  if not Self.IsOpen() then
+    Exit;
+  Self.DepositButtons[ERSBankDepositButton.WORN].Click(EMouseButton.LEFT);
   Result := True;
 end;
 

@@ -69,10 +69,7 @@ begin
   SetLength(Self.Slots, Length(tba));
 
   for i := 0 to High(tba) do
-  begin
-    Self.Slots[SKILL_ORDER[i]].Bounds := tba[i];
-    Self.Slots[SKILL_ORDER[i]].EnabledColors := [[$0F1043, 0], [$23269F, 0.227]];
-  end;
+    Self.Slots[SKILL_ORDER[i]] := new TRSButton(tba[i], [[$0F1043, 0], [$23269F, 0.227]]);
 
   Self.ConfirmBounds.X1 := Self.Bounds.X1 + 81;
   Self.ConfirmBounds.Y1 := Self.Bounds.Y2 - 35;
@@ -191,7 +188,7 @@ end.
 function TRSLamp.GetSelected(): ERSSkill;
 begin
   for Result := Low(ERSSkill) to High(ERSSkill)-1 do
-    if Self.Slots[Result].Enabled() then
+    if Self.Slots[Result].Enabled then
       Exit;
   Result := ERSSkill.TOTAL;
 end;
@@ -215,7 +212,7 @@ end.
 *)
 function TRSLamp.Enable(skill: ERSSkill): Boolean;
 begin
-  Result := Self.Slots[skill].Enable();
+  Result := Self.Slots[skill].Enabled[True];
 end;
 
 (*
@@ -264,7 +261,7 @@ function TRSLamp.Select(skill: ERSSkill): Boolean;
 begin
   if not Self.Open() then
     Exit;
-  Result := Self.Slots[skill].Enable() and Self.Confirm();
+  Result := Self.Slots[skill].Enabled[True] and Self.Confirm();
 end;
 
 var

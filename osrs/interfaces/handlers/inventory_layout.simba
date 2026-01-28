@@ -242,7 +242,7 @@ begin
     if Biometrics.RandomBoolean(0.7) then
       Self.DepositDiff()
     else
-      Bank.DynamicButtons[ERSBankDynamicButtons.DEPOSIT_INVENTORY].Click();
+      Bank.DepositButtons[ERSBankDepositButton.INVENTORY].Click();
   end;
 
   oldTab := Bank.GetCurrentTab();

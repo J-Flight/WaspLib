@@ -61,7 +61,10 @@ begin
     Self.Scroll.Area.X2 := X2 - 21;
     Self.Scroll.Area.Y2 := Y2 - 19;
 
-    Self.Buttons := TRSButtonArray.Create([[$1D1F81, 0], [$181A6C, 0], [$1A1C74, 0], [$20238D, 0]], TBoxArray.Create([X1+61, Y1+7], 3, 1, 35, 24, [7, 0]));
+    Self.Buttons := TRSButtonArray.Create(
+                        TBoxArray.Create([X1+61, Y1+7], 3, 1, 35, 24, [7, 0]),
+                        [[$1D1F81, 0], [$181A6C, 0], [$1A1C74, 0], [$20238D, 0]]
+                    );
   end;
 
   Self.Scroll.Setup();

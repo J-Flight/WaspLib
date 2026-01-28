@@ -51,18 +51,12 @@ var
 begin
   btns := TBoxArray.Create(GameTab.TopLeft.Offset(2,61), 5, 1, 31, 35, [6, 0]);
   for i := 0 to High(btns) do
-  begin
-    Self.Ratings[i].EnabledColors := [[$0F1043, 0], [$23269F, 0.227]];
-    Self.Ratings[i].Bounds := btns[i];
-  end;
-
-  Self.Buttons[ERSLogoutButton.WORLD_SWITCHER].EnabledColors := [[$0F1043, 0], [$23269F, 0.227]];
-  Self.Buttons[ERSLogoutButton.CLICK_HERE].EnabledColors := [[$0F1043, 0], [$23269F, 0.227]];
+    Self.Ratings[i] := new TRSButton(btns[i], [[$0F1043, 0], [$23269F, 0.227]]);
 
   with GameTab.Bounds do
   begin
-    Self.Buttons[ERSLogoutButton.WORLD_SWITCHER].Bounds := TBox.Create(X1+22, Y2-97, X2-22, Y2-66);
-    Self.Buttons[ERSLogoutButton.CLICK_HERE].Bounds := TBox.Create(X1+22, Y2-49, X2-22, Y2-18);
+    Self.Buttons[ERSLogoutButton.WORLD_SWITCHER] := new TRSButton([X1+22, Y2-97, X2-22, Y2-66], [[$0F1043, 0], [$23269F, 0.227]]);
+    Self.Buttons[ERSLogoutButton.CLICK_HERE] := new TRSButton([X1+22, Y2-49, X2-22, Y2-18], [[$0F1043, 0], [$23269F, 0.227]]);
   end;
 end;
 
@@ -167,7 +161,7 @@ WriteLn Logout.IsRated();
 *)
 function TRSLogout.IsRated(): Boolean;
 begin
-  Result := Self.Ratings[ERSRating.ONE].Enabled();
+  Result := Self.Ratings[ERSRating.ONE].Enabled;
 end;
 
 (*
@@ -184,8 +178,8 @@ WriteLn Logout.Rate(ERSRating.FOUR);
 *)
 function TRSLogout.Rate(star: ERSRating): Boolean;
 begin
-   if Self.Ratings[star].Enabled() and
-      ((star = ERSRating.FIVE) or not Self.Ratings[star+1].Enabled()) then
+   if Self.Ratings[star].Enabled and
+      ((star = ERSRating.FIVE) or not Self.Ratings[star+1].Enabled) then
        Exit(True);
 
    Self.Ratings[star].Click(EMouseButton.LEFT);

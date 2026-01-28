@@ -114,14 +114,11 @@ begin
   begin
     tba := TBoxArray.Create([X2-42,Y1+95], 1, 5, 27, 27, [0, 16]);
     for i := 0 to 4 do
-    begin
-      Self.QuantityButtons[i].Bounds := tba[i];
-      Self.QuantityButtons[i].EnabledColors := [[$0F1043, 0], [$23269F, 0.227]];
-    end;
-    tba := [];
+      Self.QuantityButtons[i] := new TRSButton(tba[i], [[$0F1043, 0], [$23269F, 0.227]]);
+
     tba := TBoxArray.Create([X1+24,Y2-41], 3, 1, 29, 27, [25, 0]);
     for i := 0 to 2 do
-      Self.DepositButtons[i].Bounds := tba[i];
+      Self.DepositButtons[i] := new TRSButton(tba[i]);
     Self.EquipSlotBoxes := Self.EquipSlotBoxes.Offset(Point(X1,Y1));
   end;
 end;
@@ -196,7 +193,7 @@ begin
     begin
       Button := Self.QuantityButtons[ERSItemQuantity.CUSTOM];
 
-      if Button.Enable then
+      if Button.Enabled[True] then
       begin
         Mouse.Move(B);
         Biometrics.Sleep(300);
@@ -218,7 +215,7 @@ begin
             Button := Self.QuantityButtons[ERSItemQuantity.ALL];
       end;
 
-      if Button.Enable then
+      if Button.Enabled[True] then
       begin
         Result := True;
         Mouse.Move(b, True);

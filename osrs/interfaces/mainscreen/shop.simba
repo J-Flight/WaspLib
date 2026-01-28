@@ -104,7 +104,6 @@ This is automatically called for you on the {ref}`Shop variable`.
 *)
 procedure TRSShop.SetupInterface();
 var
-  i: Integer;
   boxes: TBoxArray;
   quantity: ERSShopQuantity;
 begin
@@ -119,27 +118,19 @@ begin
   with Self.Bounds do
   begin
     Self._IsOpenHelper := TBox.Create(X1 + 30, Y2 - 35, X1 + 100, Y2 - 12);
-    Self.ValueButton.Bounds := TBox.Create(X1 + 110, Y2 - 37, X1 + 139, Y2 - 8);
+    Self.ValueButton := new TRSButton([X1+110, Y2-37, X1+139, Y2-8], [[$0F1043, 0], [$23269F, 0.227]]);
   end;
-  Self.ValueButton.EnabledColors := [[$0F1043, 0], [$23269F, 0.227]];
 
   Self.SlotBoxes := TBoxArray.Create(Self.Bounds.TopLeft.Offset(61, 40), 8, 5, 35, 32, [12,15]);
   Self.SlotsArea := Self.SlotBoxes.Merge();
   Self.Slots.Setup('Shop.Slots', Self.SlotBoxes, @Self.FindItemBoundaries);
   Self.Items.Setup('Shop.Items', @Self.Slots, [0, 1], @Self.IsOpen);
 
-  for i := 0 to 3 do
-    begin
-      Self.QuantityButtons[i].EnabledColors := [[$0F1043, 0], [$23269F, 0.227]];
-    end;
-
   with Self.Bounds do
     boxes := TBoxArray.Create([X2-196, Y2-37], 4, 1, 29, 29, [11,0]); // This is the whole button
 
   for quantity := Low(ERSShopQuantity) to High(ERSShopQuantity) do
-    begin
-      Self.QuantityButtons[quantity].Bounds := boxes[Ord(quantity)];
-    end;
+    Self.QuantityButtons[quantity] := new TRSButton(boxes[quantity], [[$0F1043, 0], [$23269F, 0.227]]);
 end;
 
 (*
@@ -285,11 +276,12 @@ WriteLn Shop.GetPrice('Gold ore');
 *)
 function TRSShop.GetPrice(item: TRSItem): Integer;
 begin
-  if not Self.IsOpen() then Exit;
-  if not Self.Items.Contains(item) then Exit;
-
-  if not Self.ValueButton.Enabled then
-    Self.ValueButton.Enable();
+  if not Self.IsOpen() then
+    Exit;
+  if not Self.Items.Contains(item) then
+    Exit;
+  if not Self.ValueButton.Enabled[True] then
+    Exit;
 
   Sleep(600, 800);
 
@@ -315,8 +307,8 @@ WriteLn Shop.SetQuantity(ERSShopQuantity.TEN);
 *)
 function TRSShop.SetQuantity(quantity: ERSShopQuantity): Boolean;
 begin
-  if Self.QuantityButtons[quantity].Enabled() then Exit(True);
-  Result := Self.QuantityButtons[quantity].Enable();
+  if Self.QuantityButtons[quantity].Enabled then Exit(True);
+  Result := Self.QuantityButtons[quantity].Enabled[True];
   if Result then Sleep(600, 800);
 end;
 

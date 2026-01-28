@@ -203,8 +203,7 @@ begin
     quantityStr := OCR.Recognize(boxes[i], RSFonts.PLAIN_11, [Self.TEXT_COLOR, RSFonts.WHITE], 0);
 
     Result[i].Quantity := ERSItemQuantity.String2Quantity(quantityStr);
-    Result[i].Button.Bounds := boxes[i];
-    Result[i].Button.EnabledColors := [[RSFonts.WHITE, 0]];
+    Result[i].Button := new TRSButton(boxes[i], [[RSFonts.WHITE, 0]]);
 
     if quantityStr.Equals('X', True) then
       Result[i].UpText := 'Other'
@@ -268,7 +267,7 @@ begin
     Exit;
 
   for i := 0 to High(btns) do
-    if btns[i].Button.Enabled() then
+    if btns[i].Button.Enabled then
       Exit(btns[i]);
 end;
 
@@ -523,12 +522,13 @@ begin
   if quantityButton = [] then
     raise GetDebugLn('Make', 'Quantity button for "' + ToStr(amount) + '" is not available.');
 
-  if quantityButton.Button.Enabled() then Exit(True);
+  if quantityButton.Button.Enabled then
+    Exit(True);
 
   quantityButton.Button.Click(EMouseButton.LEFT);
 
   Result := SleepUntil(
-              (done := quantityButton.Button.Enabled()) or
+              (done := quantityButton.Button.Enabled) or
               Chat.FindQuery('Enter amount', True), RandomMode(100, 50, 1500), 600
             );
   if done then Exit;
