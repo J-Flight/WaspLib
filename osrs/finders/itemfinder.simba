@@ -73,7 +73,11 @@ begin
 
   bounds := tBorder.Bounds;
   image.Crop(bounds);
-  template.Crop(bounds.Offset([-align.X, -align.Y]));
+
+  bounds := bounds.Offset([-align.X, -align.Y]);
+  if (bounds.X1 < 0) or (bounds.Y1 < 0) then
+    Exit;
+  template.Crop(bounds);
   Result := True;
 end;
 

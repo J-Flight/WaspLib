@@ -19,7 +19,7 @@ var
   mode: String;
   img: TImage;
   digits: TIntegerArray = [0, 7, 9, 9];
-  slots: TIntegerArray = [47,72,71,72];
+  slots: TIntegerArray = [29,56,56,57];
 begin
   for mode in modes do
   begin
@@ -49,13 +49,13 @@ begin
     Assert(Bank.InceneratorTooltipVisible() = False);
     Assert(Bank.HasJagexAccountAd() = False);
     Assert(Bank.OpenTab(5));
-    Assert(Bank.SetArrangement(ERSBankArrangement.INSERT));
-    Assert(Bank.SetWithdrawMode(False));
+    Assert(Bank.ModeButtons[ERSBankModeButton.NOTES].Enabled[False]);
     Assert(Bank.SetQuantity(ERSItemQuantity.ONE));
     Assert(Bank.Slots.Count() = slots[0]);
     Delete(slots, 0, 1);
-    Assert(Bank.Items.Contains('Rune defender'));
-    Assert(Bank.Items.Contains('Spiked boots'));
-    Assert(Bank.Items.IndexOf(['Spiked boots']) = 30);
+    Assert(Bank.Items.Contains('Uncut emerald'));
+    //Assert(Bank.Items.Contains('Rune arrow'));
+    Assert(Bank.Items.Contains('Manta ray'));
+    Assert(Bank.Items.IndexOf(['Manta ray']) = 7);
   end;
 end;
