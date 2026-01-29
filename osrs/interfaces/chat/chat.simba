@@ -295,7 +295,7 @@ begin
   if RSClient.Mode = ERSMode.FIXED then Exit(False);
   if Self.Tabs.GetActive() = ERSChatTab.NONE then Exit(True);
 
-  Self.Tabs.Get(Self.Tabs.GetActive()).Button.Click();
+  Self.Tabs.Tabs[Self.Tabs.GetActive()].Click();
   Result := Self.Tabs.GetActive() = ERSChatTab.NONE;
 end;
 

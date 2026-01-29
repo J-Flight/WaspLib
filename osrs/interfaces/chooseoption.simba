@@ -44,21 +44,33 @@ WriteLn ChooseOption.IsOpen();
 *)
 function TRSChooseOption.IsOpen(): Boolean;
 var
-  tpa: TPointArray;
-  p: TPoint;
+  header, body: TPointArray;
+  pt: TPoint;
+  bounds: TBox;
 begin
-  p := Target.FindImage(Self.TitleImg, 0);
-  if p = [-1,-1] then Exit;
-
-  p.X += 1;
-  p.Y += Self.TitleImg.Height;
+  pt := Target.FindImage(Self.TitleImg, 0);
+  if pt = [-1,-1] then Exit;
 
   with RSClient.Bounds do
-    tpa := Target.FindColor(Colors.BLACK, 0, [P.X, P.Y, Width - 1, Height - 1]);
+    header := Target.FindColor(Colors.BLACK, 0, [pt.X, pt.Y, Width - 1, Height - 1]);
 
-  Result := tpa <> [];
+  if header = [] then
+    Exit;
+
+  bounds := header.Cluster(1.5, 1.5).SortFromFirstPoint(pt)[0].Bounds().Expand(-1);
+
+  pt.X += 1;
+  pt.Y += Self.TitleImg.Height;
+
+  with RSClient.Bounds do
+    body := Target.FindColor(Colors.BLACK, 0, [pt.X, pt.Y, Width - 1, Height - 1]);
+
+  Result := body <> [];
   if Result then
-    Self.Bounds := tpa.Cluster(1, 1).SortFromFirstPoint(p)[0].Bounds().Expand(-1);
+    Self.Bounds := body.Cluster(1.5, 1.5).SortFromFirstPoint(pt)[0].Bounds().Expand(-1);
+
+  Self.Bounds.X1 := bounds.X1;
+  Self.Bounds.X2 := bounds.X2;
 end;
 
 (*
@@ -250,6 +262,7 @@ var
 begin
   Result := Self.Find(text, option, caseSensitive, closeOnFalse);
 end;
+
 
 (*
 ## ChooseOption.Hover

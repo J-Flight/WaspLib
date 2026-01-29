@@ -262,7 +262,7 @@ procedure TAntiban.RandomChatTab();
 var
   tab: ERSChatTab;
 begin
-  tab := ERSChatTab(Random(1, Length(ERSChatTab)));
+  tab := ERSChatTab(Random(1, Length(ERSChatTab)-1));
   WriteLn GetDebugLn('Antiban', 'Opening ' + ToStr(tab) + ' chat button');
   Chat.Tabs.Open(tab);
 end;
@@ -284,7 +284,7 @@ var
   tpa: TPointArray;
 begin
   WriteLn GetDebugLn('Antiban', 'Toggling chat buttons');
-  if Chat.Tabs.Open(ERSChatTab.PUBLIC_) then
+  if Chat.Tabs.Open(ERSChatTab.PUB) then
   begin
     for b in Chat.MessageLines do
     begin
@@ -308,11 +308,11 @@ var
   tab: ERSChatTab;
   state: ERSChatTabState;
 begin
-  tab := ERSChatTab(Random(1, Length(ERSChatTab)));
+  tab := ERSChatTab(Random(1, Length(ERSChatTab)-1));
   case tab of
     ERSChatTab.GAME:     state := ERSChatTabState.FILTERED;
-    ERSChatTab.PUBLIC_:  state := ERSChatTabState(Random(1, Length(ERSChatTabState)));
-    ERSChatTab.PRIVATE_: state := ERSChatTabState(Random(1, 3));
+    ERSChatTab.PUB:      state := ERSChatTabState(Random(1, Length(ERSChatTabState)-1));
+    ERSChatTab.PRIV:     state := ERSChatTabState(Random(1, 3));
     ERSChatTab.CHANNEL:  state := ERSChatTabState(Random(1, 3));
     ERSChatTab.CLAN:     state := ERSChatTabState(Random(1, 3));
     ERSChatTab.TRADE:    state := ERSChatTabState(Random(1, 3));

@@ -71,7 +71,7 @@ Property to get/set a {ref}`TRSButton` `Enabled` state.
 Example:
 ```pascal
 WriteLn Button.Enabled;
-Button.Enabled := True;
+Button.Enabled := True; //or Button.Enabled[True];
 WriteLn Button.Enabled;
 ```
 *)
@@ -89,7 +89,7 @@ begin
   if value = Self.Enabled then
     Exit(True);
   Self.Click();
-  Result := SleepUntil(Self.Enabled = value, RandomMode(100, 50, 1500), time);
+  Result := SleepUntil(Self.Enabled = value, RandomMode(100, 50, 1500), 600);
 end;
 
 (*

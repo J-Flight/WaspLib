@@ -11,18 +11,20 @@ You can use these to change the current chat being viewed.
 
 type
 (*
-## ERSChatTab
+(ERSChatTab)=
+## ERSChatTab enum
 ```pascal
-ERSChatTab = enum(NONE, ALL, GAME, PUBLIC_, PRIVATE_, CHANNEL, CLAN, TRADE);
+ERSChatTab = enum(NONE, ALL, GAME, PUB, PRIV, CHANNEL, CLAN, TRADE);
 ```
 Enum representing each of the chat tabs available.
 *)
-  ERSChatTab = enum(NONE, ALL, GAME, PUBLIC_, PRIVATE_, CHANNEL, CLAN, TRADE);
+  ERSChatTab = enum(NONE, ALL, GAME, PUB, PRIV, CHANNEL, CLAN, TRADE);
 
 (*
-## ERSChatTabState
+(ERSChatTabState)=
+## ERSChatTabState enum
 ```pascal
-ERSChatTabState = (NONE, ENABLED, FILTERED, DISABLED, HIDE, AUTOCHAT);
+ERSChatTabState = enum(NONE, ENABLED, FILTERED, DISABLED, HIDE, AUTOCHAT);
 ```
 Enum representing each of the filters a chat tab can have.
 
@@ -30,16 +32,7 @@ You can see the filters when you right click the tab:
 ```{figure} ../../images/chattab_filter.png
 ```
 *)
-  ERSChatTabState = (NONE, ENABLED, FILTERED, DISABLED, HIDE, AUTOCHAT);
-
-(*
-## TRSChatTab
-Helper record to interact with a tab.
-*)
-  TRSChatTab = record
-    Tab: ERSChatTab;
-    Button: TRSButton;
-  end;
+  ERSChatTabState = enum(NONE, ENABLED, FILTERED, DISABLED, HIDE, AUTOCHAT);
 
 (*
 ## TRSChatTabs
@@ -49,7 +42,7 @@ In {ref}`TRSChat` you have a `Tabs` variable of this type.
 *)
   TRSChatTabs = record
     Bounds: TBox;
-    Tabs: array [0..7] of TRSChatTab;
+    Tabs: array [0..7] of TRSButton;
   end;
 
 (*
@@ -75,32 +68,10 @@ begin
 
   with Self.Bounds do
     for i := 0 to 6 do
-    begin
-      Self.Tabs[i].Tab := ERSChatTab(i+1);
-      Self.Tabs[i].Button := new TRSButton([X1 + 3 + (i * 62), Y1, X1 + 58 + (i * 62), Y2 - 1], [[$0E202D, 0.888]]);
-    end;
+      Self.Tabs[i+1] := new TRSButton([X1+3+(i*62), Y1, X1+58+(i*62), Y2-1], [[$0E202D, 0.888]]);
 
   MainScreen.Mask.DrawColor := $FFFFFF;
   MainScreen.Mask.DrawBoxFilled(Self.Bounds);
-end;
-
-(*
-## Chat.Tabs.Get
-```pascal
-function TRSChatTabs.Get(tab: ERSChatTab): TRSChatTab;
-```
-Returns the {ref}`TRSChatTab` that is represented by the specified {ref}`ERSChatTab`.
-
-This is mostly for internal use.
-
-Example:
-```pascal
-WriteLn Chat.Tabs.Get(ERSChatTab.GAME);
-```
-*)
-function TRSChatTabs.Get(tab: ERSChatTab): TRSChatTab;
-begin
-  Result := Self.Tabs[tab-1];
 end;
 
 (*
@@ -120,7 +91,7 @@ var
   tab: ERSChatTab;
 begin
   for tab := ERSChatTab.ALL to High(ERSChatTab) do
-    if Self.Get(tab).Button.Enabled then
+    if Self.Tabs[tab].Enabled then
       Exit(tab);
 end;
 
@@ -138,7 +109,7 @@ WriteLn Chat.Tabs.IsActive(ERSChatTab.ALL);
 *)
 function TRSChatTabs.IsActive(tab: ERSChatTab): Boolean;
 begin
-  Result := Self.Get(tab).Button.Enabled;
+  Result := Self.Tabs[tab].Enabled;
 end;
 
 
@@ -156,24 +127,23 @@ WriteLn Chat.Tabs.Open(ERSChatTab.ALL);
 *)
 function TRSChatTabs.Open(tab: ERSChatTab): Boolean;
 begin
-  Result := Self.Get(tab).Button.Enabled[True];
+  Result := Self.Tabs[tab].Enabled[True];
 end;
 
-{%codetools off}
-function TRSChatTab._GetState(): ERSChatTabState;
+
+function TRSChatTabs._GetState(tab: ERSChatTab): ERSChatTabState;
 const
   COLORS: array [1..5] of Integer = [65280, 65535, 255, 16776960, 16756480];
 var
   state: ERSChatTabState;
 begin
   Result := ERSChatTabState.NONE;
-  if Self.Tab = ERSChatTab.ALL then Exit;
+  if tab = ERSChatTab.ALL then Exit;
 
   for state := ERSChatTabState.ENABLED to High(ERSChatTabState) do
-    if Target.CountColor(COLORS[state], 0, Self.Button.Bounds) > 0 then
+    if Target.CountColor(COLORS[state], 0, Self.Tabs[tab].Bounds) > 0 then
       Exit(state);
 end;
-{%codetools on}
 
 (*
 ## Chat.Tabs.GetState
@@ -189,7 +159,7 @@ WriteLn Chat.Tabs.GetState(ERSChatTab.PUBLIC_);
 *)
 function TRSChatTabs.GetState(tab: ERSChatTab): ERSChatTabState;
 begin
-  Result := Self.Get(tab)._GetState();
+  Result := Self._GetState(tab);
 end;
 
 (*
@@ -206,15 +176,14 @@ WriteLn Chat.Tabs.GetState(ERSChatTab.PUBLIC_, ERSChatTabState.ENABLED);
 ```
 *)
 function TRSChatTabs.ChangeState(tab: ERSChatTab; state: ERSChatTabState): Boolean;
-var
-  chatTab: TRSChatTab;
 begin
-  chatTab := Self.Get(tab);
-  if chatTab._GetState() = state then Exit(True);
+  if Self._GetState(tab) = state then
+    Exit(True);
 
-  chatTab.Button.Click(EMouseButton.RIGHT);
+  Self.Tabs[tab].Click(EMouseButton.RIGHT);
 
-  if not ChooseOption.WaitOpen(200) then Exit;
+  if not ChooseOption.WaitOpen(200) then
+    Exit;
 
   case state of
     ERSChatTabState.ENABLED:  ChooseOption.Select(['Filter', 'standard', 'all']);
@@ -224,5 +193,5 @@ begin
     ERSChatTabState.AUTOCHAT: ChooseOption.Select(['autochat']);
   end;
 
-  Result := chatTab._GetState() = state;
+  Result := Self._GetState(tab) = state;
 end;
