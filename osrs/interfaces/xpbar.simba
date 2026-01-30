@@ -299,7 +299,7 @@ var
   str: String;
   count: Integer;
 begin
-  if not Self.Setup then Exit;
+  if not Self.Setup() then Exit;
 
   str := OCR.Recognize(Self.Bounds, Self.Font, [$FFFFFF], 0);
 

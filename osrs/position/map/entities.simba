@@ -387,6 +387,23 @@ begin
 end;
 
 
+(*
+## Entity.IsVisible
+```pascal
+function TRSEntity.IsVisible(): Boolean;
+```
+Returns a boolean whether the entity is currently visible or not.
+*)
+function TRSEntity.IsVisible(): Boolean;
+var
+  coordinates: TPointArray;
+  boundsArray: TPolygonArray;
+  atpa: T2DPointArray;
+begin
+  Result := Self.FindEx(Self.Walker^.Position(), boundsArray, coordinates, atpa);
+end;
+
+
 function TRSEntity.FindFrom(position: TPoint; out atpa: T2DPointArray): Boolean;
 var
   boundsArray: TPolygonArray;

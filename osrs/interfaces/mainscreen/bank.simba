@@ -1534,7 +1534,7 @@ var
   box: TBox;
 begin
   box := Inventory.Slots.Box(slot);
-  Result := Target.FindColor($0000ff, 4, box.Expand(2, 1)).Intersection(box.Expand(1, 0).Corners).Length = 4;
+  Result := Target.FindColor($0000ff, 4, box.Expand(2, 1)).Intersection(box.Expand(1, 0).Corners()).Length = 4;
 end;
 
 (*

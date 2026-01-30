@@ -456,7 +456,7 @@ begin
   // Now find shadows, offset by -1,-1 to find colors of text
   tpa := img.FindColor(0, 0, [1, 1, img.Width, img.Height]);
   tpa := tpa.Offset([-1,-1]).ExcludePoints(tpa);
-  img.ReplaceColorBinary(False, img.GetColors(tpa).Unique, 0);
+  img.ReplaceColorBinary(False, img.GetColors(tpa).Unique(), 0);
 
   Result := OCR.Engine.Recognize(img, RSFonts.PLAIN_12, [0,0]);
 end;

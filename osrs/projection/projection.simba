@@ -737,6 +737,6 @@ begin
     Minimap.Center.Offset(2,0).ToVec3(-3).Rotate(-radians, Minimap.Center)
   ];
 
-  Result := Projection.Run(vectors, radians).Bounds;
+  Result := Projection.Run(vectors, radians).Bounds();
   Projection.PlayerBoxes[Options.GetZoomLevel()] := Result;
 end;

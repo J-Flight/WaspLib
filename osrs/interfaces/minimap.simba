@@ -1059,7 +1059,7 @@ var
   count: Integer;
 begin
   count := Self.CountColor(color, tolerance);
-  Result := count / Self.Polygon.Area;
+  Result := count / Self.Polygon.Area();
 end;
 
 function TRSMinimap.ColorPercent(color: TColorTolerance): Single; overload;
@@ -1067,7 +1067,7 @@ var
   count: Integer;
 begin
   count := Self.CountColor(color);
-  Result := count / Self.Polygon.Area;
+  Result := count / Self.Polygon.Area();
 end;
 
 

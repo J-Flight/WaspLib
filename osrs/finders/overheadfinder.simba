@@ -206,7 +206,7 @@ begin
 
       matrix := MatchTemplate(Target.GetImage(bounds), overheadImage, ETMFormula.TM_CCOEFF_NORMED);
 
-      with matrix.ArgMax do
+      with matrix.ArgMax() do
       begin
         if matrix[Y,X] < Self.Similarity then
           Break;

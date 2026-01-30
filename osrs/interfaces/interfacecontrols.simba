@@ -79,6 +79,9 @@ property TRSButton.Enabled: Boolean;
 var
   i: Integer;
 begin
+  if Self.EnabledColors = [] then
+    raise GetDebugLn('TRSButton', 'This button has no state. Use `TRSButton.Click` instead or add `EnabledColors` to it.');
+
   for i := 0 to High(Self.EnabledColors) do
     if Target.HasColor(Self.EnabledColors[i].Color, Self.EnabledColors[i].Tolerance, 1, Self.Bounds) then
       Exit(True);

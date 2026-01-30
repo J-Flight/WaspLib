@@ -38,7 +38,7 @@ Main record used to hold core values of the {ref}`Map Debugger`.
     GetGlobal: function (pt: TPoint; offset: TPoint = [0,0]): TPoint of object;
 
     Coordinate, SelectedInfo: TLazLabel;
-    ShowGraph, ShowWalkableSpace, ShowWalkableClusters, ShowObjectClusters: Boolean;
+    ShowGraph, ShowWalkableSpace, ShowWalkableClusters, ShowObjectClusters, Normalize: Boolean;
     ColorArray: TColorArray;
   end;
 
@@ -103,7 +103,10 @@ var
   i: Integer;
 begin
   pt := TPoint.Create(x,y);
-  g := Self.GetGlobal([pt.X div 4 * 4, pt.Y div 4 * 4]);
+  if Self.Normalize then
+    g := Self.GetGlobal([pt.X div 4 * 4, pt.Y div 4 * 4])
+  else
+    g := Self.GetGlobal([pt.X, pt.Y]);
 
   Self.Coordinate.Caption := Format('[%d, %d]', [g.X, g.Y]);
 
@@ -182,6 +185,11 @@ begin
   Self.ImageBox.Repaint();
 end;
 
+procedure TMapDebugger.NormalizeCoordinatesOnChange(sender: TLazObject);
+begin
+  Self.Normalize := TLazCheckBox(sender).IsChecked();
+end;
+
 (*
 ## MapDebugger.Show
 ```pascal
@@ -232,6 +240,20 @@ begin
   panel.SetBounds(0, 0, form.Width, 30);
   panel.BevelOuter := ELazPanelBevel.None;
   panel.Align := ELazAlign.Top;
+
+  lbl := TLazLabel.CreateEx(panel, 'Normalize Coordinates');
+  lbl.Font.Color := $FFFFFF;
+  lbl.Align := ELazAlign.Left;
+  lbl.BorderSpacing.Around := 5;
+
+  checkbox := TLazCheckBox.CreateEx(panel);
+  checkbox.Align := ELazAlign.Left;
+  checkbox.BorderSpacing.Left  := 10;
+  checkbox.BorderSpacing.Right := 4;
+  checkbox.OnChange := @Self.NormalizeCoordinatesOnChange;
+  checkbox.SetChecked(True);
+  lbl.AnchorSideTop.Control := checkbox;
+  lbl.OnClick := @FormUtils.OnCheckboxCaptionClick;
 
   lbl := TLazLabel.CreateEx(panel, 'Show ObjectClusters');
   lbl.Font.Color := $FFFFFF;

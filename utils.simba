@@ -1,4 +1,5 @@
 {$SCOPEDENUMS ON}
+{$AUTOINVOKE OFF}
 
 {$IFNDEF WL_ENV_INCLUDED}             {$INCLUDE_ONCE utils/env.simba}
 {$IFNDEF WL_GEOMETRY_INCLUDED}        {$INCLUDE_ONCE utils/math/geometry.simba}

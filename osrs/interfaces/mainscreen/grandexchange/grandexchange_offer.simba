@@ -406,7 +406,7 @@ begin
   tpa := Target.FindColor(RSFonts.LIGHT_ORANGE, 0, Self.InfoBounds.Examine);
   if tpa = [] then Exit;
   tpa := tpa.Cluster(12, 8).Last;
-  txt := OCR.Recognize(tpa.Bounds, RSFonts.PLAIN_11, [RSFonts.LIGHT_ORANGE], 0);
+  txt := OCR.Recognize(tpa.Bounds(), RSFonts.PLAIN_11, [RSFonts.LIGHT_ORANGE], 0);
   Result := txt.ExtractInteger(0) / 100;
 end;
 

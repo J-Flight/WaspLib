@@ -42,7 +42,7 @@ Returns a unique string representing this map region.
 *)
 property TRSMapRegion.Name: String;
 begin
-  with Self.Chunks.Bounds do
+  with Self.Chunks.Bounds() do
     Result := ToStr(X1) + '-' + ToStr(Y1) + '_' + ToStr(X2) + '-' + ToStr(Y2) + '_p' + ToStr(Self.Plane);
 end;
 

@@ -187,7 +187,7 @@ end;
 
 property TLazControl.Left: Integer; override;
 begin
-  Result := Round(inherited / FormUtils.Scale);
+  Result := Round(inherited() / FormUtils.Scale);
 end;
 
 
@@ -198,7 +198,7 @@ end;
 
 property TLazControl.Top: Integer; override;
 begin
-  Result := Round(inherited / FormUtils.Scale);
+  Result := Round(inherited() / FormUtils.Scale);
 end;
 
 
@@ -209,7 +209,7 @@ end;
 
 property TLazControl.Width: Integer; override;
 begin
-  Result := Round(inherited / FormUtils.Scale);
+  Result := Round(inherited() / FormUtils.Scale);
 end;
 
 property TLazControl.Height(value: Integer); override;
@@ -219,7 +219,7 @@ end;
 
 property TLazControl.Height: Integer; override;
 begin
-  Result := Round(inherited / FormUtils.Scale);
+  Result := Round(inherited() / FormUtils.Scale);
 end;
 
 
@@ -242,7 +242,7 @@ end;
 
 property TLazSizeConstraints.MinWidth: Integer; override;
 begin
-  Result := Round(inherited / FormUtils.Scale);
+  Result := Round(inherited() / FormUtils.Scale);
 end;
 
 property TLazSizeConstraints.MaxWidth(value: Integer); override;
@@ -252,7 +252,7 @@ end;
 
 property TLazSizeConstraints.MaxWidth: Integer; override;
 begin
-  Result := Round(inherited / FormUtils.Scale);
+  Result := Round(inherited() / FormUtils.Scale);
 end;
 
 
@@ -263,7 +263,7 @@ end;
 
 property TLazSizeConstraints.MinHeight: Integer; override;
 begin
-  Result := Round(inherited / FormUtils.Scale);
+  Result := Round(inherited() / FormUtils.Scale);
 end;
 
 property TLazSizeConstraints.MaxHeight(value: Integer); override;
@@ -273,7 +273,7 @@ end;
 
 property TLazSizeConstraints.MaxHeight: Integer; override;
 begin
-  Result := Round(inherited / FormUtils.Scale);
+  Result := Round(inherited() / FormUtils.Scale);
 end;
 
 

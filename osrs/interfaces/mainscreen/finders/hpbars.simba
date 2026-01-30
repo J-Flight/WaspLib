@@ -55,7 +55,7 @@ begin
       Result := True;
       for i:=0 to High(GBars) do
       begin
-        if (not InRange(GBars[i].Bounds.Height, 3, 5)) then Continue;
+        if (not InRange(GBars[i].Bounds().Height, 3, 5)) then Continue;
         Bar    := [];
         Border := [];
         BarG   := [];
@@ -67,29 +67,29 @@ begin
             begin
               Bar := RBars[h];
               Bar.Insert(GBars[i],0);
-              Border := Bar.Bounds;
+              Border := Bar.Bounds();
               BarG := Target.FindColor($00FF00, 0, Border);
               if Length(BarG) > 0 then
               begin
-                AddToBars(Border, Round(BarG.Bounds.Width / Border.Width * 100));
+                AddToBars(Border, Round(BarG.Bounds().Width / Border.Width * 100));
                 break;
               end;
             end else
             begin
               if (h = High(RBars)) then
-                AddToBars(GBars[i].Bounds, 100);
+                AddToBars(GBars[i].Bounds(), 100);
             end;
           end;
-        end else AddToBars(GBars[i].Bounds, 100);
+        end else AddToBars(GBars[i].Bounds(), 100);
       end;
     end else if Length(GBars) = 0 then
     begin
       if Length(RBars) > 0 then
         for i:=0 to High(RBars) do
         begin
-          if (not InRange(RBars[i].Bounds.Height, 3, 5)) then Continue;
-          if (RBars[i].Bounds.Width < 10) then Continue;
-          AddToBars(RBars[i].Bounds, 0);
+          if (not InRange(RBars[i].Bounds().Height, 3, 5)) then Continue;
+          if (RBars[i].Bounds().Width < 10) then Continue;
+          AddToBars(RBars[i].Bounds(), 0);
         end;
     end;
   finally

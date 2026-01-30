@@ -214,7 +214,7 @@ begin
 
   WriteLn GetDebugLn('Antiban', 'Toggling make quantity buttons');
 
-  quantityBtns := Make.FindQuantityButtons;
+  quantityBtns := Make.FindQuantityButtons();
   if quantityBtns = [] then Exit;
   currentBtn := Make.GetCurrentQuantity();
   randomBtn := quantityBtns[Random(Length(quantityBtns))];

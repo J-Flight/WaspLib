@@ -183,7 +183,7 @@ begin
   cutoff := RandCutoff;
   RandCutoff := 4.0;
 
-  c := Self.Corners.Random;
+  c := Self.Corners.Random();
   Result.X := Round(RandomMode(skewed.X, from.X, c.X));
   Result.Y := Round(RandomMode(skewed.Y, from.Y, c.Y));
   RandCutoff := cutoff;
@@ -390,7 +390,7 @@ begin
   cutoff := RandCutoff;
   RandCutoff := 4.0;
 
-  c := Self.Corners.Random;
+  c := Self.Corners.Random();
   Result.X := Round(RandomMode(skewed.X, from.X, c.X));
   Result.Y := Round(RandomMode(skewed.Y, from.Y, c.Y));
   RandCutoff := cutoff;
@@ -438,5 +438,5 @@ end;
 
 function TBox.RandomWeightedPoint(from: TPoint; weight: Single = 10.0; bias: Single=1): TPoint;
 begin
-  Result := TPolygon(Self.Corners).RandomWeightedPoint(from, weight, bias);
+  Result := TPolygon(Self.Corners()).RandomWeightedPoint(from, weight, bias);
 end;

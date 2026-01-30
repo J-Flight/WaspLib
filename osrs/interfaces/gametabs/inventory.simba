@@ -432,12 +432,12 @@ begin
 
   if not Self.ShiftEnabled then Exit(Self.Drop(slots));
 
-  boxes := Self.Slots.Boxes;
+  boxes := Self.Slots.Boxes();
   for 1 to attempts do
   begin
     for i := 0 to High(slots) do
     begin
-      if Self.GetSelected > -1 then
+      if Self.GetSelected() > -1 then
       begin
         Self.Select(-1);
         Continue(2);

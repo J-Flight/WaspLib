@@ -90,7 +90,7 @@ WriteLn GameTabs.GetCurrent();
 *)
 function TRSGameTabs.GetCurrent(): ERSGameTab; override;
 begin
-  Result := inherited;
+  Result := inherited();
   if Result <> ERSGameTab.NONE then Exit;
 
   if Bank.IsOpen() then Exit(ERSGameTab.INVENTORY);
@@ -174,7 +174,7 @@ begin
   if WorldSwitcher._IsOpen() then
     Exit(True);
   Logout.Buttons[ERSLogoutButton.WORLD_SWITCHER].Click();
-  Result := inherited;
+  Result := inherited();
 end;
 
 {$R-}

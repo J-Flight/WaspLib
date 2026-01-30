@@ -24,7 +24,7 @@ var
   b: TBox;
   isHelm: Boolean;
 begin
-  b := borders.Bounds;
+  b := borders.Bounds();
 
   case b.Height of
     30:

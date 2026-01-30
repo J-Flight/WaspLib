@@ -164,8 +164,8 @@ begin
   atpa := tpa.Cluster(2).ExcludeSize(100, __LT__).SortFrom(Mouse.Position);
 
   for tpa in atpa do
-    if tpa.Bounds.Corners.Intersection(tpa).Length = 4 then
-      Exit(tpa.Bounds.Expand(-2));
+    if tpa.Bounds().Corners().Intersection(tpa).Length = 4 then
+      Exit(tpa.Bounds().Expand(-2));
 end;
 
 (*

@@ -67,7 +67,7 @@ begin
 
   for tpa in atpa do
   begin
-    b := tpa.Bounds;
+    b := tpa.Bounds();
     if b.Height <= 5 then Continue;
     Exit(TBoxArray.Create([Self.SlotsArea.X1, b.Y1 - 1], 4, 7, 32, 32, [10, 4]));
   end;

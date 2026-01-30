@@ -101,7 +101,7 @@ begin
   img.DrawColor := color;
   img.DrawTPA(highlight);
 
-  Self.PrayerImages[p].Picture.Bitmap := img.ToLazBitmap;
+  Self.PrayerImages[p].Picture.Bitmap := img.ToLazBitmap();
 end;
 
 procedure TRSPrayerForm._UpdateHint();
@@ -350,10 +350,10 @@ begin
   SetLength(Self.PrayerImages, Length(ERSPrayer));
   for i := 0 to Ord(High(ERSPrayer)) do
   begin
-    img := PrayerFinder.GetImage(ERSPrayer(i)).Copy;
+    img := PrayerFinder.GetImage(ERSPrayer(i)).Copy();
     img.ReplaceColor($0, TRSPrayerForm.BACKGROUND_COLOR);
     Self.PrayerImages[i] := TLazImage.Create(Self.Form);
-    Self.PrayerImages[i].Picture.Bitmap := img.ToLazBitmap;
+    Self.PrayerImages[i].Picture.Bitmap := img.ToLazBitmap();
     Self.PrayerImages[i].Top := 9 + ((i div 5) * (33 + 4));
     Self.PrayerImages[i].Left := 7 + ((i mod 5) * (33 + 4));
     Self.PrayerImages[i].Parent := Self.Form;

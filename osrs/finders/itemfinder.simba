@@ -71,7 +71,7 @@ begin
   if not Self._AlignHelper(image, tBorder, bBorder, align) then
     Exit;
 
-  bounds := tBorder.Bounds;
+  bounds := tBorder.Bounds();
   image.Crop(bounds);
 
   bounds := bounds.Offset([-align.X, -align.Y]);

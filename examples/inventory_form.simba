@@ -9,7 +9,7 @@ begin
   layout.Layout := InventoryForm.Layouts[layoutSelector.ItemIndex];
 
   WriteLn('Inventory Layout: ', layout.Layout);
-  inherited;
+  inherited();
 end;
 
 var

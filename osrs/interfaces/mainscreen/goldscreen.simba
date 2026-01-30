@@ -175,7 +175,7 @@ function TRSGoldScreen.WaitOpen(time, interval: Int32): Boolean;
 begin
   if interval < 0 then
     interval := RandomMode(100,50,1500);
-  Result := SleepUntil(Self.IsOpen, interval, time);
+  Result := SleepUntil(Self.IsOpen(), interval, time);
 end;
 
 (*
@@ -195,7 +195,7 @@ begin
             (PressEscape and MSInterface.Close(True));
 
   if Result then
-    Result := SleepUntil(not Self.IsOpen,
+    Result := SleepUntil(not Self.IsOpen(),
                          RandomMode(100,50,1500),
                          Random(1500,2000));
 end;

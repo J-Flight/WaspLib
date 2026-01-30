@@ -13,7 +13,7 @@ begin
 
   WriteLn('Main Gear: ', gear1.Gear);
   WriteLn('SpecAttack Gear: ', gear2.Gear);
-  inherited;
+  inherited();
 end;
 
 var
