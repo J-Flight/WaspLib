@@ -508,16 +508,13 @@ begin
 
   for i := 0 to High(Self.Nodes) do
   begin
-    if Self.Nodes[i].Node = a then
-    begin
-      idxA := i;
-      if idxB > -1 then Break;
-    end;
-    if Self.Nodes[i].Node = b then
-    begin
+    if (idxA = -1) and (Self.Nodes[i].Node = a) then
+      idxA := i
+    else if (idxB = -1) and (Self.Nodes[i].Node = b) then
       idxB := i;
-      if idxA > -1 then Break;
-    end;
+
+    if (idxA <> -1) and (idxB <> -1) then
+      Break;
   end;
 
   Self.ConnectNodes(idxA,idxB);
@@ -536,7 +533,7 @@ end;
 (*
 ## TWebGraph.ConnectNodesEx
 ```pascal
-procedure TWebGraph.ConnectNodesEx(a,b: TPoint);
+procedure TWebGraph.ConnectNodesEx(a,b: TPoint; notEqual: Boolean = False);
 ```
 Connects the closest node to `a` to the closest node to `b`.
 
@@ -546,12 +543,13 @@ it, your points don't have to be the exact same as the nodes in the graph.
 Overall, this is the most flexible and easiest method to use but it might not
 connect exactly the nodes you want at times.
 *)
-procedure TWebGraph.ConnectNodesEx(a,b: TPoint);
+procedure TWebGraph.ConnectNodesEx(a,b: TPoint; notEqual: Boolean = False);
 var
   p, q: TPoint;
 begin
-  p := Self.Tree.Nearest(a, False);
-  q := Self.Tree.Nearest(b, False);
+  p := Self.Tree.Nearest(a, notEqual);
+  q := Self.Tree.Nearest(b, notEqual);
+
   Self.ConnectNodes(p,q);
 end;
 

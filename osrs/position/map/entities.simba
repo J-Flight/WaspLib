@@ -31,7 +31,6 @@ Main type to handle {ref}`RSEntity`.
     Coordinates: TPointArray;
     Filter: TRSDotFilterArray;
     Finder: TColorFinder;
-    Track: Boolean;
     MinimapDots: ERSMinimapDots;
     LastCoordinate: TPoint;
     Walker: PRSWalker;
@@ -446,144 +445,6 @@ begin
   shouldExit := False;
 end;
 
-(*
-## TRSEntity._HoverHelper
-```pascal
-function TRSEntity._HoverHelper(action: TStringArray; attempts: Integer): Boolean;
-```
-Internal helper method used to hover a TRSEntity target.
-You should not use this directly.
-*)
-function TRSEntity._HoverHelper(action: TStringArray; attempts: Integer): Boolean;
-var
-  shouldExit: Boolean;
-  attempt, i: Integer;
-  atpa: T2DPointArray;
-  coordinates, tpa: TPointArray;
-begin
-  Result := Self._UpTextCheck(shouldExit, action);
-  if shouldExit then Exit;
-
-  for attempt := 0 to attempts do
-  begin
-    if Self.Find(coordinates, atpa) then
-    begin
-      if Length(coordinates) <> Length(atpa) then
-        raise 'SOMETHING WENT WRONG CACHING COORDINATES.';
-
-      if attempt < 2 then i := 0
-      else if Length(atpa) > (attempt - 2) then i := attempt - 2
-      else i := Random(Low(atpa), High(atpa));
-
-      tpa := atpa[i];
-      Self.LastCoordinate := coordinates[i];
-
-      Mouse.Move(tpa.RandomMean());
-
-      if Self.UpText = [] then Exit(True);
-    end;
-
-    if MainScreen.IsUpText(Self.UpText) then Exit(True);
-
-    if attempt <> (attempts - 1) then
-      Continue;
-
-    Minimap.CompassRadians := Minimap.CompassRadians + PI/3.6 * Random(-1,1);
-  end;
-end;
-
-(*
-## TRSEntity._WalkHoverHelper
-```pascal
-function TRSEntity._WalkHoverHelper(action: TStringArray; attempts: Integer): Boolean;
-```
-Internal helper method used to walk and hover a TRSEntity target.
-You should not use this directly.
-
-This is responsible for deciding wether we should walk to a TRSEntity target or not before attempting to hover it.
-*)
-function TRSEntity._WalkHoverHelper(action: TStringArray; attempts: Integer): Boolean;
-var
-  shouldExit: Boolean;
-  attempt, i: Integer;
-  atpa: T2DPointArray;
-  coordinates, tpa: TPointArray;
-  path: TGraphNodeArray;
-  me, closest: TPoint;
-begin
-  Result := Self._UpTextCheck(shouldExit, action) or Self.Walker^.RedClicked;
-  if shouldExit then Exit;
-
-  for attempt := 0 to attempts do
-  begin
-    if Self.Find(coordinates, atpa) then
-    begin
-      if Length(coordinates) <> Length(atpa) then
-        raise 'SOMETHING WENT WRONG CACHING COORDINATES.';
-
-      if attempt < 2 then i := 0
-      else if Length(atpa) > (attempt - 2) then i := attempt - 2
-      else i := Random(Low(atpa), High(atpa));
-
-      tpa := atpa[i];
-      Self.LastCoordinate := coordinates[i];
-
-      Mouse.Move(tpa.RandomMean());
-
-      if Self.UpText = [] then Exit(True);
-    end;
-
-    if MainScreen.IsUpText(Self.UpText) then Exit(True);
-
-    me := Self.Walker^.Position();
-    closest := Self.Walker^.GetClosestPoint(me, Self.Coordinates, path);
-
-    if path = [] then
-    begin
-      path := Self.Walker^.WebGraph^.PathToNear(me, closest, 0.33);
-      if path = [] then
-        raise GetDebugLn('TRSEntity', 'Can''t path to object.');
-    end;
-
-    if me.DistanceTo(closest) > 50 then
-    begin
-      Self.Walker^.WebWalkEx(me, closest, Self.MinDistance, 0.15);
-      Continue;
-    end;
-
-    if attempt <> (attempts - 1) then Continue;
-
-    if me.DistanceTo(closest) > (Self.MinDistance div 2) then
-    begin
-      Self.Walker^.WebWalkEx(me, closest, Self.MinDistance div 2, 0.15);
-      Continue;
-    end;
-
-    Minimap.CompassRadians := Minimap.CompassRadians + PI/3.6 * Random(-1,1);
-  end;
-end;
-
-(*
-## TRSEntity._PreHoverHelper
-```pascal
-function TRSEntity.PreHoverHelper(attempts: Integer): Boolean;
-```
-Internal helper method used to pre-hover a TRSEntity target.
-You should not use this directly.
-*)
-function TRSEntity._PreHoverHelper(me: TPoint; attempts: Integer = 2): Boolean;
-var
-  attempt: Integer;
-  atpa: T2DPointArray;
-begin
-  for attempt := 0 to attempts do
-  begin
-    if not Self.FindFrom(me, atpa) then Continue;
-    Mouse.Move(atpa.Random().Random());
-    Exit(True);
-  end;
-end;
-
 
 (*
 ## TRSEntity._ClickHelper
@@ -658,6 +519,12 @@ Example:
 ```
 *)
 function TRSEntity.Hover(action: TStringArray = []; attempts: Integer = 2): Boolean;
+var
+  me: TPoint;
+  shouldExit: Boolean;
+  attempt, i: Integer;
+  atpa: T2DPointArray;
+  coordinates, tpa: TPointArray;
 begin
   if ChooseOption.IsOpen() then
   begin
@@ -671,10 +538,32 @@ begin
   if Self.Coordinates = [] then
     raise GetDebugLn('TRSEntity', 'FindFrom requires the object to have coordinates.');
 
-  //TODO:
-  //if not Self.Walker^.MakePointVisible(Self.Coordinates) then Exit;
+  me := Self.Walker^.Position();
+  if not Self.Walker^.MakePointVisible(me, Self.Coordinates.NearestPoint(me)) then
+    Exit;
 
-  Result := Self._HoverHelper(action, attempts);
+  Result := Self._UpTextCheck(shouldExit, action);
+  if shouldExit then Exit;
+
+  for attempt := 0 to attempts do
+  begin
+    if Self.Find(coordinates, atpa) then
+    begin
+      if attempt < 2 then i := 0
+      else if Length(atpa) > (attempt - 2) then i := attempt - 2
+      else i := Random(Low(atpa), High(atpa));
+
+      tpa := atpa[i];
+      Self.LastCoordinate := coordinates[i];
+
+      Mouse.Move(tpa.RandomMean());
+
+      if Self.UpText = [] then Exit(True);
+    end;
+
+    if TRSObject._HoverHelper(Self.UpText + action, attempt, attempts) then
+      Exit(True);
+  end;
 end;
 
 (*
@@ -693,7 +582,10 @@ function TRSEntity.WalkHover(action: TStringArray = []; attempts: Integer = 2): 
 var
   me, closest: TPoint;
   path: TGraphNodeArray;
-  hasPath: Boolean;
+  hasPath, shouldExit: Boolean;
+  attempt, i: Integer;
+  atpa: T2DPointArray;
+  coordinates, tpa: TPointArray;
 begin
   if ChooseOption.IsOpen() then
   begin
@@ -718,7 +610,7 @@ begin
   Self.Walker^.ActionUpText := action;
 
   try
-  // check if doors need to be passed to reach target
+    // check if doors need to be passed to reach target
     if hasPath or Self.Walker^.WebGraph^.WalkableClusters.InSameTPA(me, closest) then
     begin
       if not Self.Walker^.MakePointVisible(closest) and not Self.Walker^.WebWalkEx(me, closest, Self.MinDistance, 0.15) then
@@ -728,7 +620,34 @@ begin
     if not Self.Walker^.WebWalk(closest, Self.MinDistance, 0.15) then
       Exit;
 
-    Result := Self._WalkHoverHelper(action, attempts);
+    me := Self.Walker^.Position();
+    if not Self.Walker^.MakePointVisible(me, Self.Coordinates.NearestPoint(me)) then
+      Exit;
+
+    Result := Self._UpTextCheck(shouldExit, action) or Self.Walker^.RedClicked;
+    if shouldExit then Exit;
+
+    for attempt := 0 to attempts do
+    begin
+      if Self.Find(coordinates, atpa) then
+      begin
+        if attempt < 2 then i := 0
+        else if Length(atpa) > (attempt - 2) then i := attempt - 2
+        else i := Random(Low(atpa), High(atpa));
+
+        tpa := atpa[i];
+        Self.LastCoordinate := coordinates[i];
+
+        Mouse.Move(tpa.RandomMean());
+
+        if Self.UpText = [] then
+          Exit(True);
+        Sleep(50); //give uptext 1~ frame time to update
+      end;
+
+      if TRSObject._WalkHoverHelper(Self.UpText + action, Self.Walker, Self.MinDistance, attempt, attempts, Self.Coordinates, path) then
+        Exit(True);
+    end;
   finally
     Self.Walker^.TargetUpText := [];
     Self.Walker^.ActionUpText := [];
@@ -925,6 +844,5 @@ begin
                   ToString(entity.Size) + ', ' +
                   ToString(entity.Coordinates) + ', ' +
                   ToString(entity.Finder) + ', ' +
-                  ToString(entity.MinimapDots) + ', ' +
-                  ToString(entity.Track) + ']';
+                  ToString(entity.MinimapDots) + ']';
 end;
