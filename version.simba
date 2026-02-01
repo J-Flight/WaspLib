@@ -39,8 +39,8 @@ Should be self explanatory but each holds a part of the data of the current
 WaspLib version.
 *)
   WL_VERSION_YEAR: Integer = 2026;
-  WL_VERSION_MONTH: Integer = 01;
-  WL_VERSION_DAY: Integer = 29;
+  WL_VERSION_MONTH: Integer = 02;
+  WL_VERSION_DAY: Integer = 01;
 (*
 ## Commit Hash Constants
 ```pascal
@@ -49,7 +49,7 @@ WL_VERSION_COMMIT_HASH
 Should be self explanatory but holds the shortened hash of the commit that has
 created the current WaspLib version.
 *)
-  WL_VERSION_COMMIT_HASH: String = '93386e6';
+  WL_VERSION_COMMIT_HASH: String = 'dbe732b';
 
 
 (*
