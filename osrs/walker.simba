@@ -535,6 +535,12 @@ var
 begin
   Self.RedClicked := False;
 
+  if MSInterface.IsOpen() then
+  begin
+    Self.Walking := False;
+    Exit;
+  end;
+
   if MainScreen.IsUpText('>') and not Self.ActionUpText.AnyContains('>') then
   begin
     ChooseOption.Select('Cancel');
