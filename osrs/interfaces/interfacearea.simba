@@ -57,8 +57,8 @@ Returns True/False if any interface is found open.
 function TRSInterfaceArea.IsOpen(interfaceType: ERSInterfaceType = ERSInterfaceType.ANY): Boolean;
 begin
   case interfaceType of
-    ERSInterfaceType.CLASSIC: Result := Target.HasColor(3358536, 2, 10000, Self.Bounds);
-    ERSInterfaceType.PAPER:   Result := False;//TODO: SRL.CountColor(CTS2(8693433, 5, 0.10, 1.17), Self.Bounds) > 35000;
+    ERSInterfaceType.CLASSIC: Result := Target.HasColor([$323E47, 0.75, EColorSpace.HSV, [0.778, 1.112, 1.112]], 10000, Self.Bounds);
+    ERSInterfaceType.PAPER:   Result := Target.HasColor([$88AABD, 0.4, EColorSpace.HSV, [1.366, 1.437, 0.199]], 10000, Self.Bounds);
     ERSInterfaceType.ANY:     Result := Self.IsOpen(ERSInterfaceType.CLASSIC) or Self.IsOpen(ERSInterfaceType.PAPER);
   end;
 end;
