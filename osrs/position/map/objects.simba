@@ -755,7 +755,10 @@ begin
       else if Length(atpa) > (attempt - 2) then i := attempt - 2
       else i := Random(Low(atpa), High(atpa));
 
-      tpa := atpa[i];
+      tpa := atpa[i].ExtractBox(MainScreen.Bounds);
+      if tpa = [] then
+        Continue;
+
       Self.LastCoordinate := coordinates[i];
 
       Mouse.Move(tpa.RandomMean());
@@ -858,7 +861,10 @@ begin
         else if Length(atpa) > (attempt - 2) then i := attempt - 2
         else i := Random(Low(atpa), High(atpa));
 
-        tpa := atpa[i];
+        tpa := atpa[i].ExtractBox(MainScreen.Bounds);
+        if tpa = [] then
+          Continue;
+
         Self.LastCoordinate := coordinates[i];
 
         Mouse.Move(tpa.RandomMean());
