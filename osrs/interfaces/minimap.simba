@@ -265,8 +265,8 @@ begin
   center := Self.Compass.Circle.Center;
   bounds := Self.Compass.Circle.Bounds;
 
-  dials := Target.FindColor($26259C,  12, bounds);
-  Nclr  := Target.FindColor($1D2931, 0.6, bounds);
+  dials := Target.FindColor($26259C,  12, bounds); //red
+  Nclr  := Target.FindColor($1D2931, 0.6, bounds); //N
 
   dials := dials.ExtractDist(center, 10, 20);
   north := Nclr.ExtractDist(center, 0,20).Mean();
@@ -284,13 +284,13 @@ begin
       eastArr := dials;
   end;
 
-  west := westArr.FurthestPoint(eastArr.Mean()); //late edit: Should not this be middle, not eastarr.mean
-  east := eastArr.FurthestPoint(westArr.Mean()); //late edit: Should not this be middle, not westarr.mean
+  west := westArr.FurthestPoint(eastArr.Mean());
+  east := eastArr.FurthestPoint(westArr.Mean());
 
-  n := ArcTan2(north.y-center.y, north.x-center.x) + HALF_PI;
-  s := ArcTan2(south.y-center.y, south.x-center.x) - HALF_PI;
-  w := ArcTan2(west.y-center.y, west.x-center.x)+PI;
-  e := ArcTan2(east.y-center.y, east.x-center.x);
+  n := ArcTan2(north.Y-center.Y, north.X-center.X) + HALF_PI;
+  s := ArcTan2(south.Y-center.Y, south.X-center.X) - HALF_PI;
+  w := ArcTan2(west.Y-center.Y, west.X-center.X) + PI;
+  e := ArcTan2(east.Y-center.Y, east.X-center.X);
 
   x := Cos(s) + Cos(e) + Cos(w) + Cos(n);
   y := Sin(s) + Sin(e) + Sin(w) + Sin(n);

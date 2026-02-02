@@ -353,13 +353,9 @@ Runs and shows your `TScriptForm` after it has been setup.
 *)
 procedure TScriptForm.Run();
 begin
-  try
-    Self.Form.ShowModal();
-  except
-    WriteLn(GetExceptionMessage());
-  finally
-    Self.Form.Free();
-  end;
+  Self.Form.ShowOnTop();
+  while Self.Form.Showing do
+    Sleep(500);
 
   if Self._FormClosed then
     TerminateScript('Thank you for using WaspScripts');

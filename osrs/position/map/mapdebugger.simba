@@ -342,7 +342,9 @@ begin
   Self.ImageBox.OnImgMouseMove := @Self.ImgBoxMouseMove; 
   Self.ImageBox.OnImgMouseDown := @Self.ImgBoxMouseDown;
 
-  form.ShowModal();
+  form.ShowOnTop();
+  while form.Showing do
+    Sleep(500);
 end;
 
 (*

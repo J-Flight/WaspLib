@@ -464,6 +464,8 @@ var
   img, map, cleanMinimap: TImage;
   time: Double;
   lines: TStringArray;
+  rads: Single;
+  txt: String;
 begin
   Target.FreezeImage();
 
@@ -490,6 +492,8 @@ begin
   x := local.X - x1;
   y := local.Y - y1;
 
+  rads := Minimap.CompassRadians;
+
   lines := [
     'Position:',
     ' - Local : '  + Format('[%d, %d]', [local.X, local.Y]),
@@ -501,10 +505,11 @@ begin
     ' - Plane   : ' + ToStr(Self.Region.Plane),
     ' - Local   : ' + _BoxStr(Self.Region.Region),
     ' - Original: ' + _BoxStr(Self.Region.Original),
-    ' - Compass: '  + ToStr(Minimap.CompassDegrees),
+    ' - Radians : '  + ToStr(rads),
+    ' - Compass : '  + ToStr(RadToDeg(rads)),
     '',
-    'Certainty: '    + ToStr(Round(Self.Similarity, 3)),
-    'Time: '         + ToStr(Round(time)) + ' ms'
+    'Certainty: ' + ToStr(Round(Self.Similarity, 3)),
+    'Time     : ' + ToStr(Round(time)) + ' ms'
   ];
 
   map := Self.Loader.Map.Copy([x1, y1, x2, y2]);
@@ -540,9 +545,12 @@ begin
   img.DrawColor := $FFFFFF;
   for i := 0 to High(lines) do
   begin
-    if print then WriteLn(lines[i]);
+    txt += lines[i] + LINE_SEP;
     img.DrawText(lines[i], [430, cleanMinimap.Height + 20 + 20 * i]);
   end;
+
+  if print then
+    WriteLn txt;
 
   img.DrawImage(cleanMinimap, [520, 10]);
   img.Show();
