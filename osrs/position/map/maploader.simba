@@ -149,57 +149,67 @@ end;
 (*
 ### TRSMapLoader.GetGlobal
 ```pascal
-function TRSMapLoader.GetGlobal(regionIndex: Integer; pt: TPoint; offset: TPoint = [0,0]): TPoint;
+function TRSMapLoader.GetGlobal(regionIdx: Integer; pt: TPoint; offset: TPoint = [0,0]): TPoint;
 function TRSMapLoader.GetGlobal(pt: TPoint; offset: TPoint = [0,0]): TPoint; overload;
 ```
 Converts a {ref}`Local point` to a {ref}`Global point`.
 
-You can optionally specify the `regionIndex` you want your `pt` to be converted to or let Simba figure it out.
+You can optionally specify the `regionIdx` you want your `pt` to be converted to or let Simba figure it out.
 For points in bulk from the same region specifying it is better as you save Simba from doing more math.
 
 The specified `pt` is returned unmodified if not region index matching the point is found.
 *)
-function TRSMapLoader.GetGlobal(regionIndex: Integer; pt: TPoint; offset: TPoint = [0,0]): TPoint;
+function TRSMapLoader.GetGlobal(regionIdx: Integer; pt: TPoint; offset: TPoint = [0,0]): TPoint;
 begin
-  Result := pt + Self.Regions[regionIndex].Offset - [Self.Regions[regionIndex].Region.X1, Self.Regions[regionIndex].Region.Y1] + offset;
+  Result := pt + Self.Regions[regionIdx].Offset - [Self.Regions[regionIdx].Region.X1, Self.Regions[regionIdx].Region.Y1] + offset;
 end;
 
 function TRSMapLoader.GetGlobal(pt: TPoint; offset: TPoint = [0,0]): TPoint; overload;
 var
-  regionIndex: Integer;
+  regionIdx: Integer;
 begin
-  regionIndex := Self.LocalIndex(pt);
-  if regionIndex = -1 then Exit(pt);
-  Result := Self.GetGlobal(regionIndex, pt, offset);
+  regionIdx := Self.LocalIndex(pt);
+  if regionIdx = -1 then Exit(pt);
+  Result := Self.GetGlobal(regionIdx, pt, offset);
 end;
 
 
 (*
 ### TRSMapLoader.GetLocal
 ```pascal
-function TRSMapLoader.GetLocal(regionIndex: Integer; pt: TPoint; offset: TPoint = [0,0]): TPoint;
+function TRSMapLoader.GetLocal(regionIdx: Integer; pt: TPoint; offset: TPoint = [0,0]): TPoint;
+function TRSMapLoader.GetLocal(regionIdx: Integer; b: TBox; offset: TPoint = [0,0]): TBox; overload;
 function TRSMapLoader.GetLocal(pt: TPoint; offset: TPoint = [0,0]): TPoint; overload;
 function TRSMapLoader.GetLocal(tpa: TPointArray; offset: TPoint = [0,0]): TPointArray; overload;
 ```
 Converts a {ref}`Global point` to a {ref}`Local point`.
 
-You can optionally specify the `regionIndex` you want your `pt` to be converted to or let Simba figure it out.
+You can optionally specify the `regionIdx` you want your `pt` to be converted to or let Simba figure it out.
 You can also optionally specify points in bulk as a `tpa`.
 
 The specified `pt` is returned unmodified if not region index matching the point is found.
 *)
-function TRSMapLoader.GetLocal(regionIndex: Integer; pt: TPoint; offset: TPoint = [0,0]): TPoint;
+function TRSMapLoader.GetLocal(regionIdx: Integer; pt: TPoint; offset: TPoint = [0,0]): TPoint;
 begin
-  Result := pt - Self.Regions[regionIndex].Offset + Self.Regions[regionIndex].Region.TopLeft + offset;
+  Result := pt - Self.Regions[regionIdx].Offset + Self.Regions[regionIdx].Region.TopLeft + offset;
+end;
+
+function TRSMapLoader.GetLocal(regionIdx: Integer; b: TBox; offset: TPoint = [0,0]): TBox; overload;
+var
+  topLeft, btmRight: TPoint;
+begin
+  topLeft  := Self.GetLocal(regionIdx, b.TopLeft, offset);
+  btmRight := Self.GetLocal(regionIdx, b.BottomRight, offset);
+  Result := [topLeft.X, topLeft.Y, btmRight.X, btmRight.Y];
 end;
 
 function TRSMapLoader.GetLocal(pt: TPoint; offset: TPoint = [0,0]): TPoint; overload;
 var
-  regionIndex: Integer;
+  regionIdx: Integer;
 begin
-  regionIndex := Self.GlobalIndex(pt);
-  if regionIndex = -1 then Exit(pt);
-  Result := Self.GetLocal(regionIndex, pt, offset);
+  regionIdx := Self.GlobalIndex(pt);
+  if regionIdx = -1 then Exit(pt);
+  Result := Self.GetLocal(regionIdx, pt, offset);
 end;
 
 function TRSMapLoader.GetLocal(tpa: TPointArray; offset: TPoint = [0,0]): TPointArray; overload;
@@ -209,6 +219,7 @@ begin
   for pt in tpa do
     Result += Self.GetLocal(pt, offset);
 end;
+
 
 
 procedure TRSMapLoader.Free();
@@ -467,7 +478,8 @@ begin
       raise GetDebugLn('MapLoader', 'Failed to create cache directory: ' + path);
 
     Result := WebGraphGenerator.BuildGraph(name, map);
-    Self.CacheGraph(Result, path);
+    if Result <> Default(TWebGraph) then
+      Self.CacheGraph(Result, path);
     Exit;
   end;
 
@@ -685,6 +697,7 @@ This is an internal method. Usually, {ref}`TRSMap` `Load` methods will call this
 procedure TRSMapLoader.Load(chunks: TRSMapChunkArray; downscale: Integer = 8; padding: Integer = 40);
 begin
   Self.Setup(downscale);
-  Self.Padding := padding;
-  Self.Add(chunks, downscale, padding);
+  if Self.Padding = 0 then
+    Self.Padding := padding;
+  Self.Add(chunks, downscale, Self.Padding);
 end;

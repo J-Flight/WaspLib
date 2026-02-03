@@ -17,6 +17,7 @@ less confusing way.
 {$DEFINE WL_DEBUG_UPTEXT}
 {$DEFINE WL_DEBUG_INTERFACES}
 {$DEFINE WL_GENERATE_GRAPH_ALWAYS}
+{$DEFINE WL_DEBUG_MAP}
 {$DEFINE WL_TRANSPORTER_DEBUG}
 ```
 These are the main compiler directives available in the library.

@@ -1,5 +1,5 @@
 (*
-# Entities
+# RSEntities
 This file is responsible for interacting with `RSEntities`.
 
 `RSEntities` is anything in the game that has a {ref}`ERSMinimapDot` assign to

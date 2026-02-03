@@ -11,10 +11,14 @@ For a online interactive map you can visit
 
 For something simpler and much closer to the original
 [slacky](https://slacky.one/) walker check out {ref}`Image Map`.
+
+For debugging purposes you can use `{$DEFINE WL_DEBUG_MAP}` before including
+{ref}`WaspLib`.
 *)
 
 {$DEFINE WL_MAP_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
+{.$DEFINE WL_DEBUG_MAP}
 
 type
 (*
@@ -69,6 +73,48 @@ function TRSMap.Height(pt: TPoint = [0,0]; global: Boolean = True): Single; forw
 
 
 (*
+## Map.AddLocalFilter
+```pascal
+procedure TRSMap.AddLocalFilter(filter: TBox; inside: Boolean);
+```
+Adds a position filter to the `TRSMap`.
+
+This is a way to making it impossible for you to get positions inside of the
+`filter` boxes your `TRSMap` has.
+
+It's useful to understand the different between local and global coordinates to
+know if you should use this or {ref}`Map.AddGlobalFilter` instead.
+*)
+procedure TRSMap.AddLocalFilter(filter: TBox; inside: Boolean);
+begin
+  with Self.Loader do
+    Self.Filters += [[
+      filter.X1 div Downscale, filter.Y1 div Downscale,
+      filter.X2 div Downscale, filter.Y2 div Downscale
+    ], inside];
+end;
+
+(*
+## Map.AddGlobalFilter
+```pascal
+procedure TRSMap.AddGlobalFilter(regionIdx: Integer; filter: TBox; inside: Boolean);
+```
+Adds a position filter to the `TRSMap`.
+
+This is a way to making it impossible for you to get positions inside of the
+`filter` boxes your `TRSMap` has.
+
+It's useful to understand the different between local and global coordinates to
+know if you should use this or {ref}`Map.AddLocalFilter` instead.
+*)
+procedure TRSMap.AddGlobalFilter(regionIdx: Integer; filter: TBox; inside: Boolean);
+begin
+  filter := Self.Loader.GetLocal(regionIdx, filter);
+  filter := filter.Clip(Self.Loader.Regions[regionIdx].Region);
+  Self.AddLocalFilter(filter, inside);
+end;
+
+(*
 ## Map.InternalSetup
 ```pascal
 procedure TRSMap.InternalSetup();
@@ -107,8 +153,8 @@ begin
   Self.Filters := [];
   for i := 0 to High(Self.Loader.Regions) do
   begin
-    b := Self.Loader.Regions[i].Region.Expand(-(Self.Loader.Padding));
-    Self.Filters += [b, True];
+    b := Self.Loader.Regions[i].Region.Expand(-Self.Loader.Padding);
+    Self.AddLocalFilter(b, True);
   end;
 
   if not Self.IsSetup then
@@ -229,10 +275,15 @@ function TRSMap.ScaledSearch(img: TImage): TPointArray;
 var
   sample: TImage;
   matrix: TSingleMatrix;
-  w, h, i, loops: Integer;
+  w, h, i, loops, width, height, padding: Integer;
   pt, loaderOffset: TPoint;
-  width, height: Integer;
+  filters: TBoxArray;
+  {$IFDEF WL_DEBUG_MAP}
+  debugImg, matrixImg: TImage;
+  {$ENDIF}
 begin
+  padding := Self.Loader.Padding div Self.Loader.Downscale;
+
   sample := Minimap.ScaleMinimap(img, Self.Loader.Downscale, Self.Sample.Radius);
   matrix := MatchTemplateMask(Self.Cache.MatchTemplate, sample.ToMatrix(), ETMFormula.TM_CCOEFF_NORMED);
 
@@ -244,27 +295,40 @@ begin
   width -= 1;
   height -= 1;
 
+  for i := 0 to High(Self.Filters) do
+  begin
+    if Self.Filters[i].Inside then
+      filters += Self.Filters[i].Box.Offset([-padding, -padding])
+    else
+      matrix.Fill(Self.Filters[i].Box.Offset([-padding, -padding]), 0);
+  end;
+
+  {$IFDEF WL_DEBUG_MAP}
+  debugImg := Self.Loader.DownscaledMap.Copy();
+  matrixImg := new TImage();
+  matrixImg.FromMatrix(matrix);
+  debugImg.DrawAlpha := $A7;
+  debugImg.DrawImage(matrixImg, [padding, padding]);
+  for i := 0 to High(Self.Filters) do
+  begin
+    if Self.Filters[i].Inside then
+      debugImg.DrawColor := $00FF00
+    else
+      debugImg.DrawColor := $0000FF;
+    debugImg.DrawBox(Self.Filters[i].Box);
+  end;
+  debugImg.Show();
+  Sleep(2000);
+  {$ENDIF}
+
   while Length(Result) < Self.Sample.Amount do
   begin
-    with matrix.ArgMax() do
-    begin
-      pt := Offset(w, h);
-      pt := pt * Self.Loader.Downscale;
-
-      for i := 0 to High(Self.Filters) do
-      begin
-        if Self.Filters[i].Valid(pt) then
-        begin
-          Result += pt + loaderOffset;
-          matrix.Fill([Max(0, X-5), Max(0, Y-5), Min(width, X+5), Min(height, Y+5)], 0);
-          Continue(2);
-        end;
-      end;
-
-      matrix.Fill([Max(0, X-5), Max(0, Y-5), Min(width, X+5), Min(height, Y+5)], 0);
-    end;
-
-    if Inc(loops) > 70 then Break;
+    pt := matrix.ArgMax();
+    if filters.ContainsPoint(pt) > -1 then
+      Result += (pt.Offset(w, h) * Self.Loader.Downscale) + loaderOffset;
+    matrix.Fill([Max(0, pt.X-5), Max(0, pt.Y-5), Min(width, pt.X+5), Min(height, pt.Y+5)], 0);
+    if Inc(loops) > 70 then
+      Break;
   end;
 end;
 
@@ -272,7 +336,7 @@ end;
 ## Map.Position
 ```pascal
 function TRSMap.Position(): TPoint;
-property TRSMap.FullPosition(): TRSPosition;
+function TRSMap.FullPosition(): TRSPosition;
 ```
 Returns the players current position on the loaded map.
 `TRSMap.FullPosition()` also returns the current Z level.
@@ -337,7 +401,7 @@ begin
   Self.Cache.Position := Result;
 end;
 
-property TRSMap.FullPosition: TRSPosition;
+function TRSMap.FullPosition(): TRSPosition;
 begin
   with Self.Position() do
   begin
@@ -460,7 +524,7 @@ function TRSMap.DebugPosition(print: Boolean = True): TPoint;
   end;
 var
   x1, y1, x2, y2, x, y, i: Int32;
-  p, local: TPoint;
+  pt, local: TPoint;
   img, map, cleanMinimap: TImage;
   time: Double;
   lines: TStringArray;
@@ -471,7 +535,6 @@ begin
 
   time   := PerformanceTime();
   Result := Self.Position();
-
   time   := PerformanceTime() - time;
 
   case Self.RegionIndex of
@@ -520,21 +583,21 @@ begin
   map.DrawBox([x - 2, y - 2, x + 2, y + 2]);
 
   cleanMinimap := Minimap.GetCleanImage();
-  img := new TImage(700 + cleanMinimap.Width, 440);
+  img := new TImage(700 + cleanMinimap.Width, 450);
   img.DrawImage(map, [10, 20]);
 
   with cleanMinimap.Center do
   begin
     if RSClient.Mode = ERSMode.FIXED then
-      p := Point(X, Y).Offset(0, 8).Rotate(-Minimap.CompassRadians, [X,Y])
+      pt := Point(X, Y).Offset(0, 8).Rotate(-rads, [X,Y])
     else
-      p := Point(X, Y).Offset(2, 1).Rotate(-Minimap.CompassRadians, [X,Y]);
+      pt := Point(X, Y).Offset(2, 1).Rotate(-rads, [X,Y]);
   end;
 
   cleanMinimap.DrawColor := $FFFFFF;
-  cleanMinimap.DrawBox(TBox.Create(p, 1, 1));
+  cleanMinimap.DrawBox(TBox.Create(pt, 1, 1));
   cleanMinimap.DrawColor := $FF;
-  cleanMinimap.DrawCross(p, 4);
+  cleanMinimap.DrawCross(pt, 4);
 
   {$IFDEF WINDOWS}
   img.FontName := 'Consolas';
