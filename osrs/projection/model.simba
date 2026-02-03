@@ -1,9 +1,15 @@
 (*
-# Model
+# Models
 Types and methods that allows you to load and project 3D models.
 
 This is mostly for internal use for {ref}`RSObjects` and {ref}`RSEntities` but
 you may use this directly if you need and know what you are doing.
+
+If you are curious about how the projection works you should read about
+{ref}`Projection`.
+
+```{figure} ../../images/modeldraw.png
+```
 *)
 {$DEFINE WL_MODEL_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}

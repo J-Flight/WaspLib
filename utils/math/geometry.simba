@@ -231,8 +231,6 @@ begin
 end;
 
 
-
-
 type
   TBoxFilter = record
     Box: TBox;
