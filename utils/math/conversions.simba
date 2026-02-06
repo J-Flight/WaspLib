@@ -191,4 +191,185 @@ begin
   SetLength(Result, len div SizeOf(TGraphNode));
   Move(bytes[0], Result[0], len);
 end;
+
+
+function TVector3Array.ToBytes(): TByteArray;
+var
+  len: Integer;
+begin
+  len := Length(Self) * SizeOf(TVector3);
+  if len = 0 then Exit;
+  SetLength(Result, len);
+  Move(Self[0], Result[0], len);
+end;
+
+function TVector3Array.CreateFromBytes(bytes: TByteArray): TVector3Array; static;
+var
+  len: Integer;
+begin
+  len := Length(bytes);
+  if len = 0 then Exit;
+  SetLength(Result, len div SizeOf(TVector3));
+  Move(bytes[0], Result[0], len);
+end;
+
+
+function TColorArray.ToBytes(): TByteArray;
+var
+  len: Integer;
+begin
+  len := Length(Self) * SizeOf(Self[0]);
+  if len = 0 then Exit;
+  SetLength(Result, len);
+  Move(Self[0], Result[0], len);
+end;
+
+function TColorArray.CreateFromBytes(bytes: TByteArray): TColorArray; static;
+var
+  len, size: Integer;
+begin
+  len := Length(bytes);
+  if len = 0 then Exit;
+  size := SizeOf(Result[0]);
+  SetLength(Result, len div size);
+  Move(bytes[0], Result[0], len);
+end;
+
+
+function TModelFaceArray.ToBytes(): TByteArray;
+var
+  len: Integer;
+begin
+  len := Length(Self) * SizeOf(TModelFace);
+  if len = 0 then Exit;
+  SetLength(Result, len);
+  Move(Self[0], Result[0], len);
+end;
+
+function TModelFaceArray.CreateFromBytes(bytes: TByteArray): TModelFaceArray; static;
+var
+  len: Integer;
+begin
+  len := Length(bytes);
+  if len = 0 then Exit;
+  SetLength(Result, len div SizeOf(TModelFace));
+  Move(bytes[0], Result[0], len);
+end;
+
+
 {$R+}
+
+function TModel.ToBytes(): TByteArray;
+var
+  size, offset: Integer;
+  vertices, faces, materials: TByteArray;
+begin
+  vertices := Self.Vertices.ToBytes();
+  Inc(size, SizeOf(Int32) + Length(vertices));
+
+  faces := TModelFaceArray(Self.Faces).ToBytes();
+  Inc(size, SizeOf(Int32) + Length(faces));
+
+  materials := Self.Materials.ToBytes();
+  Inc(size, SizeOf(Int32) + Length(materials));
+
+  Inc(size, SizeOf(Int32) + Length(Self.Alphas));
+
+  Inc(size, SizeOf(Single) * 3);
+  Inc(size, SizeOf(TVector3));
+
+  SetLength(Result, size);
+
+  Move(Length(vertices), Result[offset], SizeOf(Int32));
+  Inc(offset, SizeOf(Int32));
+  if Length(vertices) > 0 then
+  begin
+    Move(vertices[0], Result[offset], Length(vertices));
+    Inc(offset, Length(vertices));
+  end;
+
+  faces := TModelFaceArray(Self.Faces).ToBytes();
+  Move(Length(faces), Result[offset], SizeOf(Int32));
+  Inc(offset, SizeOf(Int32));
+  if Length(faces) > 0 then
+  begin
+    Move(faces[0], Result[offset], Length(faces));
+    Inc(offset, Length(faces));
+  end;
+
+  materials := Self.Materials.ToBytes();
+  Move(Length(materials), Result[offset], SizeOf(Int32));
+  Inc(offset, SizeOf(Int32));
+  if Length(materials) > 0 then
+  begin
+    Move(materials[0], Result[offset], Length(materials));
+    Inc(offset, Length(materials));
+  end;
+
+  Move(Length(Self.Alphas), Result[offset], SizeOf(Int32));
+  Inc(offset, SizeOf(Int32));
+  if Length(Self.Alphas) > 0 then
+  begin
+    Move(Self.Alphas[0], Result[offset], Length(Self.Alphas));
+    Inc(offset, Length(Self.Alphas));
+  end;
+
+  Move(Self.Width,  Result[offset], SizeOf(Single)); Inc(offset, SizeOf(Single));
+  Move(Self.Depth,  Result[offset], SizeOf(Single)); Inc(offset, SizeOf(Single));
+  Move(Self.Height, Result[offset], SizeOf(Single)); Inc(offset, SizeOf(Single));
+  Move(Self.Center, Result[offset], SizeOf(TVector3));
+end;
+
+function TModel.Construct(bytes: TByteArray): TModel; static; overload;
+var
+  offset, len: Integer;
+  tmp: TByteArray;
+begin
+  //Vertices
+  Move(bytes[offset], len, SizeOf(Int32));
+  Inc(offset, SizeOf(Int32));
+  if len > 0 then
+  begin
+    SetLength(tmp, len);
+    Move(bytes[offset], tmp[0], len);
+    Result.Vertices := TVector3Array.CreateFromBytes(tmp);
+    Inc(offset, len);
+  end;
+
+  // Faces
+  Move(bytes[offset], len, SizeOf(Int32));
+  Inc(offset, SizeOf(Int32));
+  if len > 0 then
+  begin
+    SetLength(tmp, len);
+    Move(bytes[offset], tmp[0], len);
+    Result.Faces := TModelFaceArray.CreateFromBytes(tmp);
+    Inc(offset, len);
+  end;
+
+  // Materials
+  Move(bytes[offset], len, SizeOf(Int32));
+  Inc(offset, SizeOf(Int32));
+  if len > 0 then
+  begin
+    SetLength(tmp, len);
+    Move(bytes[offset], tmp[0], len);
+    Result.Materials := TColorArray.CreateFromBytes(tmp);
+    Inc(offset, len);
+  end;
+
+  // Alphas
+  Move(bytes[offset], len, SizeOf(Int32));
+  Inc(offset, SizeOf(Int32));
+  SetLength(Result.Alphas, len);
+  if len > 0 then
+  begin
+    Move(bytes[offset], Result.Alphas[0], len);
+    Inc(offset, len);
+  end;
+
+  Move(bytes[offset], Result.Width,  SizeOf(Single)); Inc(offset, SizeOf(Single));
+  Move(bytes[offset], Result.Depth,  SizeOf(Single)); Inc(offset, SizeOf(Single));
+  Move(bytes[offset], Result.Height, SizeOf(Single)); Inc(offset, SizeOf(Single));
+  Move(bytes[offset], Result.Center, SizeOf(TVector3));
+end;

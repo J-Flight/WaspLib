@@ -120,7 +120,6 @@ Summary: It includes this file until the current file is reached.
 {$IFNDEF WL_MM2MS_INCLUDED}                 {$INCLUDE_ONCE osrs/projection/mm2ms.simba}
 {$IFNDEF WL_CAMERA_INCLUDED}                {$INCLUDE_ONCE osrs/projection/camera.simba}
 {$IFNDEF WL_PROJECTION_INCLUDED}            {$INCLUDE_ONCE osrs/projection/projection.simba}
-{$IFNDEF WL_MODEL_INCLUDED}                 {$INCLUDE_ONCE osrs/projection/model.simba}
 
 {$IFNDEF WL_ANTIBAN_INCLUDED}               {$INCLUDE_ONCE osrs/antiban/antiban.simba}
 
@@ -188,4 +187,4 @@ Summary: It includes this file until the current file is reached.
 {$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
 {$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
 {$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
-{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
+{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}

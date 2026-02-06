@@ -30,8 +30,11 @@
 {$IFNDEF WL_PROFILE_FORM_INCLUDED}    {$INCLUDE_ONCE utils/forms/profile_form.simba}
 {$IFNDEF WL_RECORDER_INCLUDED}        {$INCLUDE_ONCE utils/recorder.simba}
 {$IFNDEF WL_SCRIPTFORM_INCLUDED}      {$INCLUDE_ONCE utils/forms/scriptform.simba}
+{$IFNDEF WL_MODEL_INCLUDED}           {$INCLUDE_ONCE utils/math/model.simba}
+
 {$IFNDEF WL_CONVERSIONS_INCLUDED}     {$INCLUDE_ONCE utils/math/conversions.simba}
 
 {$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
 {$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
 {$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
+{$ENDIF}

@@ -12,7 +12,7 @@ If you are curious about how the projection works you should read about
 ```
 *)
 {$DEFINE WL_MODEL_INCLUDED}
-{$INCLUDE_ONCE WaspLib/osrs.simba}
+{$INCLUDE_ONCE WaspLib/utils.simba}
 
 type
 (*
@@ -25,10 +25,12 @@ A model face consists of 3 vertices indices making a triangle and a
 
 A 3D model will have several of these.
 *)
-  TModelFace = object
+  TModelFace = record
     Vertices: array [0..2] of Int32;
     Material: Int32;
   end;
+
+  TModelFaceArray = array of TModelFace;
 
 (*
 (TModel)=
@@ -41,7 +43,7 @@ faces that represent triangles among those vertices
 *)
   TModel = object
     Vertices: TVector3Array;
-    Faces: array of TModelFace;
+    Faces: TModelFaceArray;
     Materials: TColorArray;
     Alphas: TByteArray;
     Width, Depth, Height: Single;
@@ -161,12 +163,13 @@ begin
         parts := line.Split(' ', True);
         if Length(parts) >= 4 then
         begin
-          face := new TModelFace();
           for j := 0 to 2 do
             face.Vertices[j] := StrToInt64(parts[j+1].Split('/')[0], 0) - 1;
 
           if InRange(idx, 0, High(Self.Materials)) then
-            face.Material := idx;
+            face.Material := idx
+          else
+            face.Material := 0;
           Self.Faces += face;
         end;
       end;
@@ -233,7 +236,7 @@ begin
     begin
       img := Target.GetImage(MainScreen.Bounds);
       model.Scale(0.99);
-      tpa := model.Project(Minimap.Center.ToVec3(), Minimap.CompassRadians, 0);
+      tpa := Projection.ProjectModel(model, Minimap.Center.ToVec3(), Minimap.CompassRadians, 0);
       model.DrawModel(img, tpa, True);
       img.Show();
     end;
@@ -242,7 +245,7 @@ begin
     begin
       img := Target.GetImage(MainScreen.Bounds);
       model.Scale(1.01);
-      tpa := model.Project(Minimap.Center.ToVec3(), Minimap.CompassRadians, 0);
+      tpa := Projection.ProjectModel(model, Minimap.Center.ToVec3(), Minimap.CompassRadians, 0);
       model.DrawModel(img, tpa, True);
       img.Show();
     end;
@@ -293,7 +296,7 @@ begin
   begin
     img := Target.GetImage(MainScreen.Bounds);
     model.Rotate(0.005);
-    tpa := model.Project(Minimap.Center.ToVec3(), Minimap.CompassRadians, 0);
+    tpa := Projection.ProjectModel(model, Minimap.Center.ToVec3(), Minimap.CompassRadians, 0);
     model.DrawModel(img, tpa, True);
     img.Show();
   end;
@@ -343,7 +346,7 @@ begin
         401..500: model.Offset([0,0.1,0]);
         501..600: model.Offset([0,-0.1,0]);
       end;
-      tpa := model.Project(Minimap.Center.ToVec3(), Minimap.CompassRadians, 0);
+      tpa := Projection.ProjectModel(model, Minimap.Center.ToVec3(), Minimap.CompassRadians, 0);
       model.DrawModel(img, tpa, True);
       img.Show();
     end;
@@ -368,77 +371,6 @@ end;
 
 
 (*
-# Model.Project
-```pascal
-function TModel.ProjectEx(minimapCoord: TVector3; heights: array [0..3] of Single; rotation, radians: Single): TPointArray;
-function TModel.Project(minimapCoord: TVector3; rotation, radians: Single): TPointArray;
-```
-Projects a model from a `Minimap Coordinate` to the `MainScreen`.
-
-Example:
-```pascal
-{$I WaspLib/osrs.simba}
-var
-  model: TModel;
-  tpa: TPointArray;
-begin
-  model := new TModel('path/to/my/model.obj');
-  tpa := model.Project(Minimap.Center.ToVec3(), Minimap.CompassRadians, 0);
-  ShowOnTarget(tpa);
-end.
-```
-
-```{figure} ../../images/modelproject.png
-```
-*)
-function TModel.ProjectEx(minimapCoord: TVector3; heights: array [0..3] of Single; rotation, radians: Single): TPointArray;
-var
-  i: Integer;
-  vertices: TVector3Array;
-  width, depth: Single;
-begin
-  width := Self.Width/2;
-  depth := Self.Depth/2;
-
-  for i := 0 to High(Self.Vertices) do
-  begin
-    vertices += Self.Vertices[i].Rotate(rotation, minimapCoord.X, minimapCoord.Y);
-
-    if vertices[i].X < width then
-    begin
-      if vertices[i].Y < depth then vertices[i].Z += heights[0]
-      else if vertices[i].Y > depth then vertices[i].Z += heights[2]
-      else vertices[i].Z += (heights[0] + heights[2]) / 2;
-    end
-    else if vertices[i].X > width then
-    begin
-      if vertices[i].Y < depth then vertices[i].Z += heights[1]
-      else if vertices[i].Y > depth then vertices[i].Z += heights[3]
-      else vertices[i].Z += (heights[1] + heights[3]) / 2;
-    end
-    else
-    begin
-      if vertices[i].Y < depth then vertices[i].Z += (heights[0]+heights[1]) / 2
-      else if vertices[i].Y > depth then vertices[i].Z += (heights[2]+heights[3]) / 2
-      else vertices[i].Z += (heights[0] + heights[1] + heights[2] + heights[3]) / 4;
-    end;
-
-    vertices[i].X += minimapCoord.X;
-    vertices[i].Y += minimapCoord.Y;
-    vertices[i].Z += minimapCoord.Z;
-  end;
-
-  Result := Projection.Run(vertices, radians);
-end;
-
-function TModel.Project(minimapCoord: TVector3; rotation, radians: Single): TPointArray;
-begin
-  with minimapCoord do
-    Result := Projection.Run(Self.Vertices.Offset([X,Y,Z]).Rotate(rotation,X,Y), radians);
-end;
-
-
-(*
 # Model.GetArea
 ```pascal
 function TModel.GetArea(projection: TPointArray): TPointArray;
@@ -457,7 +389,7 @@ var
   tpa: TPointArray;
 begin
   model := new TModel('path/to/my/model.obj');
-  tpa := model.Project(Minimap.Center.ToVec3(), Minimap.CompassRadians, 0);
+  tpa := Projection.ProjectModel(model, Minimap.Center.ToVec3(), Minimap.CompassRadians, 0);
   ShowOnTarget(model.GetArea(tpa));
 end.
 ```
@@ -498,7 +430,7 @@ var
   tpa: TPointArray;
 begin
   model := new TModel('path/to/my/model.obj');
-  tpa := model.Project(Minimap.Center.ToVec3(), Minimap.CompassRadians, 0);
+  tpa := Projection.ProjectModel(model, Minimap.Center.ToVec3(), Minimap.CompassRadians, 0);
   ShowOnTarget(model.GetEdges(tpa));
 end.
 ```
@@ -528,7 +460,7 @@ var
 begin
   img := Target.GetImage(MainScreen.Bounds);
   model := new TModel('path/to/my/model.obj');
-  tpa := model.Project(Minimap.Center.ToVec3(), Minimap.CompassRadians, 0);
+  tpa := Projection.ProjectModel(model, Minimap.Center.ToVec3(), Minimap.CompassRadians, 0);
   model.DrawModel(img, tpa, True);
   img.Show();
 end.

@@ -222,7 +222,7 @@ var
 begin
   pt := me + vector.ToPoint() - Minimap.Center;
   if Self.Model <> nil then
-    Exit(Self.Model.GetArea(Self.Model.Project(vector.ToVec3(Self.Walker^.Height(pt, False) - height), rotation, radians)));
+    Exit(Self.Model.GetArea(Projection.ProjectModel(Self.Model, vector.ToVec3(Self.Walker^.Height(pt, False) - height), rotation, radians)));
 
   size.X := size.X*2;
   size.Y := size.Y*2;

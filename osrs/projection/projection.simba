@@ -119,6 +119,77 @@ begin
 end;
 
 
+(*
+## Projection.ProjectModel
+```pascal
+function TProjection.ProjectModelEx(model: TModel; minimapCoord: TVector3; heights: array [0..3] of Single; rotation, radians: Single): TPointArray;
+function TProjection.ProjectModel(model: TModel; minimapCoord: TVector3; rotation, radians: Single): TPointArray;
+```
+Projects a model from a `Minimap Coordinate` to the `MainScreen`.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+var
+  model: TModel;
+  tpa: TPointArray;
+begin
+  model := new TModel('path/to/my/model.obj');
+  tpa := Projection.ProjectModel(Minimap.Center.ToVec3(), Minimap.CompassRadians, 0);
+  ShowOnTarget(tpa);
+end.
+```
+
+```{figure} ../../images/modelproject.png
+```
+*)
+function TProjection.ProjectModelEx(model: TModel; minimapCoord: TVector3; heights: array [0..3] of Single; rotation, radians: Single): TPointArray;
+var
+  i: Integer;
+  vertices: TVector3Array;
+  width, depth: Single;
+begin
+  width := model.Width/2;
+  depth := model.Depth/2;
+
+  for i := 0 to High(model.Vertices) do
+  begin
+    vertices += model.Vertices[i].Rotate(rotation, minimapCoord.X, minimapCoord.Y);
+
+    if vertices[i].X < width then
+    begin
+      if vertices[i].Y < depth then vertices[i].Z += heights[0]
+      else if vertices[i].Y > depth then vertices[i].Z += heights[2]
+      else vertices[i].Z += (heights[0] + heights[2]) / 2;
+    end
+    else if vertices[i].X > width then
+    begin
+      if vertices[i].Y < depth then vertices[i].Z += heights[1]
+      else if vertices[i].Y > depth then vertices[i].Z += heights[3]
+      else vertices[i].Z += (heights[1] + heights[3]) / 2;
+    end
+    else
+    begin
+      if vertices[i].Y < depth then vertices[i].Z += (heights[0]+heights[1]) / 2
+      else if vertices[i].Y > depth then vertices[i].Z += (heights[2]+heights[3]) / 2
+      else vertices[i].Z += (heights[0] + heights[1] + heights[2] + heights[3]) / 4;
+    end;
+
+    vertices[i].X += minimapCoord.X;
+    vertices[i].Y += minimapCoord.Y;
+    vertices[i].Z += minimapCoord.Z;
+  end;
+
+  Result := Self.Run(vertices, radians);
+end;
+
+function TProjection.ProjectModel(model: TModel; minimapCoord: TVector3; rotation, radians: Single): TPointArray;
+begin
+  with minimapCoord do
+    Result := Self.Run(model.Vertices.Offset([X,Y,Z]).Rotate(rotation,X,Y), radians);
+end;
+
+
 var
 (*
 ## MM2MS variable
@@ -327,7 +398,6 @@ function TRSMainScreen.Point2MM(pt: TPoint; height: Single): TPoint;
 begin
   Result := Projection.ReverseRun([[pt.X, pt.Y, height]])[0];
 end;
-
 
 
 (*
