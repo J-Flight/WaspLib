@@ -307,7 +307,7 @@ begin
   debugImg := Self.Loader.DownscaledMap.Copy();
   matrixImg := new TImage();
   matrixImg.FromMatrix(matrix);
-  debugImg.DrawAlpha := $A7;
+  debugImg.DrawAlpha := 120;
   debugImg.DrawImage(matrixImg, [padding, padding]);
   for i := 0 to High(Self.Filters) do
   begin
