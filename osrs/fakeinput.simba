@@ -54,7 +54,11 @@ begin
     RIInject(GetSimbaTargetPID());
   except
     if GetExceptionMessage() = 'Access violation' then
-      raise GetDebugLn('RemoteInput', 'A different RemoteInput has already been paired with this client. Please open a new one.')
+      ErrorDialog(
+        'RemoteInput',
+        'A different RemoteInput has already been paired with this client.' +
+        LINE_SEP + LINE_SEP + 'Please open a new one.'
+      )
     else
       raise GetExceptionMessage();
   end;
@@ -65,7 +69,11 @@ begin
       Self.Target := EIOS_PairClient(GetSimbaTargetPID());
     except
       if GetExceptionMessage() = 'Access violation' then
-        raise GetDebugLn('RemoteInput', 'A different RemoteInput has already been paired with this client. Please open a new one.')
+        ErrorDialog(
+          'RemoteInput',
+          'A different RemoteInput has already been paired with this client.' +
+          LINE_SEP + LINE_SEP + 'Please open a new one.'
+        )
       else
         raise GetExceptionMessage();
     end;
@@ -134,6 +142,25 @@ var
   WaspInput: TWaspInput;
 {$ENDIF}
 {$ENDIF}
+
+
+(*
+## TRSClient.Clear
+```pascal
+procedure TRSClient.Clear();
+```
+Clears the client canvas.
+
+Example:
+```pascal
+RSClient.Clear();
+```
+*)
+procedure TRSClient.Clear();
+begin
+  if Self.Canvas <> nil then
+    Self.Canvas.Clear();
+end;
 
 
 (*
@@ -302,7 +329,7 @@ begin
     ERSClient.LEGACY, ERSClient.RUNELITE: RemoteInput.Setup();
   end;
 
-  AddOnTerminate(@Self.Canvas.Clear);
+  AddOnTerminate(@Self.Clear);
   AddOnTerminate(@Self.EnableRealInput);
   {$ELSE}
   WriteLn(GetDebugLn('RSClient', 'InjectInput method is not implemented without a fake input tool.', ELogLevel.WARN));

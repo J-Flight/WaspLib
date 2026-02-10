@@ -134,33 +134,47 @@ Optionally logs to file and applies color formatting based on `level`.
 function GetDebugLn(text: String; log: Boolean = True): String;
 begin
   Result := GetTimeStamp() + ': ' + text;
-  if log then Logger.AddLine(Result);
+  if log then
+    Logger.AddLine(Result);
 end;
 
 function GetDebugLn(name, text: String; log: Boolean = True): String; overload;
 begin
   Result := GetTimeStamp() + ':[' + name + ']: ' + text;
-  if log then Logger.AddLine(Result);
+  if log then
+    Logger.AddLine(Result);
 end;
 
 function GetDebugLn(text: String; level: ELogLevel; log: Boolean = True): String; overload;
 begin
   case level of
-    ELogLevel.SUCCESS: Result := #0#0'000008' + GetDebugLn(text, log);
-    ELogLevel.WARN:    Result := #0#0'000002' + GetDebugLn(text, log);
-    ELogLevel.ERROR:   Result := #0#0'000004' + GetDebugLn(text, log);
+    ELogLevel.SUCCESS: Result := #0#0'000008' + GetDebugLn(text, log).Replace(LINE_SEP, LINE_SEP + #0#0'000008');
+    ELogLevel.WARN:    Result := #0#0'000002' + GetDebugLn(text, log).Replace(LINE_SEP, LINE_SEP + #0#0'000002');
+    ELogLevel.ERROR:   Result := #0#0'000004' + GetDebugLn(text, log).Replace(LINE_SEP, LINE_SEP + #0#0'000004');
   end;
 end;
 
 function GetDebugLn(name, text: String; level: ELogLevel; log: Boolean = True): String; overload;
 begin
   case level of
-    ELogLevel.SUCCESS: Result := #0#0'000008' + GetDebugLn(name, text, log);
-    ELogLevel.WARN:    Result := #0#0'000002' + GetDebugLn(name, text, log);
-    ELogLevel.ERROR:   Result := #0#0'000004' + GetDebugLn(name, text, log);
+    ELogLevel.SUCCESS: Result := #0#0'000008' + GetDebugLn(name, text, log).Replace(LINE_SEP, LINE_SEP + #0#0'000008');
+    ELogLevel.WARN:    Result := #0#0'000002' + GetDebugLn(name, text, log).Replace(LINE_SEP, LINE_SEP + #0#0'000002');
+    ELogLevel.ERROR:   Result := #0#0'000004' + GetDebugLn(name, text, log).Replace(LINE_SEP, LINE_SEP + #0#0'000004');
   end;
 end;
 
+(*
+## ErrorDialog
+```pascal
+procedure ErrorDialog(name, text: String; log: Boolean = True);
+```
+Show an error dialog and then raises an exception.
+*)
+procedure ErrorDialog(name, text: String; log: Boolean = True);
+begin
+  ShowDialog(EDialogIcon.ERROR, [EDialogButton.ABORT], name, text);
+  raise GetDebugLn(name, text, log).Replace(LINE_SEP, LINE_SEP + #0#0'000004');
+end;
 
 (*
 ## Logger.Info
