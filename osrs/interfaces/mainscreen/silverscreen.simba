@@ -2,6 +2,9 @@
 # SilverScreen
 Methods to interact with the silver‑smelting **Silver Screen** interface.
 
+```{figure} ../../images/silverscreen_interface.png
+```
+
 ```{note}
 Credits to Flight and Skunkworks
 ```
