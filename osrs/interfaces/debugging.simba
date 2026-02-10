@@ -198,9 +198,10 @@ end;
 
 procedure TRSChat.Draw(img: TImage);
 var
-  tab: TRSChatTab;
+  tab: TRSButton;
 begin
-  if not Self.IsOpen() then Exit;
+  if not Self.IsOpen() then
+    Exit;
 
   img.DrawColor := $00FFFF;
   img.DrawBox(Self.Bounds);
@@ -213,7 +214,7 @@ begin
 
   Self.Scroll.Draw(img);
   for tab in Self.Tabs.Tabs do
-    tab.Button.Draw(img);
+    tab.Draw(img);
 end;
 
 procedure TRSMake.Draw(img: TImage);
@@ -236,14 +237,29 @@ procedure TRSBank.Draw(img: TImage);
 var
   i: Integer;
 begin
-  if not Self.IsOpen() then Exit;
+  if not Self.IsOpen() then
+    Exit;
 
-  for i := 0 to 1 do
-  begin
+  img.DrawColor := $FFFFFF;
+  img.DrawBox(Self.Bounds);
+
+  for i := 0 to High(Self.Buttons) do
     Self.Buttons[i].Draw(img);
-    Self.ArrangementButtons[i].Draw(img);
-    Self.WithdrawModeButtons[i].Draw(img);
-  end;
+
+  for i := 0 to High(Self.SidebarButtons) do
+    Self.SidebarButtons[i].Draw(img);
+
+  for i := 0 to High(Self.ModeButtons) do
+    Self.ModeButtons[i].Draw(img);
+
+  for i := 0 to High(Self.QuantityButtons) do
+    Self.QuantityButtons[i].Draw(img);
+
+  for i := 0 to High(Self.MiscButtons) do
+    Self.MiscButtons[i].Draw(img);
+
+  for i := 0 to High(Self.DepositButtons) do
+    Self.DepositButtons[i].Draw(img);
 
   img.DrawColor := $FFFFFF;
   for i := 0 to Self.CountTabs() do
@@ -252,12 +268,6 @@ begin
   img.DrawColor := $FFFF00;
   img.DrawBoxArray(Self.FindItemBoundaries(), False);
   Self.Scroll.Draw(img);
-
-  for i := 0 to 4 do
-    Self.QuantityButtons[i].Draw(img);
-
-  for i := 0 to 3 do
-    Self.DynamicButtons[i].Draw(img);
 end;
 
 procedure TRSBankPin.Draw(img: TImage);
@@ -357,23 +367,43 @@ begin
 end;
 
 procedure TRSGoldScreen.Draw(img: TImage);
+var
+  i: Integer;
 begin
   img.DrawBox(Self.Bounds);
   img.DrawBoxArray(Self.ItemBoxes, False);
-  Self.GetButtons().Draw(img);
+  for i := 0 to High(Self.Buttons) do
+    Self.Buttons[i].Draw(img);
 end;
 
 procedure TRSSilverScreen.Draw(img: TImage);
+var
+  i: Integer;
 begin
   img.DrawBox(Self.Bounds);
   img.DrawBoxArray(Self.SlotBoxes, False);
   img.DrawBoxArray(Self.ClickBoxes, False);
-  Self.GetButtons().Draw(img);
+  for i := 0 to High(Self.Buttons) do
+    Self.Buttons[i].Draw(img);
+end;
+
+procedure TRSAnvil.Draw(img: TImage);
+begin
+  img.DrawColor := $FFFFFF;
+  img.DrawBox(Self.Bounds);
+
+  img.DrawColor := $00FFFF;
+  img.DrawBox(Self.SlotsArea);
+
+  img.DrawColor := $00FF00;
+  img.DrawBoxArray(Self.GetSlotBoxes(), False);
+  img.DrawColor := $00FFFF;
+
+  Self.QuantityButtons.Draw(img);
 end;
 
 
-
-procedure ShowOnTarget(button: TRSButton); overload;
+procedure ShowOnTarget(constref button: TRSButton); overload;
 var
   img: TImage;
 begin
@@ -382,7 +412,7 @@ begin
   img.Show();
 end;
 
-procedure ShowOnTarget(buttons: TRSButtonArray); overload;
+procedure ShowOnTarget(constref buttons: TRSButtonArray); overload;
 var
   img: TImage;
 begin
@@ -391,7 +421,7 @@ begin
   img.Show();
 end;
 
-procedure ShowOnTarget(scroll: TRSScrollBar); overload;
+procedure ShowOnTarget(constref scroll: TRSScrollBar); overload;
 var
   img: TImage;
 begin
@@ -400,7 +430,7 @@ begin
   img.Show();
 end;
 
-procedure ShowOnTarget(dropdown: TRSDropDown); overload;
+procedure ShowOnTarget(constref dropdown: TRSDropDown); overload;
 var
   img: TImage;
 begin
@@ -409,7 +439,7 @@ begin
   img.Show();
 end;
 
-procedure ShowOnTarget(chat: TRSChat); overload;
+procedure ShowOnTarget(constref chat: TRSChat); overload;
 var
   img: TImage;
 begin
@@ -418,7 +448,7 @@ begin
   img.Show();
 end;
 
-procedure ShowOnTarget(bank: TRSBank); overload;
+procedure ShowOnTarget(constref bank: TRSBank); overload;
 var
   img: TImage;
 begin
@@ -427,7 +457,7 @@ begin
   img.Show();
 end;
 
-procedure ShowOnTarget(collectionBox: TRSCollectionBox); overload;
+procedure ShowOnTarget(constref collectionBox: TRSCollectionBox); overload;
 var
   img: TImage;
 begin
@@ -436,7 +466,7 @@ begin
   img.Show();
 end;
 
-procedure ShowOnTarget(depositBox: TRSDepositBox); overload;
+procedure ShowOnTarget(constref depositBox: TRSDepositBox); overload;
 var
   img: TImage;
 begin
@@ -445,7 +475,7 @@ begin
   img.Show();
 end;
 
-procedure ShowOnTarget(shop: TRSShop); overload;
+procedure ShowOnTarget(constref shop: TRSShop); overload;
 var
   img: TImage;
 begin
@@ -454,7 +484,7 @@ begin
   img.Show();
 end;
 
-procedure ShowOnTarget(bankPin: TRSBankPin); overload;
+procedure ShowOnTarget(constref bankPin: TRSBankPin); overload;
 var
   img: TImage;
 begin
@@ -463,7 +493,7 @@ begin
   img.Show();
 end;
 
-procedure ShowOnTarget(goldscreen: TRSGoldScreen); overload;
+procedure ShowOnTarget(constref goldscreen: TRSGoldScreen); overload;
 var
   img: TImage;
 begin
@@ -472,7 +502,7 @@ begin
   img.Show();
 end;
 
-procedure ShowOnTarget(silverscreen: TRSSilverScreen); overload;
+procedure ShowOnTarget(constref silverscreen: TRSSilverScreen); overload;
 var
   img: TImage;
 begin
@@ -481,12 +511,21 @@ begin
   img.Show();
 end;
 
-procedure ShowOnTarget(make: TRSMake); overload;
+procedure ShowOnTarget(constref make: TRSMake); overload;
 var
   img: TImage;
 begin
   img := Target.GetImage();
   make.Draw(img);
+  img.Show();
+end;
+
+procedure ShowOnTarget(constref anvil: TRSAnvil); overload;
+var
+  img: TImage;
+begin
+  img := Target.GetImage();
+  anvil.Draw(img);
   img.Show();
 end;
 

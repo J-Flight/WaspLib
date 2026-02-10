@@ -124,58 +124,7 @@ Record responsible to handle the {ref}`Bank` interface.
     Bankers: TRSEntityArray;
   end;
 
-(*
-## Bank.FindItemBoundaries
-```pascal
-function TRSBank.FindItemBoundaries(): TBoxArray;
-```
-Finds item boundaries and returns them as a TBoxArray.
-
-You have 2 ways of getting the bank slots, a static one:
-```pascal
-ShowOnTarget(Bank.SlotBoxes);
-```
-```{figure} ../../images/bank_static_slots.png
-The bank static slots.
-```
-
-And a dynamic one:
-```pascal
-ShowOnTarget(Self.FindItemBoundaries());
-```
-```{figure} ../../images/bank_item_boundaries.png
-The bank "dynamic" slots.
-```
-
-There are use cases for both, internally, `Bank.FindItemBoundaries` is usually used.
-*)
-function TRSBank.FindItemBoundaries(): TBoxArray;
-var
-  tpa, final: TPointArray;
-  atpa: T2DPointArray;
-  b: TBox;
-  stack: ERSStack;
-begin
-  final := Target.FindColor(ITEM_BORDER, 1, Self.SlotsArea);
-  if final = [] then Exit;
-
-  for stack := Low(ERSStack) to High(ERSStack) do
-  begin
-    tpa := Target.FindColor(stack.Color, 0, Self.SlotsArea);
-    if tpa <> [] then
-      final += tpa;
-  end;
-
-  atpa := final.Cluster(200, 3);
-
-  for tpa in atpa do
-  begin
-    b := tpa.Bounds();
-    if b.Height <= 5 then Continue;
-
-    Result += TBoxArray.Create([Self.SlotsArea.X1, b.Y1], 8, 1, 31, Min(Self.SlotsArea.Y2-b.Y1, 31), [17, 1]);
-  end;
-end;
+function TRSBank.FindItemBoundaries(): TBoxArray; forward;
 
 function TRSBank.IsOpen(): Boolean; forward;
 
@@ -195,12 +144,12 @@ begin
   case RSClient.Mode of
     ERSMode.FIXED: Self.Bounds := MSInterface.CreateBounds([0, 2, 0, -1], 488, 800);
     ERSMode.RESIZABLE, ERSMode.MODERN_COMPACT, ERSMode.MODERN_WIDE:
-      Self.Bounds := MSInterface.CreateBounds([0, 2, 0, -2], 488, 800);
+      Self.Bounds := MSInterface.CreateBounds([0, 2, 0, -1], 488, 800);
   end;
 
   Self.Scroll.Area.X1 := Self.Bounds.X1 + 5;
   Self.Scroll.Area.Y1 := Self.Bounds.Y1 + 77;
-  Self.Scroll.Area.X2 := Self.Bounds.X2 - 21;
+  Self.Scroll.Area.X2 := Self.Bounds.X2 - 22;
   Self.Scroll.Area.Y2 := Self.Bounds.Y2 - 44;
 
   Self.Scroll.Setup();
@@ -384,6 +333,60 @@ function TRSBank.CloseJagexAccountAd(): Boolean;
 begin
   Mouse.Click(Self.JagexAccountAd.NotNow, EMouseButton.LEFT);
   Result := SleepUntil(not Self.HasJagexAccountAd(), 50, 600);
+end;
+
+
+(*
+## Bank.FindItemBoundaries
+```pascal
+function TRSBank.FindItemBoundaries(): TBoxArray;
+```
+Finds item boundaries and returns them as a TBoxArray.
+
+You have 2 ways of getting the bank slots, a static one:
+```pascal
+ShowOnTarget(Bank.SlotBoxes);
+```
+```{figure} ../../images/bank_static_slots.png
+The bank static slots.
+```
+
+And a dynamic one:
+```pascal
+ShowOnTarget(Self.FindItemBoundaries());
+```
+```{figure} ../../images/bank_item_boundaries.png
+The bank "dynamic" slots.
+```
+
+There are use cases for both, internally, `Bank.FindItemBoundaries` is usually used.
+*)
+function TRSBank.FindItemBoundaries(): TBoxArray;
+var
+  tpa, final: TPointArray;
+  atpa: T2DPointArray;
+  b: TBox;
+  stack: ERSStack;
+begin
+  final := Target.FindColor(ITEM_BORDER, 1, Self.SlotsArea);
+  if final = [] then Exit;
+
+  for stack := Low(ERSStack) to High(ERSStack) do
+  begin
+    tpa := Target.FindColor(stack.Color, 0, Self.SlotsArea);
+    if tpa <> [] then
+      final += tpa;
+  end;
+
+  atpa := final.Cluster(200, 3);
+
+  for tpa in atpa do
+  begin
+    b := tpa.Bounds();
+    if b.Height <= 5 then Continue;
+
+    Result += TBoxArray.Create([Self.SlotsArea.X1, b.Y1], 8, 1, 31, Min(Self.SlotsArea.Y2-b.Y1, 31), [17, 1]);
+  end;
 end;
 
 

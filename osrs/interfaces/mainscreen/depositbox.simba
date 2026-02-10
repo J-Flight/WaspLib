@@ -46,32 +46,7 @@ WriteLn DepositBox.FindItemBoundaries();
 ```
 *)
 
-function TRSDepositBox.FindItemBoundaries(): TBoxArray;
-var
-  tpa, final: TPointArray;
-  atpa: T2DPointArray;
-  b: TBox;
-  stack: ERSStack;
-begin
-  final := Target.FindColor(ITEM_BORDER, 1, Self.SlotsArea);
-  if final = [] then Exit;
-
-  for stack := Low(ERSStack) to High(ERSStack) do
-  begin
-    tpa := Target.FindColor(stack.Color, 0, Self.SlotsArea);
-    if tpa <> [] then
-      final += tpa;
-  end;
-
-  atpa := final.Cluster(200, 3);
-
-  for tpa in atpa do
-  begin
-    b := tpa.Bounds();
-    if b.Height <= 5 then Continue;
-    Exit(TBoxArray.Create([Self.SlotsArea.X1, b.Y1 - 1], 4, 7, 32, 32, [10, 4]));
-  end;
-end;
+function TRSDepositBox.FindItemBoundaries(): TBoxArray;forward;
 
 function TRSDepositBox.IsOpen(): Boolean; forward;
 
@@ -88,7 +63,7 @@ var
   i: Integer;
   tba: TBoxArray;
 begin
-  Self.Bounds := MSInterface.CreateBounds([0,-1,0,1], 425, 310);
+  Self.Bounds := MSInterface.CreateBounds([0,-1,0,1], 425, 311);
   Self.Title.Setup(Self.Bounds);
 
   Self.SlotsArea.X1 := Self.Bounds.X1 + 196;
@@ -120,6 +95,34 @@ begin
     for i := 0 to 2 do
       Self.DepositButtons[i] := new TRSButton(tba[i]);
     Self.EquipSlotBoxes := Self.EquipSlotBoxes.Offset(Point(X1,Y1));
+  end;
+end;
+
+
+function TRSDepositBox.FindItemBoundaries(): TBoxArray;
+var
+  tpa, final: TPointArray;
+  atpa: T2DPointArray;
+  b: TBox;
+  stack: ERSStack;
+begin
+  final := Target.FindColor(ITEM_BORDER, 1, Self.SlotsArea);
+  if final = [] then Exit;
+
+  for stack := Low(ERSStack) to High(ERSStack) do
+  begin
+    tpa := Target.FindColor(stack.Color, 0, Self.SlotsArea);
+    if tpa <> [] then
+      final += tpa;
+  end;
+
+  atpa := final.Cluster(200, 3);
+
+  for tpa in atpa do
+  begin
+    b := tpa.Bounds();
+    if b.Height <= 5 then Continue;
+    Exit(TBoxArray.Create([Self.SlotsArea.X1, b.Y1 - 1], 4, 7, 32, 32, [10, 4]));
   end;
 end;
 

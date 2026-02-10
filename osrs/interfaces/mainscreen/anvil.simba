@@ -24,6 +24,49 @@ Main record to interact with the {ref}`Anvil` interface.
     Anvils: TRSObjectArray;
   end;
 
+function TRSAnvil.GetSlotBoxes(): TBoxArray; forward;
+
+(*
+## Anvil.SetupInterface
+```pascal
+procedure TRSAnvil.SetupInterface;
+```
+Initializes {ref}`Anvil` variables.
+
+```{note}
+This is automatically called for you on the {ref}`Anvil variable`.
+```
+*)
+procedure TRSAnvil.SetupInterface();
+var
+  i: Integer;
+  boxes: TBoxArray;
+begin
+  case RSClient.Mode of
+    ERSMode.FIXED: Self.Bounds := MSInterface.CreateBounds([0, 2, 0, -1], 500, 320);
+    ERSMode.RESIZABLE, ERSMode.MODERN_COMPACT, ERSMode.MODERN_WIDE:
+      Self.Bounds := MSInterface.CreateBounds([0, -1, 0, 1], 500, 320);
+  end;
+
+  Self.Title.Setup(Self.Bounds);
+
+  Self.SlotsArea.X1 := Self.Bounds.X1 + 4;
+  Self.SlotsArea.Y1 := Self.Bounds.Y1 + 30;
+  Self.SlotsArea.X2 := Self.Bounds.X2 - 50;
+  Self.SlotsArea.Y2 := Self.Bounds.Y2 - 4;
+
+  Self.SlotBoxes := TBoxArray.Create(Self.Bounds.TopLeft + [6, 36], 6, 5, 75, 54, [1, 1]);
+  for i in [5, 11, 17, 23, 29] do
+    Self.SlotBoxes[i].X2 := Self.SlotBoxes[i].X1 + 67;
+
+  Self.Slots.Setup('Anvil.Slots', Self.SlotBoxes, @Self.GetSlotBoxes);
+  Self.Items.Setup('Anvil.Items', @Self.Slots, [0, 0]);
+
+  with Self.Bounds do
+    boxes := TBoxArray.Create([X2-43, Y1+36], 1, 6, 36, 36, [0,9]);
+  Self.QuantityButtons := TRSButtonArray.Create(boxes, [[RSFonts.WHITE]]);
+end;
+
 (*
 ## Anvil.GetSlotBoxes
 ```pascal
@@ -69,47 +112,6 @@ begin
   for i := 0 to High(Self.SlotBoxes) do
     if Target.HasColor(RSFonts.GREEN, 0, 1, Self.SlotBoxes[i]) or Target.HasColor(RSFonts.ORANGE, 0, 1, Self.SlotBoxes[i]) then
       Result += Self.SlotBoxes[i];
-end;
-
-(*
-## Anvil.SetupInterface
-```pascal
-procedure TRSAnvil.SetupInterface;
-```
-Initializes {ref}`Anvil` variables.
-
-```{note}
-This is automatically called for you on the {ref}`Anvil variable`.
-```
-*)
-procedure TRSAnvil.SetupInterface();
-var
-  i: Integer;
-  boxes: TBoxArray;
-begin
-  case RSClient.Mode of
-    ERSMode.FIXED: Self.Bounds := MSInterface.CreateBounds([0, 2, 0, -1], 500, 320);
-    ERSMode.RESIZABLE, ERSMode.MODERN_COMPACT, ERSMode.MODERN_WIDE:
-      Self.Bounds := MSInterface.CreateBounds([0, -1, 0, 0], 500, 320);
-  end;
-
-  Self.Title.Setup(Self.Bounds);
-
-  Self.SlotsArea.X1 := Self.Bounds.X1 + 4;
-  Self.SlotsArea.Y1 := Self.Bounds.Y1 + 30;
-  Self.SlotsArea.X2 := Self.Bounds.X2 - 50;
-  Self.SlotsArea.Y2 := Self.Bounds.Y2 - 4;
-
-  Self.SlotBoxes := TBoxArray.Create(Self.Bounds.TopLeft + [6, 36], 6, 5, 75, 54, [1, 1]);
-  for i in [5, 11, 17, 23, 29] do
-    Self.SlotBoxes[i].X2 := Self.SlotBoxes[i].X1 + 67;
-
-  Self.Slots.Setup('Anvil.Slots', Self.SlotBoxes, @Self.GetSlotBoxes);
-  Self.Items.Setup('Anvil.Items', @Self.Slots, [0, 0]);
-
-  with Self.Bounds do
-    boxes := TBoxArray.Create([X2-43, Y1+36], 1, 6, 36, 36, [0,9]);
-  Self.QuantityButtons := TRSButtonArray.Create(boxes, [[RSFonts.WHITE]]);
 end;
 
 (*
