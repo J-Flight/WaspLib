@@ -47,12 +47,12 @@ begin
 end;
 
 (*
-## HouseViewer.SetupInterface
+## HouseViewer.LayoutBounds
 ```pascal
-procedure TRSHouseViewer.SetupInterface();
+property TRSHouseViewer.LayoutBounds: TBox;
 ```
-Internal method used to setup the {ref}`TRSHouseViewer` coordinates.
-This is automatically called for you on the {ref}`HouseViewer variable`.
+Internal property used to get the house layout bounds from the
+{ref}`TRSHouseViewer`.
 *)
 property TRSHouseViewer.LayoutBounds: TBox;
 begin

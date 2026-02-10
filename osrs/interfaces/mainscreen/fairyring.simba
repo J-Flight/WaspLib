@@ -122,7 +122,7 @@ function TRSFairyRing.WaitOpen(time: Integer; interval: Integer = -1): Boolean;
 ```
 Returns true if the fairy ring interface is open within `time` milliseconds.
 
-## Example:
+Example:
 ```pascal
 WriteLn FairyRing.WaitOpen();
 ```

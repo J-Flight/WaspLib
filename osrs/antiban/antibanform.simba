@@ -1032,11 +1032,11 @@ Global {ref}`TAntibanFormHelper` variable.
   AntibanForm: TAntibanFormHelper;
 
 (*
-## ScriptForm CreateInventoryTab
+## ScriptForm.CreateAntibanTab
 ```pascal
-function TScriptForm.CreateInventoryTab(): TLazTabSheet;
+function TScriptForm.CreateAntibanTab(): TLazTabSheet;
 ```
-Sets up a `TLazTabSheet` on your `TScriptForm` to configure your `Inventory Layouts`.
+Sets up a `TLazTabSheet` on your `TScriptForm` to configure your {ref}`Antiban`.
 
 Example:
 ```pascal
@@ -1045,13 +1045,12 @@ var
   form: TScriptForm;
 begin
   form.Setup();
-  form.CreateInventoryTab();
+  form.CreateAntibanTab();
   form.Run();
 end.
 ```
-```{figure} ../../images/inventoryform.gif
+```{figure} ../../images/antibanform.gif
 ```
-For a more complete example check out the file `Simba/Includes/WaspLib/examples/inventory_form.simba`.
 *)
 function TScriptForm.CreateAntibanTab(): TLazTabSheet;
 var

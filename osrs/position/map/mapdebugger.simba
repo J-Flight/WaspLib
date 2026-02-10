@@ -5,10 +5,9 @@ Tool to help debug {ref}`TRSMap` and {ref}`TRSMapLoader`.
 Example:
 ```pascal
 {$I WaspLib/osrs.simba}
-
 begin
   Map.Setup([ERSChunk.VARROCK]);
-  MapDebugger.Setup(@Map.Loader);
+  MapDebugger.Setup(Map.Loader);
   MapDebugger.Show();
 end.
 ```

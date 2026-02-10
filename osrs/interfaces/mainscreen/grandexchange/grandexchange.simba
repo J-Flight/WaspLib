@@ -140,7 +140,7 @@ begin
 end;
 
 (*
-## TRSGrandExchangeSlot
+## TRSGrandExchangeSlot.GetType
 ```pascal
 function TRSGrandExchangeSlot.GetType(): EGESlotType;
 ```
@@ -516,7 +516,7 @@ function TRSGrandExchange.WaitOpen(time: Integer; interval: Integer = -1): Boole
 ```
 Returns true if the Grand Exchange is open within `time` milliseconds.
 
-## Example:
+Example:
 ```pascal
 WriteLn GrandExchange.WaitOpen();
 ```

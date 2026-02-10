@@ -4,10 +4,8 @@ Fetches and filters OSRS world information for world selection.
 
 Credits: Developed by TazE
 Acknowledgements: Thanks to BigAussie for initial world scraper prototype
-## Getting Started
 
 Basic example for finding a suitable world:
-
 ```pascal
 var
   BestWorld: TWorldInfo;
@@ -26,7 +24,6 @@ end;
 ```
 
 Example for checking skill requirements:
-
 ```pascal
 var
   WorldInfo: TWorldInfo;
@@ -433,11 +430,11 @@ function TWorldFetcher.GetWorldInfo(WorldNum: Int32; IncludePing: Boolean = Fals
 ```
 Fetches information for a specific world from the official server list.
 
-### Parameters
+Parameters:
 - `WorldNum`: The world number to fetch.
 - `IncludePing`: Whether to measure ping (default: False).
 
-### Returns
+Returns:
 - TWorldInfo record with the world's data.
 
 Example:
@@ -593,7 +590,7 @@ function TWorldFetcher.FetchAll(): Boolean;
 Fetches information for all available worlds from the official server list.
 Results are stored in the Worlds array.
 
-### Returns
+Returns:
 - True if the fetch was successful, False otherwise.
 
 Example:

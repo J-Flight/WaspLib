@@ -1,5 +1,10 @@
 (*
 # RSCamera
+RSCamera is a 3D engine similar to {ref}`MM2MS`.
+It differs from it in that it uses the exact same math as the OSRS client for
+projection and therefore is more accurate when doing "Minimap to MainScreen"
+projections specifically, where `MM2MS` is unrivaled when doing
+"MainScreen to Minimap" ironically.
 *)
 {$DEFINE WL_CAMERA_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
@@ -75,12 +80,26 @@ begin
   Self.ViewportOffset.Y := MainScreen.Bounds.Height div 2 + Self.Offset.Y;
 end;
 
+(*
+## RSCamera.SetPitch
+```pascal
+procedure TRSCamera.SetPitch(value: Integer);
+```
+Allows you the set the camera pitch.
+*)
 procedure TRSCamera.SetPitch(value: Integer);
 begin
   Self.Pitch := value;
   Self.Y := Self.Player.Y - 674 - Round(235 * (Self.MAX_PITCH - value) / (Self.MAX_PITCH - Self.MIN_PITCH));
 end;
 
+(*
+## RSCamera.Update
+```pascal
+procedure TRSCamera.Update(zoom: Integer; rads: Single);
+```
+Updates current zoom and rotation.
+*)
 procedure TRSCamera.Update(zoom: Integer; rads: Single);
 begin
   if Self.ZoomScale <> ZOOM2RSZOOM[zoom] then
@@ -108,7 +127,6 @@ begin
   end;
 end;
 
-//MM2MS
 function TRSCamera.MinimapOffset(constref coordinate: TVector3): TVector3;
 begin
   Result.X := (coordinate.X-Minimap.Center.X)/4*128 - Self.Origin.X;

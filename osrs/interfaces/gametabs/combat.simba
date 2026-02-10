@@ -236,7 +236,7 @@ end;
 
 
 (*
-## Combat.StyleBoxes
+## Combat.WeaponStyle
 ```pascal
 property TRSCombat.WeaponStyle: EWeaponStyle;
 property TRSCombat.WeaponStyle(value: EWeaponStyle): Boolean;
@@ -299,7 +299,7 @@ end;
 
 
 (*
-## Combat.StyleBoxes
+## Combat.MeleeStyle
 ```pascal
 property TRSCombat.MeleeStyle: EMeleeStyle;
 property TRSCombat.MeleeStyle(value: EMeleeStyle): Boolean;

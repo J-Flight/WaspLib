@@ -7,24 +7,24 @@ Works with image frame sequences (not video files) and provides interactive cont
 - Credits: Developed by TazE
 - Acknowledgement: Slackydev for the original prototype concept
 
-## Requirements
+Requirements:
 - Individual image files (PNG, BMP, JPG) with numbers in filenames
 - Example: `frame_001.bmp`, `002.bmp` (last number is used for ordering)
 - **FPS Note**: Set playback FPS to match how frames were extracted for accurate speed
 
-## Video to Frames
+Video to Frames:
 ```bash
 # Extract all frames at original framerate
 ffmpeg -i video.mp4 -vsync 0 frame_%04d.bmp
 ```
 Note: Frames from recorder.simba videos will have compression artifacts and won't match screenshot quality.
 
-## Getting Started
+## Video Player Getting Started
 
-### Creating frame sequences
+Creating frame sequences:
 Use the {ref}`framerecorder` utility to capture frames.
 
-### Playing frame sequences:
+Playing frame sequences:
 ```pascal
 {$I WaspLib/osrs.simba}
 {$I Wasplib/tools/videoplayer.simba}

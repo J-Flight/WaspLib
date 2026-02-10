@@ -148,7 +148,7 @@ function TRSDepositBox.WaitOpen(time: Integer; interval: Integer = -1): Boolean;
 ```
 Returns true if the {ref}`DepositBox` is open within `time` milliseconds.
 
-## Example:
+Example:
 ```pascal
 WriteLn DepositBox.WaitOpen();
 ```

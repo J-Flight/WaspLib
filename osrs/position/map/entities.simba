@@ -168,7 +168,7 @@ end;
 ```pascal
 function TRSEntityArray.Create(json: TJSONArray): TRSEntityArray; static;
 ```
-Create function to build your {ref}`TRSObjectArray`.
+Create function to build your {ref}`TRSEntityArray`.
 
 This only accepts a `json` array and it expects a specific json structure which is
 the one that {ref}`Map JSONs` provide.
@@ -214,6 +214,10 @@ begin
   if Self.Model <> nil then
     Exit(Self.Model.GetArea(Projection.ProjectModel(Self.Model, vector.ToVec3(Self.Walker^.Height(pt, False) - height), 0, radians)));
 
+  if Abs(size.X - 0) < 0.005 then
+    raise GetDebugLn('TRSEntity', 'Your entity has a size.X of 0 or is simply too small! An entity can''t be ' + ToStr(size.X) + ' tiles wide.');
+  if Abs(size.Y - 0) < 0.005 then
+    raise GetDebugLn('TRSEntity', 'Your entity has a size.Y of 0 or is simply too small! An entity can''t be ' + ToStr(size.Y) + ' tiles wide.');
 
   size.X := size.X*2;
   size.Y := size.Y*2;
@@ -343,8 +347,8 @@ You also have {ref}`RSEntity.Find` to find entities, this version of the method
 is internal because it returns extra information about the found entities for
 internal use, like it's `cuboids` for example.
 
-This also returns an `atpa` containing the colors of the object that were found
-assuming the object has a {ref}`TColorFinder` setup.
+This also returns an `atpa` containing the colors of the entity that were found
+assuming the entity has a {ref}`TColorFinder` setup.
 If not, the cuboids area are returned as the match.
 *)
 function TRSEntity.FindEx(me: TPoint; out boundsArray: TPolygonArray; out coordinates: TPointArray; out atpa: T2DPointArray): Boolean;
@@ -511,11 +515,18 @@ end;
 ```pascal
 function TRSEntity.Hover(action: TStringArray = []; attempts: Integer = 2): Boolean;
 ```
-Method used to hover a TRSEntity target if it's found on the mainscreen.
+Method used to hover a TRSEntity target if it's found on the {ref}`MainScreen`.
 
 Example:
 ```pascal
-//TODO...
+{$I WaspLib/osrs.simba}
+var
+  npc: TRSEntity;
+begin
+  Map.Setup([Chunk(Box(40,49,41,48), 0)]);
+  npc := TRSEntity.Create(Map.Walker, [1,1,7], 8, [[]], ['Dominic Onion'], [ERSMinimapDot.NPC]);
+  WriteLn npc.Hover();
+end.
 ```
 *)
 function TRSEntity.Hover(action: TStringArray = []; attempts: Integer = 2): Boolean;
@@ -536,7 +547,7 @@ begin
   if Self.Walker = nil then
     raise GetDebugLn('TRSEntity', 'Missing the walker pointer.');
   if Self.Coordinates = [] then
-    raise GetDebugLn('TRSEntity', 'FindFrom requires the object to have coordinates.');
+    raise GetDebugLn('TRSEntity', 'FindFrom requires the entity to have coordinates.');
 
   me := Self.Walker^.Position();
   if not Self.Walker^.MakePointVisible(me, Self.Coordinates.NearestPoint(me)) then
@@ -574,11 +585,19 @@ end;
 ```pascal
 function TRSEntity.WalkHover(action: TStringArray = []; attempts: Integer = 2): Boolean;
 ```
-Method used to walk and hover a TRSEntity target if it's found on the mainscreen after walking.
+Method used to walk and hover a TRSEntity target if it's found on the
+{ref}`MainScreen` after walking.
 
 Example:
 ```pascal
-//TODO...
+{$I WaspLib/osrs.simba}
+var
+  npc: TRSEntity;
+begin
+  Map.Setup([Chunk(Box(40,49,41,48), 0)]);
+  npc := TRSEntity.Create(Map.Walker, [1,1,7], 8, [[]], ['Dominic Onion'], [ERSMinimapDot.NPC]);
+  WriteLn npc.WalkHover();
+end.
 ```
 *)
 function TRSEntity.WalkHover(action: TStringArray = []; attempts: Integer = 2): Boolean;
@@ -666,12 +685,18 @@ end;
 ```pascal
 function TRSEntity.Click(leftClick: Boolean = True; attempts: Integer = 2): Boolean;
 ```
-Method used to click a TRSEntity target if it's found on the mainscreen.
+Method used to click a TRSEntity target if it's found on the {ref}`MainScreen`.
 
 Example:
 ```pascal
-//Be in ge with a ge map loaded.
-WriteLn RSObjects.GEBank.Click();
+{$I WaspLib/osrs.simba}
+var
+  npc: TRSEntity;
+begin
+  Map.Setup([Chunk(Box(40,49,41,48), 0)]);
+  npc := TRSEntity.Create(Map.Walker, [1,1,7], 8, [[]], ['Dominic Onion'], [ERSMinimapDot.NPC]);
+  WriteLn npc.Click();
+end.
 ```
 *)
 function TRSEntity.Click(leftClick: Boolean = True; attempts: Integer = 2): Boolean;
@@ -684,7 +709,19 @@ end;
 ```pascal
 function TRSEntity.Interact(action: TStringArray; attempts: Integer = 2): Boolean;
 ```
-Method used to select an option on a TRSEntity target if it's found on the mainscreen.
+Method used to select an option on a TRSEntity target if it's found on the
+{ref}`MainScreen`.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+var
+  npc: TRSEntity;
+begin
+  Map.Setup([Chunk(Box(40,49,41,48), 0)]);
+  npc := TRSEntity.Create(Map.Walker, [1,1,7], 8, [[]], ['Dominic Onion'], [ERSMinimapDot.NPC]);
+  WriteLn npc.Interact(['Dream']);
+end.
 *)
 function TRSEntity.Interact(action: TStringArray; attempts: Integer = 2): Boolean;
 begin
@@ -696,12 +733,19 @@ end;
 ```pascal
 function TRSEntity.WalkClick(leftClick: Boolean = True; attempts: Integer = 2): Boolean;
 ```
-Method used to walk and click a TRSEntity target if it's found on the mainscreen.
+Method used to walk and click a TRSEntity target if it's found on the
+{ref}`MainScreen`.
 
 Example:
 ```pascal
-//Be in ge with a ge map loaded, preferably far away so it has to walk.
-WriteLn RSObjects.GEBank.WalkClick();
+{$I WaspLib/osrs.simba}
+var
+  npc: TRSEntity;
+begin
+  Map.Setup([Chunk(Box(40,49,41,48), 0)]);
+  npc := TRSEntity.Create(Map.Walker, [1,1,7], 8, [[]], ['Dominic Onion'], [ERSMinimapDot.NPC]);
+  WriteLn npc.WalkClick();
+end.
 ```
 *)
 function TRSEntity.WalkClick(leftClick: Boolean = True; attempts: Integer = 2): Boolean;
@@ -719,7 +763,20 @@ end;
 ```pascal
 function TRSEntity.WalkInteract(action: TStringArray; attempts: Integer = 2): Boolean;
 ```
-Method used to walk and select an option on a TRSEntity target if it's found on the mainscreen.
+Method used to walk and select an option on a TRSEntity target if it's found on
+the mainscreen.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+var
+  npc: TRSEntity;
+begin
+  Map.Setup([Chunk(Box(40,49,41,48), 0)]);
+  npc := TRSEntity.Create(Map.Walker, [1,1,7], 8, [[]], ['Dominic Onion'], [ERSMinimapDot.NPC]);
+  WriteLn npc.WalkInteract(['Dream']);
+end.
+```
 *)
 function TRSEntity.WalkInteract(action: TStringArray; attempts: Integer = 2): Boolean;
 begin

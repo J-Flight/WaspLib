@@ -1584,7 +1584,7 @@ begin
 end;
 
 (*
-## Bank.LockSlot
+## Bank.UnlockSlot
 ```pascal
 function TRSBank.UnlockSlot(slot: Integer): Boolean;
 ```

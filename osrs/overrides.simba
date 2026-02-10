@@ -292,3 +292,25 @@ begin
 
   SaveScreenshotEx('levelups', Self.Bounds);
 end;
+
+
+(*
+## Minimap.SetZoomToPoint override
+```pascal
+function TRSMinimap.SetZoomToPoint(pt: TPoint; randomness: Integer = 0): Boolean; override;
+```
+Overrides {ref}`Minimap.SetZoomToPoint` to truncate the minimum and maximum zoom
+at `Antiban.Zoom` level.
+*)
+function TRSMinimap.SetZoomToPoint(pt: TPoint; randomness: Integer = 0): Boolean; override;
+var
+  level: Integer;
+begin
+  if Self.InZoomRange(pt) then
+    Exit(True);
+
+  level := Self.GetZoomToPoint(pt, randomness);
+
+  if InRange(level, Max(Antiban.Zoom.Min, 0), Min(Antiban.Zoom.Max, 100)) then
+    Result := Options.SetZoomLevel(level);
+end;

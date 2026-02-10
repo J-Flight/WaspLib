@@ -192,7 +192,7 @@ end;
 
 var
 (*
-## MM2MS variable
+## Projection variable
 Global {ref}`TProjection` variable.
 
 It's unlikely you need to use this directly.
@@ -641,14 +641,20 @@ end;
 (*
 ## Minimap.GetZoomToPoint
 ```pascal
-function TRSMinimap.GetZoomToPoint(p: TPoint; randomness: Integer = 0): Integer;
+function TRSMinimap.GetZoomToPoint(pt: TPoint; randomness: Integer = 0): Integer;
 ```
-This function gives us a zoom level where **P** would be visible in the MainScreen.
+This function gives us a zoom level where `pt` would be visible in the
+{ref}`MainScreen`.
 
 Example:
 ```pascal
-p := Minimap.GetDots(ERSMinimapDot.ITEM)[0]; //find an item dot and returns it's coodinates.
-Options.SetZoomLevel(Minimap.ZoomToVisiblePoint(p));
+{$I WaspLib/osrs.simba}
+var
+  pt: TPoint;
+begin
+  pt := Minimap.GetDots(ERSMinimapDot.ITEM)[0]; //find an item dot and returns it's coodinates.
+  Options.SetZoomLevel(Minimap.GetZoomToPoint(pt));
+end.
 ```
 *)
 function TRSMinimap.GetZoomToPoint(p: TPoint; randomness: Integer = 0): Integer;
@@ -662,17 +668,19 @@ begin
 end;
 
 (*
-## Minimap.SetZoom2Point
+## Minimap.SetZoomToPoint
 ```pascal
-function TRSMinimap.SetZoom2Point(pt: TPoint; randomness: Integer = 0): Boolean;
+function TRSMinimap.SetZoomToPoint(pt: TPoint; randomness: Integer = 0): Boolean;
 ```
-This function adjusts the zoom level so the point **pt** is true in `TRSMinimap.InZoomRange()`.
+This function adjusts the zoom level so the point **pt** is true in
+{ref}`Minimap.InZoomRange`.
 *)
-function TRSMinimap.SetZoom2Point(pt: TPoint; randomness: Integer = 0): Boolean;
+function TRSMinimap.SetZoomToPoint(pt: TPoint; randomness: Integer = 0): Boolean;
 var
   level: Integer;
 begin
-  if Self.InZoomRange(pt) then Exit(True);
+  if Self.InZoomRange(pt) then
+    Exit(True);
 
   level := Self.GetZoomToPoint(pt, randomness);
 
@@ -686,11 +694,13 @@ end;
 ```pascal
 function TRSMinimap.MakePointVisible(p: TPoint): Boolean;
 ```
-Uses both Minimap.Zoom2Point() and Minimap.FacePoint() to make a point visible on the Mainscreen.
+Uses both {ref}`Minimap.SetZoomToPoint` and {ref}`Minimap.FacePoint` to make a
+point visible on the {ref}`MainScreen`.
 *)
 function TRSMinimap.MakePointVisible(pt: TPoint): Boolean;
 begin
-  Result := Self.SetZoom2Point(pt, Random(-5, 5)) and Self.FacePoint(pt, Random(-3, 3));
+  Result := Self.SetZoomToPoint(pt, Random(-5, 5)) and
+            Self.FacePoint(pt, Random(-3, 3));
 end;
 
 

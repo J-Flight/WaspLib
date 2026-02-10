@@ -324,9 +324,9 @@ begin
 end;
 
 (*
-## Slots.GetUsed
+## Slots.GetEmpty
 ```pascal
-function TRSSlotInterface.GetUsed(): TIntegerArray;
+function TRSSlotInterface.GetEmpty(): TIntegerArray;
 ```
 Returns the indices of the slots that don't have an item.
 

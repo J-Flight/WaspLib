@@ -224,6 +224,11 @@ begin
   if Self.Model <> nil then
     Exit(Self.Model.GetArea(Projection.ProjectModel(Self.Model, vector.ToVec3(Self.Walker^.Height(pt, False) - height), rotation, radians)));
 
+  if Abs(size.X - 0) < 0.005 then
+    raise GetDebugLn('TRSObject', 'Your object has a size.X of 0 or is simply too small! An object can''t be ' + ToStr(size.X) + ' tiles wide.');
+  if Abs(size.Y - 0) < 0.005 then
+    raise GetDebugLn('TRSObject', 'Your object has a size.Y of 0 or is simply too small! An object can''t be ' + ToStr(size.Y) + ' tiles wide.');
+
   size.X := size.X*2;
   size.Y := size.Y*2;
 

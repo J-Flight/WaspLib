@@ -490,7 +490,7 @@ Global {ref}`TInventoryFormHelper` variable.
   InventoryForm: TInventoryFormHelper;
 
 (*
-## ScriptForm CreateInventoryTab
+## ScriptForm.CreateInventoryTab
 ```pascal
 function TScriptForm.CreateInventoryTab(): TLazTabSheet;
 ```

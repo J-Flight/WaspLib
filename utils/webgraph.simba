@@ -699,7 +699,7 @@ end;
 
 
 (*
-## TWebGraph.AddUniLink
+## TWebGraph.AddDualLink
 ```pascal
 procedure TWebGraph.AddDualLink(a, b: TPoint; typ: EGraphNode; check, handle: TGraphNodeFunction);
 procedure TWebGraph.AddDualLink(a, b: TPoint; typ: EGraphNode; checkA, checkB, handleA, handleB: TGraphNodeFunction); overload;

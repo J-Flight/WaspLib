@@ -4,7 +4,7 @@ A library for sending messages and files to Discord channels via webhooks.
 
 Credits: Developed by TazE
 
-## Getting Started
+## Discord Getting Started
 
 Basic example for sending a message to Discord:
 

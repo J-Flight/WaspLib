@@ -101,7 +101,7 @@ function TRSLamp.WaitOpen(time: Integer; interval: Integer = -1): Boolean;
 ```
 Returns true if the {ref}`Lamp` is open within `time` milliseconds.
 
-## Example:
+Example:
 ```pascal
 WriteLn Lamp.WaitOpen();
 ```
@@ -122,7 +122,7 @@ Attempts to open the {ref}`Lamp` interface.
 By default it attempts to open the interface on the "Lamp" item, if you want a
 different one, e.g. "Antique lamp", you need to specify that.
 
-## Example:
+Example:
 ```pascal
 WriteLn Lamp.Open();
 ```

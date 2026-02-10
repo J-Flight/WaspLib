@@ -137,7 +137,7 @@ function TRSAnvil.WaitOpen(time: Integer; interval: Integer = -1): Boolean;
 ```
 Returns true if the {ref}`Anvil` is open within `time` milliseconds.
 
-## Example:
+Example:
 ```pascal
 WriteLn Anvil.WaitOpen();
 ```
@@ -159,7 +159,7 @@ This is probably more complex than most people would think it is because buttons
 are not always visible depending on the amount of metal bars your have in your
 {ref}`Inventory`.
 
-## Example:
+Example:
 ```pascal
 WriteLn Anvil.SetQuantity(QUANTITY_ALL);
 ```
@@ -216,7 +216,7 @@ function TRSAnvil.CanSmith(item: TRSItem): Boolean;
 ```
 Checks if the specified `item` is currently available to smith.
 
-## Example:
+Example:
 ```pascal
 WriteLn Anvil.CanSmith('Rune 2h sword');
 ```
@@ -239,7 +239,7 @@ function TRSAnvil.Smith(item: TRSItem; quantity: Integer = QUANTITY_ALL; keyboar
 ```
 Attempts to smith the specified `item` with the specified `quantity`.
 
-## Example:
+Example:
 ```pascal
 WriteLn Anvil.Smith('Rune 2h sword');
 ```

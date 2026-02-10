@@ -1,13 +1,16 @@
 (*
 # MM2MS
+```{note}
 Originally created by [slacky](https://slacky.one/).
+This is basically the same thing with some pre-calculated math.
+```
 
+```{note}
 MM2MS inversion originally created by Bootje.
+```
 
-This is basically the same thing with some pre-calculated math
-
-The MM2MS projector is usually used through {ref}`MM2MS`, but can be used by
-itself if you want and know what you are doing.
+The MM2MS projector is usually used through {ref}`Projection`, but can be used
+by itself if you want and know what you are doing.
 
 By itself, the projector is basically a 3D engine, very similar to what the game
 uses:
@@ -41,6 +44,11 @@ Now imagine and infine amount of those grids stacked up on top of that one and
 below, with vertical lines creating Z axis intersections.
 
 That's what a 3D grid is.
+
+```{note}
+WaspLib also has {ref}`RSCamera`, an alternative projection engine which is more
+accurate for certain tasks.
+```
 *)
 {$DEFINE WL_MM2MS_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}

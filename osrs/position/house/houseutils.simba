@@ -734,9 +734,9 @@ begin
 end;
 
 (*
-### THouseRoomMatrix.ToBytes
+### THouseRoomMatrix.CreateFromBytes
 ```pascal
-function THouseRoomMatrix.ToBytes(): TByteArray;
+function THouseRoomMatrix.CreateFromBytes(bytes: TByteArray): THouseRoomMatrix; static;
 ```
 Decode a `THouseRoomMatrix` from bytes. Useful to load them from storage.
 *)
@@ -845,9 +845,9 @@ begin
 end;
 
 (*
-### TTeleportRoomMatrix.ToBytes
+### TTeleportRoomMatrix.CreateFromBytes
 ```pascal
-function TTeleportRoomMatrix.ToBytes(): TByteArray;
+function TTeleportRoomMatrix.CreateFromBytes(bytes: TByteArray): TTeleportRoomMatrix; static;
 ```
 Decode a `TTeleportRoomMatrix` from bytes. Useful to load them from storage.
 *)
@@ -888,7 +888,6 @@ begin
     end;
   end;
 end;
-
 
 type
 (*

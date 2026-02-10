@@ -1,7 +1,7 @@
 (*
 # CollectBox
 Methods to interact with the bank pin interface.
-```{figure} ../../images/CollectBox_interface.png
+```{figure} ../../images/collectionbox_interface.png
 ```
 *)
 

@@ -301,15 +301,15 @@ begin
 end;
 
 (*
-## Chat.IsTitle
+## Chat.WaitTitle
 ```pascal
-function TRSChat.IsTitle(text: String; similarity: Single = 0.8): Boolean;
+function TRSChat.WaitTitle(text: String; time: Integer = 600; similarity: Single = 0.8; interval: Integer = -1): Boolean;
 ```
 Returns True/False if the current chat title matches `text`.
 
 Example:
 ```pascal
-WriteLn Chat.IsTitle('Select an option');
+WriteLn Chat.WaitTitle('Select an option');
 ```
 *)
 function TRSChat.WaitTitle(text: String; time: Integer = 600; similarity: Single = 0.8; interval: Integer = -1): Boolean;

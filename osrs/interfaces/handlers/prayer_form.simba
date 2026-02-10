@@ -163,16 +163,38 @@ end;
 {$H+}
 
 (*
-## TRSPrayerForm Selected
+## TRSPrayerForm.Selected
 ```pascal
 property TRSPrayerForm.Selected(prayers: TRSPrayerSet);
+property TRSPrayerForm.Selected: TRSPrayerSet;
 ```
-Set's the defined prayers as the set of selected prayers.
-Useful for saving user settings between sessions. Selected prayers from a previous
-session could be saved and then reset on the next session by setting them
-with the procedure upon building the form.
+Get/Set the defined prayers as a set of selected prayers.
 
-Example:
+Useful for saving user settings between sessions.
+
+Selected prayers from a previous session could be saved and then reset on the
+next session by setting them with the procedure upon building the form.
+
+Getting example:
+```pascal
+{$I WaspLib/osrs.simba}
+
+var
+  form: TScriptForm;
+  tab: TTabSheet;
+  prayerForm: TRSPrayerForm;
+
+begin
+  form.Setup('Script settings');
+  tab := TLazTabSheet.Create(form.PageControl);
+  prayerForm.Setup(tab, 50, 50);
+  prayerForm.SetAllowedPrayers([ERSPrayer.EAGLE_EYE, ERSPrayer.RIGOUR]);
+  form.Run();
+  WriteLn(prayerForm.Selected);
+end.
+```
+
+Setting example:
 ```pascal
 {$I WaspLib/osrs.simba}
 
@@ -206,32 +228,6 @@ begin
    Self._Select(prayer);
 end;
 
-(*
-## TRSPrayerForm Selected
-```pascal
-property TRSPrayerForm.Selected(prayers: TRSPrayerSet);
-```
-Get's the currently selected prayers.
-
-Example:
-```pascal
-{$I WaspLib/osrs.simba}
-
-var
-  form: TScriptForm;
-  tab: TTabSheet;
-  prayerForm: TRSPrayerForm;
-
-begin
-  form.Setup('Script settings');
-  tab := TLazTabSheet.Create(form.PageControl);
-  prayerForm.Setup(tab, 50, 50);
-  prayerForm.SetAllowedPrayers([ERSPrayer.EAGLE_EYE, ERSPrayer.RIGOUR]);
-  form.Run();
-  WriteLn(prayerForm.Selected);
-end.
-```
-*)
 property TRSPrayerForm.Selected: TRSPrayerSet;
 begin
   Result := Self.SelectedPrayers;
