@@ -745,7 +745,7 @@ begin
     raise GetDebugLn('TRSObject', 'Coordinates and Rotations don''t match.');
 
   me := Self.Walker^.Position();
-  if not Self.Walker^.MakePointVisible(me, Self.Coordinates.NearestPoint(me)) then
+  if not TRSWalker.MakePointVisibleEx(me, Self.Coordinates.NearestPoint(me)) then
     Exit;
 
   Result := Self._UpTextCheck(shouldExit, action);
@@ -852,7 +852,7 @@ begin
       Exit;
 
     me := Self.Walker^.Position();
-    if not Self.Walker^.MakePointVisible(me, Self.Coordinates.NearestPoint(me)) then
+    if not TRSWalker.MakePointVisibleEx(me, Self.Coordinates.NearestPoint(me)) then
       Exit;
 
     Result := Self._UpTextCheck(shouldExit, action) or Self.Walker^.RedClicked;

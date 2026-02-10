@@ -509,8 +509,6 @@ var
   distance: Double;
   i: Integer;
 begin
-  if not Self.Contains(pt) then Exit;
-
   quad := Self.ZoomQuad;
   if quad.Contains(pt) then Exit(True);
 
@@ -527,7 +525,7 @@ begin
   if not Result then
     Exit;
 
-  Self.CompassDegrees := Self.Center.AngleBetween(tpa[i]) - Self.Center.AngleBetween(pt) + randomness;
+  Self.CompassDegrees := -(Self.Center.AngleBetween(tpa[i]) - Self.Center.AngleBetween(pt) + randomness);
 end;
 
 (*
@@ -685,7 +683,11 @@ begin
   level := Self.GetZoomToPoint(pt, randomness);
 
   if InRange(level, 0, 100) then
+  begin
+    if Abs(level-Options.GetZoomLevel(True)) < randomness then
+      Exit(True);
     Result := Options.SetZoomLevel(level);
+  end;
 end;
 
 

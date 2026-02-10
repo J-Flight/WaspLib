@@ -312,5 +312,9 @@ begin
   level := Self.GetZoomToPoint(pt, randomness);
 
   if InRange(level, Max(Antiban.Zoom.Min, 0), Min(Antiban.Zoom.Max, 100)) then
+  begin
+    if Abs(level-Options.GetZoomLevel(True)) < randomness then
+      Exit(True);
     Result := Options.SetZoomLevel(level);
+  end;
 end;
