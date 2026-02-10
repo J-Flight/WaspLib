@@ -200,7 +200,7 @@ begin
 
   Self.Scroll.Area.X1 := Self.Bounds.X1 + 5;
   Self.Scroll.Area.Y1 := Self.Bounds.Y1 + 77;
-  Self.Scroll.Area.X2 := Self.Bounds.X2 - 22;
+  Self.Scroll.Area.X2 := Self.Bounds.X2 - 21;
   Self.Scroll.Area.Y2 := Self.Bounds.Y2 - 44;
 
   Self.Scroll.Setup();

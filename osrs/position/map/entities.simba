@@ -524,7 +524,7 @@ var
   npc: TRSEntity;
 begin
   Map.Setup([Chunk(Box(40,49,41,48), 0)]);
-  npc := TRSEntity.Create(Map.Walker, [1,1,7], 8, [[]], ['Dominic Onion'], [ERSMinimapDot.NPC]);
+  npc := TRSEntity.Create(Map.Walker, [1,1,7], 8, [[10432, 37966]], ['Dominic Onion'], [ERSMinimapDot.NPC]);
   WriteLn npc.Hover();
 end.
 ```
@@ -595,7 +595,7 @@ var
   npc: TRSEntity;
 begin
   Map.Setup([Chunk(Box(40,49,41,48), 0)]);
-  npc := TRSEntity.Create(Map.Walker, [1,1,7], 8, [[]], ['Dominic Onion'], [ERSMinimapDot.NPC]);
+  npc := TRSEntity.Create(Map.Walker, [1,1,7], 8, [[10432, 37966]], ['Dominic Onion'], [ERSMinimapDot.NPC]);
   WriteLn npc.WalkHover();
 end.
 ```
@@ -694,7 +694,7 @@ var
   npc: TRSEntity;
 begin
   Map.Setup([Chunk(Box(40,49,41,48), 0)]);
-  npc := TRSEntity.Create(Map.Walker, [1,1,7], 8, [[]], ['Dominic Onion'], [ERSMinimapDot.NPC]);
+  npc := TRSEntity.Create(Map.Walker, [1,1,7], 8, [[10432, 37966]], ['Dominic Onion'], [ERSMinimapDot.NPC]);
   WriteLn npc.Click();
 end.
 ```
@@ -719,7 +719,7 @@ var
   npc: TRSEntity;
 begin
   Map.Setup([Chunk(Box(40,49,41,48), 0)]);
-  npc := TRSEntity.Create(Map.Walker, [1,1,7], 8, [[]], ['Dominic Onion'], [ERSMinimapDot.NPC]);
+  npc := TRSEntity.Create(Map.Walker, [1,1,7], 8, [[10432, 37966]], ['Dominic Onion'], [ERSMinimapDot.NPC]);
   WriteLn npc.Interact(['Dream']);
 end.
 *)
@@ -743,7 +743,7 @@ var
   npc: TRSEntity;
 begin
   Map.Setup([Chunk(Box(40,49,41,48), 0)]);
-  npc := TRSEntity.Create(Map.Walker, [1,1,7], 8, [[]], ['Dominic Onion'], [ERSMinimapDot.NPC]);
+  npc := TRSEntity.Create(Map.Walker, [1,1,7], 8, [[10432, 37966]], ['Dominic Onion'], [ERSMinimapDot.NPC]);
   WriteLn npc.WalkClick();
 end.
 ```
@@ -773,7 +773,7 @@ var
   npc: TRSEntity;
 begin
   Map.Setup([Chunk(Box(40,49,41,48), 0)]);
-  npc := TRSEntity.Create(Map.Walker, [1,1,7], 8, [[]], ['Dominic Onion'], [ERSMinimapDot.NPC]);
+  npc := TRSEntity.Create(Map.Walker, [1,1,7], 8, [[10432, 37966]], ['Dominic Onion'], [ERSMinimapDot.NPC]);
   WriteLn npc.WalkInteract(['Dream']);
 end.
 ```
