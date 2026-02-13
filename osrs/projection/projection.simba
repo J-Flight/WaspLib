@@ -202,7 +202,13 @@ You usually only need the `TRSMinimap` and `TRSMainScreen` extensions below.
   Projection: TProjection;
 
 (*
-## Minimap Vectors To MainScreen
+## Minimap Projection Extensions
+This section contains multiple extensiosn to {ref}`TRSMinimap` related to
+{ref}`Projection`.
+*)
+
+(*
+### Minimap Vectors To MainScreen
 ```pascal
 function TRSMinimap.Vectors2MS(vectors: TVector3Array; radians: Single): TPointArray;
 function TRSMinimap.Vector2MS(vector: TVector3; radians: Single): TPoint;
@@ -231,7 +237,7 @@ end;
 
 
 (*
-## Minimap Points To MainScreen
+### Minimap Points To MainScreen
 ```pascal
 function TRSMinimap.Points2MS(points: TPointArray; radians: Single = $FFFF): TPointArray;
 function TRSMinimap.Point2MS(pt: TPoint; radians: Single = $FFFF): TPoint;
@@ -279,7 +285,7 @@ end;
 
 
 (*
-## Minimap Points To MainScreen Quads
+### Minimap Points To MainScreen Quads
 ```pascal
 function TRSMinimap.Vector2MSQuad(vector: TVector3; radians: Single; size: TVector2 = [1,1]; offset: TVector3 = [0,0,0]): TQuad;
 function TRSMinimap.Point2MSQuad(pt: TPoint; size: TVector2 = [1,1]; radians: Single = $FFFF): TQuad;
@@ -329,7 +335,7 @@ end;
 
 
 (*
-## Minimap Points To MainScreen Cuboids
+### Minimap Points To MainScreen Cuboids
 ```pascal
 function TRSMinimap.Vector2MSCuboid(vector, size: TVector3; radians: Single; offset: TVector3 = [0,0,0]): TCuboid;
 function TRSMinimap.Point2MSCuboid(pt: TPoint; size: TVector3; radians: Single = $FFFF): TCuboid;
@@ -385,23 +391,8 @@ begin
   Result := Self.Vector2MSCuboid(pt.ToVec3(), size, radians);
 end;
 
-
 (*
-## MainScreen.Point2MM
-```pascal
-function TRSMainScreen.Point2MM(pt: TPoint; height: Integer; radians: Single): TVector3;
-```
-Converts a mainscreen point `pt` to a minimap `TPoint` with the help of `MM2MS`.
-This is not an exact reversion of what `MM2MS` does but it's very accurate.
-*)
-function TRSMainScreen.Point2MM(pt: TPoint; height: Single): TPoint;
-begin
-  Result := Projection.ReverseRun([[pt.X, pt.Y, height]])[0];
-end;
-
-
-(*
-## Minimap.ZoomQuad
+### Minimap.ZoomQuad
 ```pascal
 property TRSMinimap.ZoomQuad: TQuad;
 ```
@@ -443,7 +434,7 @@ begin
 end;
 
 (*
-## Minimap.PointOnZoomQuad
+### Minimap.PointOnZoomQuad
 ```pascal
 function TRSMinimap.PointOnZoomQuad(pt: TPoint): Boolean;
 ```
@@ -461,7 +452,7 @@ begin
 end;
 
 (*
-## Minimap.RandomPointOnZoomQuad
+### Minimap.RandomPointOnZoomQuad
 ```pascal
 function TRSMinimap.RandomPointOnZoomQuad(pt: TPoint; randomness: Integer): TPoint;
 ```
@@ -491,7 +482,7 @@ end;
 
 
 (*
-## Minimap.FacePoint
+### Minimap.FacePoint
 ```pascal
 function TRSMinimap.FacePoint(pt: TPoint; randomness: Integer = 0): Boolean;
 ```
@@ -528,66 +519,9 @@ begin
   Self.CompassDegrees := -(Self.Center.AngleBetween(tpa[i]) - Self.Center.AngleBetween(pt) + randomness);
 end;
 
-(*
-## MainScreen.FacePoint
-```pascal
-function TRSMainScreen.FacePoint(pt: TPoint; randomness: Integer = 0): Boolean; override;
-```
-Rotates the camera to face point `pt`.
-*)
-function TRSMainScreen.FacePoint(pt: TPoint; randomness: Integer = 0): Boolean;
-begin
-  Result := Minimap.FacePoint(Self.Point2MM(pt, 0.0), randomness);
-end;
 
 (*
-## MainScreen.NormalizeDistance
-```pascal
-function TRSMainScreen.NormalizeDistance(dist: Integer): Integer;
-```
-Converts a distance acquired from the **fixed client* and **default zoom** to the
-current mainscreen with help of {ref}`MM2MS`.
-
-For example, say you want to create a box with the same size regardless of the
-zoom level:
-```pascal
-{$I WaspLib/osrs.simba}
-
-var
-  b: TBox;
-  dist: Integer;
-begin
-  while True do
-  begin
-    Options.GetZoomLevel(False);
-    dist := MainScreen.NormalizeDistance(50);
-    b := TBox.Create(MainScreen.Center, dist, dist);
-    ShowOnTarget(b);
-  end;
-end.
-```
-
-It will look something like this:
-```{figure} ../../images/normalizedist.gif
-```
-*)
-function TRSMainScreen.NormalizeDistance(dist: Integer): Integer;
-var
-  arr: TVector2Array;
-begin
-  if dist = 0 then Exit;
-
-  MM2MS.Update(Options.GetZoomLevel(True), 0);
-
-  with MainScreen.Center do
-    arr := Projection.Normalizer.ReverseRun([[X,Y,0], [X,Y-dist,0]]);
-  arr := MM2MS.Run([arr[0].ToVec3(0), arr[1].ToVec3(0)]);
-  Result := Round(arr[0].Distance(arr[1]));
-end;
-
-
-(*
-## Minimap.InZoomRange
+### Minimap.InZoomRange
 ```pascal
 function TRSMinimap.InZoomRangeEx(pt: TPoint; out corner: TPoint): Boolean;
 function TRSMinimap.InZoomRange(pt: TPoint): Boolean;
@@ -637,7 +571,7 @@ end;
 
 
 (*
-## Minimap.GetZoomToPoint
+### Minimap.GetZoomToPoint
 ```pascal
 function TRSMinimap.GetZoomToPoint(pt: TPoint; randomness: Integer = 0): Integer;
 ```
@@ -666,7 +600,7 @@ begin
 end;
 
 (*
-## Minimap.SetZoomToPoint
+### Minimap.SetZoomToPoint
 ```pascal
 function TRSMinimap.SetZoomToPoint(pt: TPoint; randomness: Integer = 0): Boolean;
 ```
@@ -692,7 +626,7 @@ end;
 
 
 (*
-## Minimap.MakePointVisible
+### Minimap.MakePointVisible
 ```pascal
 function TRSMinimap.MakePointVisible(p: TPoint): Boolean;
 ```
@@ -707,7 +641,7 @@ end;
 
 
 (*
-## Minimap.DebugTiles
+### Minimap.DebugTiles
 ```pascal
 procedure TRSMinimap.DebugTiles(img: TImage; dots: ERSMinimapDots);
 procedure TRSMinimap.DebugTiles(dots: ERSMinimapDots = [ERSMinimapDot.PLAYER..ERSMinimapDot.ITEM]); overload;
@@ -780,8 +714,86 @@ begin
   img.Show();
 end;
 
+
 (*
-## MainScreen.PlayerBox
+## MainScreen Projection Extensions
+This section contains multiple extensiosn to {ref}`TRSMainScreen` related to
+{ref}`Projection`.
+*)
+
+(*
+### MainScreen.Point2MM
+```pascal
+function TRSMainScreen.Point2MM(pt: TPoint; height: Integer; radians: Single): TVector3;
+```
+Converts a mainscreen point `pt` to a minimap `TPoint` with the help of `MM2MS`.
+This is not an exact reversion of what `MM2MS` does but it's very accurate.
+*)
+function TRSMainScreen.Point2MM(pt: TPoint; height: Single): TPoint;
+begin
+  Result := Projection.ReverseRun([[pt.X, pt.Y, height]])[0];
+end;
+
+
+(*
+### MainScreen.FacePoint
+```pascal
+function TRSMainScreen.FacePoint(pt: TPoint; randomness: Integer = 0): Boolean; override;
+```
+Rotates the camera to face point `pt`.
+*)
+function TRSMainScreen.FacePoint(pt: TPoint; randomness: Integer = 0): Boolean;
+begin
+  Result := Minimap.FacePoint(Self.Point2MM(pt, 0.0), randomness);
+end;
+
+(*
+### MainScreen.NormalizeDistance
+```pascal
+function TRSMainScreen.NormalizeDistance(dist: Integer): Integer;
+```
+Converts a distance acquired from the **fixed client* and **default zoom** to the
+current mainscreen with help of {ref}`MM2MS`.
+
+For example, say you want to create a box with the same size regardless of the
+zoom level:
+```pascal
+{$I WaspLib/osrs.simba}
+
+var
+  b: TBox;
+  dist: Integer;
+begin
+  while True do
+  begin
+    Options.GetZoomLevel(False);
+    dist := MainScreen.NormalizeDistance(50);
+    b := TBox.Create(MainScreen.Center, dist, dist);
+    ShowOnTarget(b);
+  end;
+end.
+```
+
+It will look something like this:
+```{figure} ../../images/normalizedist.gif
+```
+*)
+function TRSMainScreen.NormalizeDistance(dist: Integer): Integer;
+var
+  arr: TVector2Array;
+begin
+  if dist = 0 then Exit;
+
+  MM2MS.Update(Options.GetZoomLevel(True), 0);
+
+  with MainScreen.Center do
+    arr := Projection.Normalizer.ReverseRun([[X,Y,0], [X,Y-dist,0]]);
+  arr := MM2MS.Run([arr[0].ToVec3(0), arr[1].ToVec3(0)]);
+  Result := Round(arr[0].Distance(arr[1]));
+end;
+
+(*
+### MainScreen.PlayerBox
 ```pascal
 property TRSMainScreen.PlayerBox: TBox;
 ```
@@ -822,3 +834,70 @@ begin
   Result := Projection.Run(vectors, radians).Bounds();
   Projection.PlayerBoxes[Options.GetZoomLevel()] := Result;
 end;
+
+
+(*
+### MainScreen.SetHighestPitch
+```pascal
+function TRSMainScreen.SetHighestPitch(): Boolean;
+```
+Attempts to set the camera pitch to the highest possible.
+
+Example:
+```pascal
+if not MainScreen.HighestPitch then
+  MainScreen.SetHighestPitch();
+```
+*)
+procedure TRSMainScreen.SetHighestPitch();
+var
+  i, shift: Integer;
+begin
+  Keyboard.KeyDown(EKeyCode.UP);
+  Sleep(30, 60);
+  for i := 1 to 10 do // 2500ms timeout
+  begin
+    shift := Target.GetPixelDifference(250, Self.Bounds).Length;
+    //less than 10% of the screen changed in 250ms
+    if (shift / Self.Bounds.Area * 100) < 10 then
+      Break;
+  end;
+  Keyboard.KeyUp(EKeyCode.UP);
+  Self.HighestPitch := True;
+  if Projection.System = EProjector.CAMERA then
+    RSCamera.SetPitch(RSCamera.MAX_PITCH);
+end;
+
+ (*
+### MainScreen.SetLowestPitch
+```pascal
+function TRSMainScreen.SetLowestPitch(): Boolean;
+```
+Attempts to set the camera pitch to the lowest possible.
+
+Example:
+```pascal
+if MainScreen.HighestPitch then
+  MainScreen.SetLowestPitch();
+```
+*)
+procedure TRSMainScreen.SetLowestPitch();
+var
+  i, shift: Integer;
+begin
+  Keyboard.KeyDown(EKeyCode.UP);
+  Sleep(30, 60);
+  for i := 1 to 10 do // 2500ms timeout
+  begin
+    shift := Target.GetPixelDifference(250, Self.Bounds).Length;
+    //less than 10% of the screen changed in 250ms
+    if (shift / Self.Bounds.Area * 100) < 10 then
+      Break;
+  end;
+  Keyboard.KeyUp(EKeyCode.UP);
+  Self.HighestPitch := False;
+
+  if Projection.System = EProjector.CAMERA then
+    RSCamera.SetPitch(RSCamera.MIN_PITCH);
+end;
+

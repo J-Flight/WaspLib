@@ -603,7 +603,7 @@ end.
 function TRSEntity.WalkHover(action: TStringArray = []; attempts: Integer = 2): Boolean;
 var
   me, closest: TPoint;
-  path: TGraphNodeArray;
+  path: TPointArray;
   hasPath, shouldExit: Boolean;
   attempt, i: Integer;
   atpa: T2DPointArray;

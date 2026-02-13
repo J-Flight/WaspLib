@@ -430,7 +430,7 @@ This is an internal method. Don't use it if you don't know what you are doing.
 function TRSMapLoader.GraphFromCache(path: String): TWebGraph;
 begin
   if FileExists(path + 'nodes.txt') then
-    Result.Nodes := TGraphNodeArray.CreateFromBytes(DecompressBytes(ECompressAlgo.ZLIB, FileReadBytes(path + 'nodes.txt')));
+    Result.Nodes := TPointArray.CreateFromBytes(DecompressBytes(ECompressAlgo.ZLIB, FileReadBytes(path + 'nodes.txt')));
   if FileExists(path + 'paths.txt') then
     Result.Paths := T2DIntegerArray.CreateFromBytes(DecompressBytes(ECompressAlgo.ZLIB, FileReadBytes(path + 'paths.txt')));
 
@@ -635,8 +635,8 @@ begin
     if offset <> [0, 0] then
     begin
       for j := 0 to High(Self.Graph.Nodes) do
-        if Self.Graph.Nodes[j].Node in oldRegions[i] then
-          Self.Graph.Nodes[j].Node := Self.Graph.Nodes[j].Node + offset;
+        if Self.Graph.Nodes[j] in oldRegions[i] then
+          Self.Graph.Nodes[j] := Self.Graph.Nodes[j] + offset;
 
       for j := 0 to High(Self.Graph.WalkableSpace) do
         if Self.Graph.WalkableSpace[j] in oldRegions[i] then

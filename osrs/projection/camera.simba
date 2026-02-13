@@ -33,7 +33,7 @@ begin
   Self.ZoomScale := -1;
   Self.Radians := -1;
 
-  Self.Pitch := 383;
+  Self.Pitch := Self.MAX_PITCH;
 
   for i := 0 to 2047 do
   begin

@@ -390,7 +390,7 @@ begin
           Exit;
         if not Magic.ContainsSpell(ERSSpell.TELEPORT_TO_HOUSE) then
           RaiseException('Can''t find teleport to house spell.');
-        if not Magic.CastSpell(ERSSpell.TELEPORT_TO_HOUSE, 'Cast') then
+        if not Magic.Cast(ERSSpell.TELEPORT_TO_HOUSE, 'Cast') then
           Exit;
       end;
     EHouseTeleportMode.TABLET:

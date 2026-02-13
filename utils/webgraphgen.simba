@@ -28,13 +28,10 @@ type
 Record responsible for generating webgraphs from collision map images.
 *)
   TWebGraphGenerator = record
-    Spacing, MinimumTiles, NodeRadius, MaxConnections,
-    MaxDoorConnections: Integer;
-    Skeletonize: Boolean;
-    Disabled: Boolean;
+    Spacing, MinimumTiles, NodeRadius, MaxConnections: Integer;
+    Skeletonize, Disabled: Boolean;
 
     WhiteClusters: T2DPointArray;
-    Doors: T2DPointArray;
     Matrix: TIntegerMatrix;
   end;
 
@@ -43,8 +40,11 @@ var
   data: TIntegerArray;
 begin
   data := [
-    Self.Spacing, Self.MinimumTiles, Self.NodeRadius, Self.MaxConnections,
-    Self.MaxDoorConnections, Int32(Self.Skeletonize)
+    Self.Spacing,
+    Self.MinimumTiles,
+    Self.NodeRadius,
+    Self.MaxConnections,
+    Int32(Self.Skeletonize)
   ];
   Result := HashData(EHashAlgo.CRC32, @data[0], Length(data) * SizeOf(Int32));
 end;
@@ -52,7 +52,7 @@ end;
 (*
 ## WebGraphGenerator.Setup
 ```pascal
-procedure TWebGraphGenerator.Setup(spacing, minimumTiles, nodeRadius, maxConnections, maxDoorConnections: Integer);
+procedure TWebGraphGenerator.Setup(spacing, minimumTiles, nodeRadius, maxConnections: Integer);
 ```
 Sets up the `TWebGraphGenerator` with the following settings which are the
 defaults:
@@ -66,207 +66,26 @@ values have worse results but geneartion is faster.
 - `minimumTiles`: spaces with less tiles than this will be ignored.
 - `nodeRadius`: closed spaces that are less than this values in pixels will have a single node in the middle.
 - `maxConnections`: max connections per node.
-- `maxDoorConnections`: max connections per door node.
 
 Feel free to change the settings to suit your need and use the
 {ref}`Map Debugger` to see what the results look like.
 
 To do so you **MUST DO IT BEFORE** setting up your {ref}`Map`.
 *)
-procedure TWebGraphGenerator.Setup(spacing, minimumTiles, nodeRadius, maxConnections, maxDoorConnections: Integer; skeletonize: Boolean);
+procedure TWebGraphGenerator.Setup(spacing, minimumTiles, nodeRadius, maxConnections: Integer; skeletonize: Boolean);
 begin
   Self.Spacing := spacing;
   Self.MinimumTiles := minimumTiles;
   Self.NodeRadius := nodeRadius;
   Self.MaxConnections := maxConnections;
-  Self.MaxDoorConnections := maxDoorConnections;
   Self.Skeletonize := skeletonize;
 end;
 
-function TWebGraphGenerator.GetDoorDirection(center: TPoint; img: TImage): TPoint;
-var
-  imgBounds: TBox;
-  
-  function SafePixelCheck(x, y: Integer): Boolean;
-  begin
-    Result := imgBounds.Contains([x, y]) and (img.Pixel[x, y] = $0000FF);
-  end;
-  
-begin
-  imgBounds := [0, 0, img.Width - 1, img.Height - 1];
-  
-  if SafePixelCheck(center.X+1, center.Y) or SafePixelCheck(center.X-1, center.Y) then
-    Exit([0,1]);
 
-  if SafePixelCheck(center.X, center.Y+1) or SafePixelCheck(center.X, center.Y-1) then
-    Exit([1,0]);
-
-  if SafePixelCheck(center.X+1, center.Y+1) or SafePixelCheck(center.X-1, center.Y-1) then
-    Exit([1,-1]);
-
-  if SafePixelCheck(center.X+1, center.Y-1) or SafePixelCheck(center.X-1, center.Y+1) then
-    Exit([1,1]);
-
-  Result := [0,0];
-end;
-
-function TWebGraphGenerator.DoorIsSeparating(center, direction: TPoint; img: TImage): Boolean;
-var
-  inverted: TPoint;
-  i: Integer;
-  splitA, splitB: Boolean;
-  testPoint: TPoint;
-  imgBounds: TBox;
-begin
-  imgBounds := [0, 0, img.Width - 1, img.Height - 1];
-  inverted := direction.Rotate(HALF_PI, [0,0]);
-
-  for i := 1 to 5 do
-  begin
-    testPoint := Point(center.X, center.Y) + (inverted*i);
-    
-    if imgBounds.Contains(testPoint) then
-    begin
-      case img.Pixel[testPoint.X, testPoint.Y] of
-        $333333, $0:
-        begin
-          splitA := True;
-          Break;
-        end;
-      end;
-    end;
-
-    testPoint := Point(testPoint.X - direction.X, testPoint.Y - direction.Y);
-    if imgBounds.Contains(testPoint) then
-    begin
-      case img.Pixel[testPoint.X, testPoint.Y] of
-        $333333, $0:
-        begin
-          splitA := True;
-          Break;
-        end;
-      end;
-    end;
-
-    testPoint := Point(center.X, center.Y) + (inverted*i) + direction;
-    if imgBounds.Contains(testPoint) then
-    begin
-      case img.Pixel[testPoint.X, testPoint.Y] of
-        $333333, $0:
-        begin
-          splitA := True;
-          Break;
-        end;
-      end;
-    end;
-  end;
-
-  for i := 1 to 5 do
-  begin
-    testPoint := Point(center.X, center.Y) - (inverted * i);
-    
-    if imgBounds.Contains(testPoint) then
-    begin
-      case img.Pixel[testPoint.X, testPoint.Y] of
-        $333333, $0:
-        begin
-          splitB := True;
-          Break;
-        end;
-      end;
-    end;
-
-    testPoint := Point(testPoint.X - direction.X, testPoint.Y - direction.Y);
-    if imgBounds.Contains(testPoint) then
-    begin
-      case img.Pixel[testPoint.X, testPoint.Y] of
-        $333333, $0:
-        begin
-          splitB := True;
-          Break;
-        end;
-      end;
-    end;
-
-    testPoint := Point(center.X, center.Y) - (inverted * i) + direction;
-    if imgBounds.Contains(testPoint) then
-    begin
-      case img.Pixel[testPoint.X, testPoint.Y] of
-        $333333, $0:
-        begin
-          splitB := True;
-          Break;
-        end;
-      end;
-    end;
-  end;
-
-  Result := splitA and splitB;
-end;
-
-
-function TWebGraphGenerator.FindDoors(doors: T2DPointArray; img: TImage): T2DPointArray;
-var
-  direction: TPoint;
-  i, idx: Integer;
-  imgBounds: TBox;
-  centerPt, testPt1, testPt2: TPoint;
-begin
-  imgBounds := [0, 0, img.Width - 1, img.Height - 1];
-  
-  for i := 0 to High(doors) do
-  begin
-    case Length(doors[i]) of
-      4, 8: ;
-      else Continue;
-    end;
-
-    centerPt := doors[i].Mean();
-    direction := Self.GetDoorDirection(centerPt, img);
-    if direction = [0,0] then Continue;
-
-    testPt1 := Point(centerPt.X + direction.X, centerPt.Y + direction.Y);
-    testPt2 := Point(centerPt.X - direction.X, centerPt.Y - direction.Y);
-    
-    if not imgBounds.Contains(testPt1) or not imgBounds.Contains(testPt2) then
-      Continue;
-      
-    if (img.Pixel[testPt1.X, testPt1.Y] <> $FFFFFF) or
-       (img.Pixel[testPt2.X, testPt2.Y] <> $FFFFFF) then
-      Continue;
-
-    if not Self.DoorIsSeparating(centerPt, direction, img) then
-      Continue;
-
-    idx := Length(Result);
-    SetLength(Result, idx+1);
-    Result[idx] += centerPt;
-    Result[idx] += centerPt + direction * 2;
-    Result[idx] += centerPt - direction * 2;
-  end;
-end;
-
-
-function TWebGraphGenerator.ProcessDoors(door: TPointArray; idx: Integer; out total: Integer; out mapA, mapB: TIntegerMatrix): TGraphNodeArray;
-var
-  a, b: Integer;
-begin
-  a := Self.Matrix[door[1].Y, door[1].X];
-  b := Self.Matrix[door[2].Y, door[2].X];
-  if a = b then Exit;
-
-  mapA[a] += idx;
-  mapB[b] += idx;
-
-  Result := [TGraphNode.Create(door[0], EGraphNode.DOOR)];
-  Self.Matrix[door[0].Y, door[0].X] := total;
-  total += 1;
-end;
-
-procedure TWebGraphGenerator.ProcessSmallCluster(out graph: TWebGraph; out minRadius: Boolean; out mapA, mapB: TIntegerArray; idx, minLength: Integer; connectA, connectB: TIntegerArray);
+procedure TWebGraphGenerator.ProcessSmallCluster(out graph: TWebGraph; out minRadius: Boolean; idx, minLength: Integer);
 var
   bounds: TBox;
-  hi, n, j, l: Integer;
+  hi: Integer;
 begin
   if Length(Self.WhiteClusters[idx]) < minLength then
     Exit;
@@ -277,35 +96,9 @@ begin
   if minRadius then
     Exit;
 
-  graph.Nodes += TGraphNode.Create(Self.WhiteClusters[idx].Median());
+  graph.Nodes += Self.WhiteClusters[idx].Median();
   hi := High(graph.Nodes);
   SetLength(graph.Paths, hi+1);
-
-  for n := High(mapA) downto 0 do
-  begin
-    j := mapA[n];
-    if connectA[j] = idx then
-    begin
-      l := Self.Matrix[Self.Doors[j,0].Y, Self.Doors[j,0].X];
-      if graph.Paths[l] <> [] then
-        Delete(mapA, idx, 1);
-      graph.Paths[l] += [hi];
-      graph.Paths[hi] += l;
-    end;
-  end;
-
-  for n := High(mapB) downto 0 do
-  begin
-    j := mapB[n];
-    if connectB[j] = idx then
-    begin
-      l := Self.Matrix[Self.Doors[j,0].Y, Self.Doors[j,0].X];
-      if graph.Paths[l] <> [] then
-        Delete(mapB, idx, 1);
-      graph.Paths[l] += [hi];
-      graph.Paths[hi] += l;
-    end;
-  end;
 end;
 
 function TWebGraphGenerator.SplitNodes(idx: Integer): TPointArray;
@@ -352,14 +145,14 @@ begin
   p := tree.Data[idx].Split;
   i := idx+len;
 
-  graph.Nodes[i] := TGraphNode.Create(p);
+  graph.Nodes[i] := p;
   Self.Matrix[p.Y, p.X] := i;
 
   for n in connectMap[p.Y,p.X] do
   begin
     q := tree.Data[n].Split;
     j := n+len;
-    graph.Nodes[j] := TGraphNode.Create(q);
+    graph.Nodes[j] := q;
     Self.Matrix[q.Y, q.X] := j;
 
     if not graph.Paths[i].Contains(j) then
@@ -368,34 +161,6 @@ begin
       graph.Paths[j] += i;
   end;
 end;
-
-procedure TWebGraphGenerator.ConnectLastDoors(out graph: TWebGraph; idx, door: Integer; constref tree: TKDPointTree);
-var
-  p, q: TPoint;
-  i, j: Integer;
-  cluster, tpa: TPointArray;
-begin
-  p := Self.Doors[door,0];
-  i := Self.Matrix[p.Y, p.X];
-
-  cluster := Self.WhiteClusters[idx] + [p];
-
-  for q in tree.KNearest(p, Self.MaxDoorConnections, True) do
-  begin
-    if Max(Abs(p.X - q.X), Abs(p.Y - q.Y)) > Self.Spacing * 2 then
-      Continue;
-
-    tpa := cluster.ExtractBox(TBox.Create(p, q).Expand(Self.Spacing div 2));
-    tpa := tpa.AStar(p, q, False);
-    if (tpa = []) or (Length(tpa) > 80) then
-      Continue;
-
-    j := Self.Matrix[q.Y, q.X];
-    graph.Paths[i] += [j];
-    graph.Paths[j] += i;
-  end;
-end;
-
 
 (*
 ## WebGraphGenerator.BuildGraph
@@ -408,8 +173,8 @@ Magically builds a webgraph for you for a given collision map passed into `map`.
 The collision map can only have 4 colors:
 - white ($FFFFFF) for walkable space
 - black ($000000) for non walkable space
-- red ($0000FF) for doors (optional)
-- gray ($333333) for objects (optional)
+- red ($0000FF) for doors
+- gray ($333333) for objects
 
 ```{note}
 This is an internal method. Don't use it if you don't know what you are doing.
@@ -437,34 +202,25 @@ parameter and it should look something like this:
 
 As a bonus you can also see the resulting webgraph!
 *)
-function TWebGraphGenerator._BuildGraph(map: TImage; white, red: TPointArray): TWebGraph;
+function TWebGraphGenerator._BuildGraph(constref white: TPointArray): TWebGraph;
 var
-  i, j, n, len, minLen: Integer;
+  i, j, len, minLen: Integer;
   nodes: TPointArray;
   pt: TPoint;
   tree: TKDPointTree;
   connectMap: array of TIntegerMatrix;
-  doorMapA, doorMapB: TIntegerMatrix;
-  connectA, connectB: TIntegerArray;
   minRadius: Boolean;
   timer: TCountDown;
 begin
   minLen := Self.MinimumTiles * RSTranslator.TileArea;
 
   Self.WhiteClusters := white.Cluster(1).SortBySize(True);
-  Self.Doors := Self.FindDoors(red.Cluster(1.5), map);
-
-  SetLength(connectA, Length(Self.Doors));
-  SetLength(connectB, Length(Self.Doors));
 
   with white.Bounds() do
   begin
     SetLength(connectMap, Y2+1, X2+1);
     SetLength(Self.Matrix, Y2+1, X2+1);
   end;
-
-  SetLength(doorMapA, Length(Self.WhiteClusters));
-  SetLength(doorMapB, Length(Self.WhiteClusters));
 
   for i := 0 to High(Self.WhiteClusters) do
   begin
@@ -473,9 +229,6 @@ begin
     for pt in Self.WhiteClusters[i] do
       Self.Matrix[pt.Y, pt.X] := i;
   end;
-
-  for i := 0 to High(Self.Doors) do
-    Result.Nodes += Self.ProcessDoors(Self.Doors[i], i, n, doorMapA, doorMapB);
 
   timer.Start(4 * ONE_SECOND);
   SetLength(Result.Paths, Length(Result.Nodes));
@@ -490,7 +243,7 @@ begin
 
     if not minRadius then
     begin
-      Self.ProcessSmallCluster(Result, minRadius, doorMapA[i], doorMapB[i], i, minLen, connectA, connectB);
+      Self.ProcessSmallCluster(Result, minRadius, i, minLen);
       if not minRadius then
         Continue;
     end;
@@ -510,9 +263,6 @@ begin
 
     for j := 0 to High(tree.Data) do
       Self.ProcessCluster(Result, tree, connectMap, j, len);
-
-    for j in doorMapA[i] + doorMapB[i] do
-      Self.ConnectLastDoors(Result, i, j, tree);
   end;
 
   Self.Matrix := [];
@@ -520,7 +270,7 @@ end;
 
 function TWebGraphGenerator.BuildGraph(name: String; map: TImage): TWebGraph;
 var
-  white, red, gray, merged, graySubset: TPointArray;
+  white, gray, merged, graySubset: TPointArray;
   grayClusters, mergedClusters: T2DPointArray;
   i, j: Integer;
   t: UInt64;
@@ -529,10 +279,9 @@ begin
   t := GetTimeRunning();
 
   white := map.FindColor($FFFFFF, 0);
-  red := map.FindColor($0000FF, 0);
   gray := map.FindColor($333333, 0);
 
-  Result := Self._BuildGraph(map, white, red);
+  Result := Self._BuildGraph(white);
   grayClusters := gray.Cluster(1);
 
   for i := 0 to High(Self.WhiteClusters) do
@@ -566,9 +315,9 @@ If you do wish to understand the technical details a little bit more, the
 following is a simplified explanation with images of more or less how it works.
 
 First of all, you need to have a collision map. WaspLib's webgraph generator
-assumes the walking space is white and that the doors are red, other than that,
-it doesn't really matter what colors your collision map, for this explanation
-I'm going to use a small piece of varrock with a bit of the wilderness:
+assumes the walking space is white, other than that, it doesn't really matter
+what colors your collision map, for this explanation I'm going to use a small
+piece of varrock with a bit of the wilderness:
 ```{figure} ../../images/graphgen0.png
 ```
 

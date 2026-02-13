@@ -9,212 +9,205 @@ This is not meant to be used directly but through {ref}`TRSWalker` WebWalking.
 
 {.$DEFINE WL_TRANSPORTER_DEBUG}
 
-{$R-}
-{$IFDEF RANGECHECKS}
-begin
-  WriteLn GetDebugLn('Transporter', 'Range checks are enabled for Transporter, these should be disabled in production!', ELogLevel.WARN);
-end;
-{$ENDIF}
+type
+  ESpellTeleport = enum(
+    HOUSE_INSIDE,
+    HOUSE_OUTSIDE,
+    KOUREND,
+    LASSAR,
+    OURANIA,
+    RESPAWN,
+    VARROCK,
+    GRAND_EXCHANGE,
+    CAMELOT,
+    SEERS,
+    KHAZARD,
+    FALADOR,
+    BARROWS,
+    MOONCLAN,
+    CEMETERY,
+    GHORROCK,
+    ARDOUGNE,
+    PADDEWWA,
+    KHARYRLL,
+    ANNAKARL,
+    CATHERBY,
+    APE_ATOLL_DUNGEON,
+    LUMBRIDGE,
+    BARBARIAN,
+    APE_ATOLL,
+    TROLLHEIM,
+    MIND_ALTAR,
+    WATCHTOWER,
+    YANILLE,
+    ICE_PLATEU,
+    LUNAR_HOME,
+    FENKENSTRAINS_CASTLE,
+    SALVE_GRAVEYARD,
+    ARCEUUS_LIBRARY,
+    HARMONY_ISLAND,
+    EDGEVILLE_HOME,
+    DRAYNOR_MANOR,
+    FISHING_GUILD,
+    LUMBRIDGE_HOME,
+    WEST_ARDOUGNE,
+    CARRALLANGAR,
+    ARCEUUS_HOME,
+    WATERBIRTH,
+    SENNTISTEN
+  );
+
+  EItemTeleport = enum(
+    DUELING_RING, GAMES_NECKLACE, DIGSITE_PENDANT, MYSTIC_CAPE
+  );
+
+const
+  TELEPORT_COORDINATES: array [ESpellTeleport] of TPoint = [
+    [], //HOUSE_INSIDE
+    [], //HOUSE_OUTSIDE
+    [], //KOUREND
+    [], //LASSAR
+    [], //OURANIA
+    [], //RESPAWN
+    [], //VARROCK
+    [], //GRAND EXCHANGE
+    [], //CAMELOT
+    [], //SEERS
+    [], //KHAZARD
+    [], //FALADOR
+    [], //BARROWS
+    [], //MOONCLAN
+    [], //CEMETERY
+    [], //GHORROCK
+    [], //ARDOUGNE
+    [], //PADDEWWA
+    [], //KHARYRLL
+    [], //ANNAKARL
+    [], //CATHERBY
+    [], //APE_ATOLL_DUNGEON
+    [], //LUMBRIDGE
+    [], //BARBARIAN
+    [], //APE_ATOLL
+    [], //TROLLHEIM
+    [], //MIND_ALTAR
+    [], //WATCHTOWER
+    [], //YANILLE
+    [], //ICE_PLATEU
+    [], //LUNAR_HOME
+    [], //FENKENSTRAINS_CASTLE
+    [], //SALVE_GRAVEYARD
+    [], //ARCEUUS_LIBRARY
+    [], //HARMONY_ISLAND
+    [], //EDGEVILLE_HOME
+    [], //DRAYNOR_MANOR
+    [], //FISHING_GUILD
+    [], //LUMBRIDGE_HOME
+    [], //WEST_ARDOUGNE
+    [], //CARRALLANGAR
+    [], //ARCEUUS_HOME
+    [], //WATERBIRTH
+    [] //SENNTISTEN
+  ];
 
 type
 (*
+(TTransporter)=
 ## TTransporter type
 Main record responsible for transporting the player from one place to another.
 *)
   TTransporter = record
-    Position: TWalkerPositionFunction;
-    Shortcuts: TRSObjectArray;
+    HomeTeleportTimer: TCountDown;
   end;
 
-function TTransporter.CheckTeleportGrandExchange(): Boolean;
-begin
-  {$IFDEF WL_TRANSPORTER_DEBUG}
-  WriteLn GetDebugLn('Transporter', 'Checking teleport to Grand Exchange spell.');
-  {$ENDIF}
-  if Stats.GetLevel(ERSSkill.MAGIC) < 25 then Exit;
-  if Achievements.Diaries.GetLevel(ERSAchievementDiary.VARROCK) < 2 then Exit;
-  Result := Magic.ContainsSpell(ERSSpell.VARROCK_TELEPORT);
-end;
-
-function TTransporter.DoTeleportGrandExchange(): Boolean;
-begin
-  {$IFDEF WL_TRANSPORTER_DEBUG}
-  WriteLn GetDebugLn('Transporter', 'Casting teleport to Grand Exchange.');
-  {$ENDIF}
-  if Magic.CastSpell(ERSSpell.VARROCK_TELEPORT, 'Grand Exchange') then
-    Result := SleepUntil(Self.Position().InRange([8565, 36522], 60), 300, 5000);
-end;
-
-
-function TTransporter.CheckTeleportVarrock(): Boolean;
-begin
-  {$IFDEF WL_TRANSPORTER_DEBUG}
-  WriteLn GetDebugLn('Transporter', 'Checking teleport to Varrock spell.');
-  {$ENDIF}
-  if Stats.GetLevel(ERSSkill.MAGIC) < 25 then Exit;
-  Result := Magic.Open() and Magic.ContainsSpell(ERSSpell.VARROCK_TELEPORT);
-end;
-
-function TTransporter.DoTeleportVarrock(): Boolean;
-begin
-  {$IFDEF WL_TRANSPORTER_DEBUG}
-  WriteLn GetDebugLn('Transporter', 'Casting teleport to Varrock.');
-  {$ENDIF}
-  if Magic.CastSpell(ERSSpell.VARROCK_TELEPORT, 'Cast') then
-    Result := SleepUntil(Self.Position().InRange([8752, 36716], 60), 300, 5000);
-end;
-
-
-function TTransporter.CheckTeleportLumbridge(): Boolean;
-begin
-  {$IFDEF WL_TRANSPORTER_DEBUG}
-  WriteLn GetDebugLn('Transporter', 'Checking teleport to Lumbridge spell.');
-  {$ENDIF}
-  if Stats.GetLevel(ERSSkill.MAGIC) < 31 then Exit;
-  Result := Magic.Open() and Magic.ContainsSpell(ERSSpell.LUMBRIDGE_TELEPORT);
-end;
-
-function TTransporter.DoTeleportLumbridge(): Boolean;
-begin
-  {$IFDEF WL_TRANSPORTER_DEBUG}
-  WriteLn GetDebugLn('Transporter', 'Casting teleport to Lumbridge.');
-  {$ENDIF}
-  if Magic.CastSpell(ERSSpell.LUMBRIDGE_TELEPORT, 'Cast') then
-    Result := SleepUntil(Self.Position().InRange([8752, 36716], 60), 300, 5000);
-end;
-
-
-function TTransporter.CheckTeleportFalador(): Boolean;
-begin
-  {$IFDEF WL_TRANSPORTER_DEBUG}
-  WriteLn GetDebugLn('Transporter', 'Checking teleport to Falador spell.');
-  {$ENDIF}
-  if Stats.GetLevel(ERSSkill.MAGIC) < 31 then Exit;
-  Result := Magic.Open() and Magic.ContainsSpell(ERSSpell.FALADOR_TELEPORT);
-end;
-
-function TTransporter.DoTeleportFalador(): Boolean;
-begin
-  {$IFDEF WL_TRANSPORTER_DEBUG}
-  WriteLn GetDebugLn('Transporter', 'Casting teleport to Falador.');
-  {$ENDIF}
-  if Magic.CastSpell(ERSSpell.FALADOR_TELEPORT, 'Cast') then
-    Result := SleepUntil(Self.Position().InRange([8752, 36716], 60), 300, 5000);
-end;
-
-
-function TTransporter.CheckFaladorCrumblingWall(): Boolean;
-begin
-  Result := Stats.GetLevel(ERSSkill.AGILITY) >= 5;
-end;
-
-function TTransporter.DoFaladorCrumblingWall(): Boolean;
+function TTransporter.Teleport(spell: ESpellTeleport; pos: TWalkerPositionFunction = nil): Boolean;
 var
-  i: Integer;
+  t: UInt64;
+  option: String;
+  magicSpell: ERSSpell;
+  hasTimer: Boolean;
 begin
-  {$IFDEF WL_TRANSPORTER_DEBUG}
-  WriteLn GetDebugLn('Transporter', 'Attempting to climb over falador crumbling wall.');
-  {$ENDIF}
+  if pos = nil then
+    pos := @Map.Position;
 
-  for i := 0 to High(Self.Shortcuts) do
-    if Self.Shortcuts[i].Coordinates = [[11740, 37008]] then
+  case spell of
+    ESpellTeleport.LUMBRIDGE_HOME, ESpellTeleport.EDGEVILLE_HOME,
+    ESpellTeleport.LUNAR_HOME, ESpellTeleport.ARCEUUS_HOME:
     begin
-      if Self.Shortcuts[i].WalkInteract(['Climb-over']) then
-      begin
-        Minimap.WaitMoving();
-        Result := True;
-      end;
-
-      Exit;
+      t := 22*TICK;
+      hasTimer := True;
     end;
-end;
-
-function TTransporter.CheckDarkEssenceMineNorthRocks(): Boolean;
-begin
-  Result := Stats.GetLevel(ERSSkill.AGILITY) >= 69;
-end;
-
-function TTransporter.DoDarkEssenceMineNorthRocks(): Boolean;
-var
-  i: Integer;
-begin
-  {$IFDEF WL_TRANSPORTER_DEBUG}
-  WriteLn GetDebugLn('Transporter', 'Attempting to climb over falador crumbling wall.');
-  {$ENDIF}
-
-  for i := 0 to High(Self.Shortcuts) do
-    if Self.Shortcuts[i].Coordinates = [[7044, 34936]] then
-    begin
-      if Self.Shortcuts[i].WalkInteract(['Climb']) then
-      begin
-        Minimap.WaitMoving();
-        Result := True;
-      end;
-
-      Exit;
-    end;
-end;
-
-
-
-procedure TTransporter.AddTeleports(var graph: TWebGraph; chunk: TPoint);
-begin
-  case chunk of
-    [46,52]:
-    begin
-      graph.AddTeleport([7764, 36906], @Self.CheckTeleportFalador, @Self.DoTeleportFalador);
-    end;
-
-    [49,54]:
-    begin
-      graph.AddTeleport([8565, 36522], @Self.CheckTeleportGrandExchange, @Self.DoTeleportGrandExchange);
-    end;
-
-    [50,50]:
-    begin
-      graph.AddTeleport([8792, 37554], @Self.CheckTeleportLumbridge, @Self.DoTeleportLumbridge);
-    end;
-
-    [50,53]:
-    begin
-      graph.AddTeleport([8752, 36716], @Self.CheckTeleportVarrock, @Self.DoTeleportVarrock);
-    end;
+    else t := 6*TICK;
   end;
-end;
 
-procedure TTransporter.AddShortcuts(var graph: TWebGraph; chunk: TPoint);
-begin
-  case chunk of
-    [45,52]:
-    begin
-      Self.Shortcuts += TRSObject.Create(Map.Walker, ObjectsJSON.GetByID(24222));
-      graph.AddDualLink([11736, 37008], [11744, 37008], EGraphNode.SHORTCUT, @Self.CheckFaladorCrumblingWall, @Self.DoFaladorCrumblingWall);
-    end;
-
-    [27,60]:
-    begin
-      Self.Shortcuts += TRSObject.Create(Map.Walker, ObjectsJSON.GetByID(34741));
-      graph.AddDualLink([7044, 34932], [7044, 34940], EGraphNode.SHORTCUT, @Self.CheckDarkEssenceMineNorthRocks, @Self.DoDarkEssenceMineNorthRocks);
-    end;
+  case spell of
+    ESpellTeleport.HOUSE_INSIDE, ESpellTeleport.HOUSE_OUTSIDE:
+      magicSpell := ERSSpell.TELEPORT_TO_HOUSE;
+    ESpellTeleport.KOUREND: magicSpell := ERSSpell.TELEPORT_TO_KOUREND;
+    ESpellTeleport.LASSAR: magicSpell := ERSSpell.LASSAR_TELEPORT;
+    ESpellTeleport.OURANIA: magicSpell := ERSSpell.OURANIA_TELEPORT;
+    ESpellTeleport.RESPAWN: magicSpell := ERSSpell.RESPAWN_TELEPORT;
+    ESpellTeleport.VARROCK, ESpellTeleport.GRAND_EXCHANGE:
+      magicSpell := ERSSpell.VARROCK_TELEPORT;
+    ESpellTeleport.CAMELOT, ESpellTeleport.SEERS:
+      magicSpell := ERSSpell.CAMELOT_TELEPORT;
+    ESpellTeleport.KHAZARD: magicSpell := ERSSpell.KHAZARD_TELEPORT;
+    ESpellTeleport.FALADOR: magicSpell := ERSSpell.FALADOR_TELEPORT;
+    ESpellTeleport.BARROWS: magicSpell := ERSSpell.BARROWS_TELEPORT;
+    ESpellTeleport.MOONCLAN: magicSpell := ERSSpell.MOONCLAN_TELEPORT;
+    ESpellTeleport.CEMETERY: magicSpell := ERSSpell.CEMETERY_TELEPORT;
+    ESpellTeleport.GHORROCK: magicSpell := ERSSpell.GHORROCK_TELEPORT;
+    ESpellTeleport.ARDOUGNE: magicSpell := ERSSpell.ARDOUGNE_TELEPORT;
+    ESpellTeleport.PADDEWWA: magicSpell := ERSSpell.PADDEWWA_TELEPORT;
+    ESpellTeleport.KHARYRLL: magicSpell := ERSSpell.KHARYRLL_TELEPORT;
+    ESpellTeleport.ANNAKARL: magicSpell := ERSSpell.ANNAKARL_TELEPORT;
+    ESpellTeleport.CATHERBY: magicSpell := ERSSpell.CATHERBY_TELEPORT;
+    ESpellTeleport.APE_ATOLL_DUNGEON:
+      magicSpell := ERSSpell.APE_ATOLL_DUNGEON_TELEPORT;
+    ESpellTeleport.LUMBRIDGE: magicSpell := ERSSpell.LUMBRIDGE_TELEPORT;
+    ESpellTeleport.BARBARIAN: magicSpell := ERSSpell.BARBARIAN_TELEPORT;
+    ESpellTeleport.APE_ATOLL: magicSpell := ERSSpell.APE_ATOLL_TELEPORT;
+    ESpellTeleport.TROLLHEIM: magicSpell := ERSSpell.TROLLHEIM_TELEPORT;
+    ESpellTeleport.MIND_ALTAR: magicSpell := ERSSpell.MIND_ALTAR_TELEPORT;
+    ESpellTeleport.WATCHTOWER, ESpellTeleport.YANILLE:
+      magicSpell := ERSSpell.WATCHTOWER_TELEPORT;
+    ESpellTeleport.ICE_PLATEU: magicSpell := ERSSpell.ICE_PLATEU_TELEPORT;
+    ESpellTeleport.LUNAR_HOME: magicSpell := ERSSpell.LUNAR_HOME_TELEPORT;
+    ESpellTeleport.FENKENSTRAINS_CASTLE:
+      magicSpell := ERSSpell.FENKENSTRAINS_CASTLE_TELEPORT;
+    ESpellTeleport.SALVE_GRAVEYARD:
+      magicSpell := ERSSpell.SALVE_GRAVEYARD_TELEPORT;
+    ESpellTeleport.ARCEUUS_LIBRARY:
+      magicSpell := ERSSpell.ARCEUUS_LIBRARY_TELEPORT;
+    ESpellTeleport.HARMONY_ISLAND:
+      magicSpell := ERSSpell.HARMONY_ISLAND_TELEPORT;
+    ESpellTeleport.EDGEVILLE_HOME:
+      magicSpell := ERSSpell.EDGEVILLE_HOME_TELEPORT;
+    ESpellTeleport.DRAYNOR_MANOR: magicSpell := ERSSpell.DRAYNOR_MANOR_TELEPORT;
+    ESpellTeleport.FISHING_GUILD: magicSpell := ERSSpell.FISHING_GUILD_TELEPORT;
+    ESpellTeleport.LUMBRIDGE_HOME:
+      magicSpell := ERSSpell.LUMBRIDGE_HOME_TELEPORT;
+    ESpellTeleport.WEST_ARDOUGNE: magicSpell := ERSSpell.WEST_ARDOUGNE_TELEPORT;
+    ESpellTeleport.CARRALLANGAR: magicSpell := ERSSpell.CARRALLANGAR_TELEPORT;
+    ESpellTeleport.ARCEUUS_HOME: magicSpell := ERSSpell.ARCEUUS_HOME_TELEPORT;
+    ESpellTeleport.WATERBIRTH: magicSpell := ERSSpell.WATERBIRTH_TELEPORT;
+    ESpellTeleport.SENNTISTEN: magicSpell := ERSSpell.SENNTISTEN_TELEPORT;
   end;
-end;
 
-procedure TTransporter.Setup(position: TWalkerPositionFunction; var mapLoader: TRSMapLoader);
-var
-  chunk: TPoint;
-  region: TRSMapRegion;
-begin
-  Self.Position := @position;
+  case spell of
+    ESpellTeleport.HOUSE_OUTSIDE: option:= 'Outside';
+    ESpellTeleport.GRAND_EXCHANGE: option:= 'Grand Exchange';
+    ESpellTeleport.SEERS: option:= 'Seers';
+    ESpellTeleport.YANILLE: option:= 'Yanille';
+    else option:= 'Cast';
+  end;
 
-  for region in mapLoader.Regions do
-    for chunk in region.Chunks do
+  if Magic.Cast(magicSpell, option) then
+    if SleepUntil(pos().InRange(TELEPORT_COORDINATES[spell], 30), 300, t) then
     begin
-      Self.AddTeleports(mapLoader.Graph, chunk);
-      Self.AddShortcuts(mapLoader.Graph, chunk);
-      //Self.AddWhatever(mapLoader.Graph, chunk);
+      Biometrics.Sleep(0, 4*TICK);
+      Exit(True);
     end;
 end;
-{$R+}
 
 {$H-}
 var

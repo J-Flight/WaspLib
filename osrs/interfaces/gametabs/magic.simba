@@ -31,7 +31,7 @@ const
   RS_INSTANT_THROW_SPELLS = TRSSpellSet([
     ERSSpell.TELEPORT_TO_HOUSE,
     ERSSpell.TELEPORT_TO_KOUREND,
-    ERSSpell.TELEPORT_TO_APE_ATOLL,
+    ERSSpell.APE_ATOLL_TELEPORT,
     ERSSpell.BOUNTY_TELEPORT,
     ERSSpell.LASSAR_TELEPORT,
     ERSSpell.OURANIA_TELEPORT,
@@ -49,7 +49,7 @@ const
     ERSSpell.KHARYRLL_TELEPORT,
     ERSSpell.ANNAKARL_TELEPORT,
     ERSSpell.CATHERBY_TELEPORT,
-    ERSSpell.APE_ATOLL_TELEPORT,
+    ERSSpell.APE_ATOLL_DUNGEON_TELEPORT,
     ERSSpell.LUMBRIDGE_TELEPORT,
     ERSSpell.BARBARIAN_TELEPORT,
     ERSSpell.TROLLHEIM_TELEPORT,
@@ -523,18 +523,18 @@ begin
 end;
 
 (*
-## Magic.CastSpell
+## Magic.Cast
 ```pascal
-function TRSMagic.CastSpell(spell: ERSSpell): Boolean;
+function TRSMagic.Cast(spell: ERSSpell): Boolean;
 ```
 Attempts to cast the specified spell.
 
 Example:
 ```pascal
-Magic.CastSpell(ERSSpell.LOW_LEVEL_ALCHEMY);
+Magic.Cast(ERSSpell.LOW_LEVEL_ALCHEMY);
 ```
 *)
-function TRSMagic.CastSpell(spell: ERSSpell; option: String = ''): Boolean;
+function TRSMagic.Cast(spell: ERSSpell; option: String = ''): Boolean;
 var
   selected: TPointArray;
 begin

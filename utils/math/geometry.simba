@@ -8,6 +8,12 @@ Methods and functions related to geometry.
 {$loadlib Plugins/wasp-plugins/libtpaex/libtpaex}
 
 {$R-}
+{$IFDEF RANGECHECKS}
+begin
+  WriteLn GetDebugLn('Geometry', 'Range checks are enabled for geometry, these should be disabled in production!', ELogLevel.WARN);
+end;
+{$ENDIF}
+
 const
   TAU: Double = 2 * PI;
 
@@ -102,6 +108,24 @@ begin
           1: if p = q then Exit(True);
           2: Exit(True);
         end;
+end;
+
+function TPointArray.NearestIndex(pt: TPoint): Integer;
+var
+  i: Integer;
+  dist, best: Double;
+begin
+  best := $FFFFFF;
+  for i := 1 to High(Self) do
+  begin
+    dist := Self[i].DistanceTo(pt);
+
+    if (dist < best) then
+    begin
+      best := dist;
+      Result := i;
+    end;
+  end;
 end;
 
 function TPointArray.PolylineLength(): Double;

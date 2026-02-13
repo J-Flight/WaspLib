@@ -31,7 +31,7 @@ Main record used to hold core values of the {ref}`Map Debugger`.
     Graph: TWebGraph;
 
     Selected: Integer;
-    Path: TGraphNodeArray;
+    Path: TPointArray;
 
     GetLocal: function (pt: TPoint; offset: TPoint = [0,0]): TPoint of object;
     GetGlobal: function (pt: TPoint; offset: TPoint = [0,0]): TPoint of object;
@@ -47,6 +47,12 @@ begin
 end;
 
 {$R-}
+{$IFDEF RANGECHECKS}
+begin
+  WriteLn GetDebugLn('TMapDebugger', 'Range checks are enabled for map debugger, these should be disabled in production!', ELogLevel.WARN);
+end;
+{$ENDIF}
+
 {$H-}
 procedure TMapDebugger.ImgBoxPaint(sender: TImageBox; canvas: TImageBoxCanvas; r: TLazRect);
 var
@@ -71,16 +77,13 @@ begin
     Self.Graph.Draw(canvas);
     if Self.Selected > -1 then
     begin
-      canvas.DrawBoxFilled(TBox.Create(Self.Graph.Nodes[Self.Selected].Node, 1, 1), $00FF00);
+      canvas.DrawBoxFilled(TBox.Create(Self.Graph.Nodes[Self.Selected], 1, 1), $00FF00);
       if Self.Path <> [] then
       begin
         for i := 0 to High(Self.Path)-1 do
         begin
-          tpa := TPointArray.CreateFromLine(Self.Path[i].Node, Self.Path[i+1].Node);
-          case Self.Path[i+1].Typ of
-            EGraphNode.TELEPORT: canvas.DrawPoints(tpa.Grow(1), $3388FF);
-            else canvas.DrawPoints(tpa, $FF0000);
-          end;
+          tpa := TPointArray.CreateFromLine(Self.Path[i], Self.Path[i+1]);
+          canvas.DrawPoints(tpa, $FF0000);
         end;
 
       end;
@@ -114,9 +117,9 @@ begin
   begin
     i := Self.Graph.Nodes.NearestIndex(pt);
 
-    if (Self.Selected <> i) and pt.InRange(Self.Graph.Nodes[i].Node, 12) then
+    if (Self.Selected <> i) and pt.InRange(Self.Graph.Nodes[i], 12) then
     try
-      Self.Path := Self.Graph.PathBetween(Self.Graph.Nodes[Self.Selected].Node, Self.Graph.Nodes[i].Node, 0.33);
+      Self.Path := Self.Graph.PathBetween(Self.Graph.Nodes[Self.Selected], Self.Graph.Nodes[i], 0.33);
     except
       WriteLn GetExceptionMessage();
     end;
@@ -135,16 +138,14 @@ begin
 
   Self.Selected := Self.Graph.Nodes.NearestIndex(pt);
 
-  if (Self.Graph.Nodes <> []) and pt.InRange(Self.Graph.Nodes[Self.Selected].Node, 4) then
+  if not Self.Graph.Nodes.IsEmpty and pt.InRange(Self.Graph.Nodes[Self.Selected], 4) then
   begin
-    g := Self.GetGlobal(Self.Graph.Nodes[Self.Selected].Node);
+    g := Self.GetGlobal(Self.Graph.Nodes[Self.Selected]);
 
     Self.SelectedInfo.Caption :=
       'Selected Index: ' + ToStr(Self.Selected).PadRight(4, ' ') +
       ' Coordinate: [' +
       String(ToStr(g.X) + ',' + ToStr(g.Y) + ']').PadRight(12, ' ') +
-      ' Type: ' +
-      ToStr(Self.Graph.Nodes[Self.Selected].Typ).After('EGraphNode.').PadRight(11,' ') +
       ' Path Count: ' +
       ToStr(Self.Graph.Paths[Self.Selected].Length).PadRight(2, ' ') +
       ' Paths: ' + ToStr(Self.Graph.Paths[Self.Selected]);
@@ -364,7 +365,7 @@ var
   collision: TImage;
   pt: TPoint;
   x, y, i: Integer;
-  node: TGraphNode;
+  node: TPoint;
 begin
   collision := loader.Collision.Copy();
 
@@ -383,7 +384,7 @@ begin
 
   Self.Graph.Nodes := [];
   for node in loader.Graph.Nodes do
-    Self.Graph.Nodes += TGraphNode.Create(Self.GetLocal(node.Node), node.Typ);
+    Self.Graph.Nodes += Self.GetLocal(node);
 
   Self.Graph.Paths := Copy(loader.Graph.Paths);
 

@@ -595,13 +595,13 @@ end;
 (*
 ## RSObject._WalkHoverHelper
 ```pascal
-function TRSObject._WalkHoverHelper(strings: TStringArray; walker: PRSWalker; minDist, attempt, attempts: Integer; const coordinates: TPointArray; out path: TGraphNodeArray): Boolean; static;
+function TRSObject._WalkHoverHelper(strings: TStringArray; walker: PRSWalker; minDist, attempt, attempts: Integer; const coordinates: TPointArray; out path: TPointArray): Boolean; static;
 ```
 Internal `TRSObject` helper method that is used by both {ref}`TRSObject.WalkHover`
 and {ref}`TRSEntity.WalkHover`.
 You probably don't need to use this directly.
 *)
-function TRSObject._WalkHoverHelper(strings: TStringArray; walker: PRSWalker; minDist, attempt, attempts: Integer; const coordinates: TPointArray; out path: TGraphNodeArray): Boolean; static;
+function TRSObject._WalkHoverHelper(strings: TStringArray; walker: PRSWalker; minDist, attempt, attempts: Integer; const coordinates: TPointArray; out path: TPointArray): Boolean; static;
 var
   me, closest: TPoint;
 begin
@@ -811,7 +811,7 @@ function TRSObject.WalkHover(action: TStringArray = []; attempts: Integer = 2): 
 var
   me, closest: TPoint;
   coordinates, tpa: TPointArray;
-  path: TGraphNodeArray;
+  path: TPointArray;
   hasPath: Boolean;
   shouldExit: Boolean;
   attempt, i: Integer;
