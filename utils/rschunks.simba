@@ -151,6 +151,7 @@ type
     DRAYNOR_VILLAGE,
     EDGEVILLE,
     FALADOR,
+    FEROX_ENCLAVE,
     FOSSIL_ISLAND,
     GUARDIANS_OF_THE_RIFT,
     HOSIDIUS_KITCHEN,
@@ -186,6 +187,7 @@ begin
     ERSChunk.DRAYNOR_VILLAGE        : Result := Chunk(Box(47,51,48,50), 0);
     ERSChunk.EDGEVILLE              : Result := Chunk(Box(48,54,48,54), 0);
     ERSChunk.FALADOR                : Result := Chunk(Box(45,53,47,51), 0);
+    ERSChunk.FEROX_ENCLAVE          : Result := Chunk(Box(48,57,49,56), 0);
     ERSChunk.FOSSIL_ISLAND          : Result := Chunk(Box(56,61,60,57), [0,1]);
     ERSChunk.GUARDIANS_OF_THE_RIFT  : Result := Chunk(Box(55,149,57,147), 0);
     ERSChunk.HOSIDIUS_KITCHEN       : Result := Chunk(Box(25,56,26,56), 0);
