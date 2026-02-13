@@ -11,22 +11,22 @@ You can configure the layouts manually but the recommended way is to use
 
 type
 (*
-## TRSInventoryLayouItem
+## TRSInventoryLayoutItem
 Type that represents a single inventory layout item.
 *)
-  TRSInventoryLayouItem = record
+  TRSInventoryLayoutItem = record
     Item: TRSItem;
     Amount: Integer;
   end;
 
 (*
-## TRSInventoryLayouItem.ToJSON
+## TRSInventoryLayoutItem.ToJSON
 ```pascal
-function TRSInventoryLayouItem.ToJSON(): TJSONItem;
+function TRSInventoryLayoutItem.ToJSON(): TJSONItem;
 ```
 Convert the `TRSInventoryLayoutItem` into a `TJSONItem`.
 *)
-function TRSInventoryLayouItem.ToJSON(): TJSONItem;
+function TRSInventoryLayoutItem.ToJSON(): TJSONItem;
 begin
   Result := new TJSONObject();
   Result.AddString('Item', Self.Item);
@@ -40,7 +40,7 @@ Type that represents an entire inventory layout.
 *)
   TRSInventoryLayoutSlots = record
     Name: String;
-    Items: array [0..27] of TRSInventoryLayouItem;
+    Items: array [0..27] of TRSInventoryLayoutItem;
   end;
 
 (*
@@ -66,7 +66,7 @@ Main type to user {ref}`Inventory Layouts`.
 *)
   TRSInventoryLayout = record
     Layout: TRSInventoryLayoutSlots;
-    Holding: array [0..27] of TRSInventoryLayouItem;
+    Holding: array [0..27] of TRSInventoryLayoutItem;
     BankItems: TRSBankItemArray;
   end;
 
@@ -80,7 +80,7 @@ This is automatically called for you when it's needed.
 *)
 procedure TRSInventoryLayout.SetupBankItems();
 var
-  items: array of TRSInventoryLayouItem;
+  items: array of TRSInventoryLayoutItem;
   i, hi, j, count: Integer;
   item: TRSItem;
 begin
