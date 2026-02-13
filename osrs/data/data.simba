@@ -471,3 +471,55 @@ var
 Global {ref}`TGearData` variable.
 *)
   GearData: TGearData;
+
+type
+
+  TWeaponData = record
+    Data: TJSONItem;
+  end;
+
+
+procedure TWeaponData.Setup();
+begin
+  if Self.Data <> nil then Exit;
+  Self.Data := new TJSONParser();
+  TJSONParser(Self.Data).Load(WLEnv.AssetsDir + 'jsons' + PATH_SEP + 'weapons.json');
+end;
+
+
+function TWeaponData.GetArray(index: Integer): TJSONItem;
+begin
+  Self.Setup();
+  Result := Self.Data.Item[index];
+end;
+
+function TWeaponData.GetArray(key: String): TJSONItem; overload;
+begin
+  Self.Setup();
+  if key = 'secondary_ammo' then key := 'ammo';
+  Result := Self.Data.Item[key];
+end;
+
+
+function TWeaponData.GetItems(key: Integer): TRSItemArray;
+var
+  i: Int32;
+begin
+  Self.Setup();
+  for i := 0 to Self.Data.Item[key].Count-1 do
+    Result += Self.Data.Item[key].Item[i].AsString;
+end;
+
+function TWeaponData.GetItems(key: String): TRSItemArray; overload;
+var
+  i: Int32;
+begin
+  Self.Setup();
+  if key = 'secondary_ammo' then key := 'ammo';
+  for i := 0 to Self.Data.Item[key].Count-1 do
+    Result += Self.Data.Item[key].Item[i].AsString;
+end;
+
+var
+
+  WeaponData: TWeaponData; 
