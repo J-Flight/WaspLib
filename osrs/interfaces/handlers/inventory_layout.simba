@@ -176,21 +176,21 @@ begin
     for j := 0 to High(items) do
       for n := 0 to High(bitems) do
       begin
-        if items[j] <> bitems[i].Item then Continue;
+        if items[j] <> bitems[n].Item then Continue;
 
         stack := Inventory.Slots.ReadStack(i);
 
         if stack < 0 then
-          bitems[i].Quantity -= 1
+          bitems[n].Quantity -= 1
         else
         begin
-          bitems[i].Quantity -= stack;
-          if bitems[i].Quantity < 0 then
+          bitems[n].Quantity -= stack;
+          if bitems[n].Quantity < 0 then
           begin
-            bitems[i].Quantity := Abs(bitems[i].Quantity);
-            if not Bank.Deposit(bitems[i], True) then
+            bitems[n].Quantity := Abs(bitems[n].Quantity);
+            if not Bank.Deposit(bitems[n], True) then
               Exit;
-            bitems[i].Quantity := 0;
+            bitems[n].Quantity := 0;
           end;
         end;
 
