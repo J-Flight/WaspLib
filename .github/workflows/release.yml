@@ -37,7 +37,18 @@ jobs:
           New-Item -Path ".\Plugins" -ItemType Directory
           "buildHash=$buildHash" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
+      - name: Check Simba64 cache
+        uses: actions/cache@v4
+        id: simba-cache
+        with:
+          path: |
+            ./Simba-Win64.exe
+            ./Simba-Win32.exe
+          key: simba-cache-${{ steps.simba-url.outputs.baseUrl }}
+          enableCrossOsArchive: true
+
       - name: Download Simba 2.0 (64-bit)
+        if: steps.simba-cache.outputs.cache-hit != 'true'
         run: |
           $baseUrl = "${{ steps.simba-url.outputs.baseUrl }}"
           $downloadUrl = "$baseUrl" + "Win64.zip?raw=true"
@@ -46,8 +57,9 @@ jobs:
           Invoke-WebRequest -Uri $downloadUrl -OutFile $outputFile
           Expand-Archive -Path $outputFile -DestinationPath . -Force
           Remove-Item -Path $outputFile -Force
-
+      
       - name: Download Simba 2.0 (32-bit)
+        if: steps.simba-cache.outputs.cache-hit != 'true'
         run: |
           $baseUrl = "${{ steps.simba-url.outputs.baseUrl }}"
           $downloadUrl = "$baseUrl" + "Win32.zip?raw=true"
@@ -72,7 +84,6 @@ jobs:
         shell: bash
         run: |
           testFiles=(./Includes/WaspLib/tests/*.simba)
-
           for testFile in "${testFiles[@]}"; do
               echo "Running test: $testFile" on 32 bits
               ./Simba-Win32.exe --extractopenssl --run "$testFile"
