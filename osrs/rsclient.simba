@@ -59,25 +59,30 @@ WriteLn RSClient.GetClient();
 ```
 *)
 function TRSClient.GetClient(): ERSClient;
+var
+  window: TWindowHandle;
 begin
-  with GetSimbaTargetWindow() do
-  begin
-    case GetClassName() of
-      'JagRenderView', 'JagWindow':
-      begin
-        ITEM_SHADOW := $323232;
-        ITEM_SHADOW_GRAY := $323232;
-        ITEM_BORDER := $000000;
-        ITEM_BORDER_WHITE := $FEFEFE;
-        Exit(ERSClient.OFFICIAL);
-      end;
-    end;
+  {$IFDEF SIMBAHEADLESS}
+  window := StrToInt(Target.ToString().Between('Handle=', ','));
+  {$ELSE}
+  window := GetSimbaTargetWindow();
+  {$ENDIF}
 
-    case GetRootWindow().GetTitle() of
-      'Old School RuneScape': Result := ERSClient.LEGACY;
-      else if GetRootWindow().GetTitle().Contains('RuneLite') then
-        Result := ERSClient.RUNELITE;
+  case window.GetClassName() of
+    'JagRenderView', 'JagWindow':
+    begin
+      ITEM_SHADOW := $323232;
+      ITEM_SHADOW_GRAY := $323232;
+      ITEM_BORDER := $000000;
+      ITEM_BORDER_WHITE := $FEFEFE;
+      Exit(ERSClient.OFFICIAL);
     end;
+  end;
+
+  case window.GetRootWindow().GetTitle() of
+    'Old School RuneScape': Result := ERSClient.LEGACY;
+    else if window.GetRootWindow().GetTitle().Contains('RuneLite') then
+      Result := ERSClient.RUNELITE;
   end;
 end;
 
@@ -116,7 +121,13 @@ begin
 
   if img.Height-1 < 503 then
   begin
-    win := GetSimbaTargetWindow().GetRootWindow();
+    {$IFDEF SIMBAHEADLESS}
+    win := StrToInt(Target.ToString().Between('Handle=', ','));
+    {$ELSE}
+    win := GetSimbaTargetWindow();
+    {$ENDIF}
+
+    win := win.GetRootWindow();
     with win.GetBounds() do
       win.SetBounds([X1, Y1, X2, Y1+535]);
     Result := [x1, 0, x2, 503];
