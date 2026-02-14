@@ -336,12 +336,15 @@ begin
 
   Result.BevelWidth := 0;
 
-  if actions and Self.ConfigData.Has('goal_actions') then
-    Self.Goals.Actions.Value := Self.ConfigData.Item['goal_actions'].AsInt;
-  if time and Self.ConfigData.Has('goal_time') then
-    Self.Goals.Time.Value := Self.ConfigData.Item['goal_time'].AsInt;
-  if level and Self.ConfigData.Has('goal_level') then
-    Self.Goals.Level.Value := Self.ConfigData.Item['goal_level'].AsInt;
+  if Self.ConfigData <> nil then
+  begin
+    if actions and Self.ConfigData.Has('goal_actions') then
+      Self.Goals.Actions.Value := Self.ConfigData.Item['goal_actions'].AsInt;
+    if time and Self.ConfigData.Has('goal_time') then
+      Self.Goals.Time.Value := Self.ConfigData.Item['goal_time'].AsInt;
+    if level and Self.ConfigData.Has('goal_level') then
+      Self.Goals.Level.Value := Self.ConfigData.Item['goal_level'].AsInt;
+  end;
 end;
 
 (*
