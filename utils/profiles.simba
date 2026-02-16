@@ -35,7 +35,7 @@ Type that holds player account information for {ref}`login`, world hopping and {
 ```pascal
 procedure TProfileArray.Add(user, pass: String; pin: String = ''; worlds: TIntegerArray = []);
 ```
-Adds a TRSAccountProfile to the TProfileArray.
+Adds a TProfile to the TProfileArray.
 
 Example:
 ```pascal
@@ -44,7 +44,7 @@ Profiles.Add('username', 'password', '0000');
 *)
 procedure TProfileArray.Add(name, user, pass: String; pin: String = ''; worlds: TIntegerArray = []);
 begin
-  Self += [name, user, pass, pin, worlds, true];
+  Self += [name, user, pass, pin, worlds, True];
 end;
 
 (*
@@ -83,11 +83,11 @@ end;
 (*
 ## Profiles.Get
 ```pascal
-function TProfileArray.Get(): TRSAccountProfile;
+function TProfileArray.Get(): TProfile;
 ```
-Returns the currently selected TRSAccountProfile.
-The currently selected TRSAccountProfile is decided by `ProfileIndex` which
-is an index of the TRSAccountProfileArra.
+Returns the currently selected TProfile.
+The currently selected TProfile is decided by `ProfileIndex` which
+is an index of the TProfileArray.
 
 Example:
 ```pascal
@@ -97,11 +97,52 @@ WriteLn Profiles.Get().Username;
 function TProfileArray.Get(): TProfile;
 begin
   if Self = [] then
-    raise GetDebugLn('Profiles', 'No profiles declared: Add a profile if you want scripts to handle login.');
+    ErrorDialog('Profiles', 'No profiles declared.' + LINE_SEP + 'Add a profile if you want scripts to handle login.');
   if not InRange(ProfileIndex, 0, High(Self)) then
     raise GetDebugLn('Profiles', 'Profile is out of range: Profile number selected in script does not exist.');
 
   Result := Self[ProfileIndex];
+end;
+
+(*
+## Profiles.Update
+```pascal
+procedure TProfileArray.Update(const profile: TProfile);
+```
+Updates the currently selected TProfile.
+The currently selected TProfile is decided by `ProfileIndex` which
+is an index of the TProfileArray.
+
+The way this works is a little bit special as `Profiles[ProfileIndex]` is not
+not completely updated:
+
+- `Profiles[ProfileIndex].Active` is never changed.
+- `Profiles[ProfileIndex].Name`, `Profiles[ProfileIndex].Username`, `Profiles[ProfileIndex].Password` and `Profiles[ProfileIndex].Pin` are only updated if the values of the passed in profile are not `''`.
+- `Profiles[ProfileIndex].Worlds` is always set to `profile.Worlds`
+
+Example:
+```pascal
+WriteLn Profiles.Get();
+Profiles.Update(['', '', '', ''. [311, 312]]);
+WriteLn Profiles.Get();
+```
+*)
+procedure TProfileArray.Update(const profile: TProfile);
+begin
+  if Self = [] then
+    ErrorDialog('Profiles', 'No profiles declared.' + LINE_SEP + 'This script needs you to add a profile.');
+  if not InRange(ProfileIndex, 0, High(Self)) then
+    raise GetDebugLn('Profiles', 'Profile is out of range: Profile number selected in script does not exist.');
+
+  if profile.Name <> '' then
+    Self[ProfileIndex].Name := profile.Name;
+  if profile.Username <> '' then
+    Self[ProfileIndex].Username := profile.Username;
+  if profile.Password <> '' then
+    Self[ProfileIndex].Password := profile.Password;
+  if profile.Pin <> '' then
+    Self[ProfileIndex].Pin := profile.Pin;
+  Self[ProfileIndex].Worlds := profile.Worlds;
 end;
 
 (*
