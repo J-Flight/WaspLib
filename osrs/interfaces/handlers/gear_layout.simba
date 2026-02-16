@@ -197,6 +197,11 @@ begin
   begin
     if Self.Equipped[slot] = Self.Gear.Items[slot] then
       Continue;
+
+    case Self.Gear.Items[slot] of
+      'Nothing', 'Anything': Continue;
+    end;
+
     if Inventory.Items.Contains(Self.Gear.Items[slot]) then
       Continue;
 
