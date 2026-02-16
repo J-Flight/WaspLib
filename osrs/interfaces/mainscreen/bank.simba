@@ -291,7 +291,7 @@ begin
       end;
     end;
     3: for i := 0 to High(boxes) do
-        Self.DepositButtons[i].Bounds := boxes[2];
+        Self.DepositButtons[i].Bounds := boxes[i];
   end;
 
   Self.ButtonsOffset := True;
