@@ -237,6 +237,10 @@ WriteLn RSMouseZoom.GetZoomLevel();
 *)
 function TRSMouseZoom.GetZoomLevel(): Integer;
 begin
+  if not Self.SettingChecked then
+    if not Options.OpenTab(ERSOptionsTab.DISPLAY) then
+      Exit;
+
   if (Self.ZoomLevel > -1) then
     Exit(Self.ZoomLevel);
 
@@ -246,13 +250,18 @@ begin
     Exit(Self.ZoomLevel);
   end;
 
-  case Random(3) of
+  case Random(100) of
     0: Options.SetZoomLevel(Random(101));
-    1: Self.MaxZoomBlind(RandomBoolean(0.5));
-    2: Self.ZoomLevel := Self.Slider2Level(Options.GetZoomLevel());
+    1..30: Self.MaxZoomBlind(Biometrics.RandomBoolean(0.5));
+    31..99: Self.ZoomLevel := Self.Slider2Level(Options.GetZoomLevel());
   end;
 
   Result := Self.ZoomLevel;
+
+  if Result = -1 then
+    WriteLn GetDebugLn('RSMouseZoom', 'Failed to read zoom!', ELogLevel.ERROR)
+  else
+    WriteLn GetDebugLn('RSMouseZoom', 'Current zoom level: ' + ToStr(Options.ZoomLevel), ELogLevel.SUCCESS);
 end;
 
 
@@ -274,6 +283,10 @@ function TRSMouseZoom.SetZoomLevel(level: Integer): Boolean;
 var
   rslevel, amount: Integer;
 begin
+  if not Self.SettingChecked then
+    if not Options.OpenTab(ERSOptionsTab.DISPLAY) then
+      Exit;
+
   if not Self.Enabled then
     Exit(Options.SetZoomLevel(level));
 
@@ -298,6 +311,11 @@ begin
     Self.Scroll(Floor(amount/24));
 
   Result := InRange(Options.ZoomLevel, level-4, level+4);
+
+  if Result then
+    WriteLn GetDebugLn('RSMouseZoom', 'Current zoom level set to: ' + ToString(Options.ZoomLevel), ELogLevel.SUCCESS)
+  else
+    WriteLn GetDebugLn('RSMouseZoom', 'Failed to set zoom! Current level: ' + ToString(Options.ZoomLevel), ELogLevel.ERROR);
 end;
 
 var

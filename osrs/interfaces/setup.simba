@@ -172,7 +172,6 @@ begin
 
   Options.Setup();
   RSMouseZoom.ZoomLevel := -1;
-  RSMouseZoom.Enabled := True;
   WorldSwitcher.Setup();
   FairyRing.Setup();
 

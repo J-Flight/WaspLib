@@ -31,6 +31,7 @@ WriteLn RSClient.IsLoggedIn();
 function TRSClient.IsLoggedIn(): Boolean; override;
 var
   mode: ERSMode;
+  zoom: Integer;
 begin
   mode := Self.GetMode();
   Result := mode <> ERSMode.UNKNOWN;
@@ -49,11 +50,16 @@ begin
       MainScreen.SetHighestPitch();
 
     if not Options.MaxBrightness then
-    begin
       Options.SetMaxBrightness();
-      //Since we might have options open, take the time to setup the zoom level.
-      if (Options.ZoomLevel = -1) and Options.IsOpen() and (Options.GetTab() = ERSOptionsTab.DISPLAY) then
-        Options.GetZoomLevel();
+
+    if not RSMouseZoom.SettingChecked or (Options.ZoomLevel = -1) then
+      Options.OpenTab(ERSOptionsTab.DISPLAY);
+
+    if (Options.ZoomLevel > -1) and not InRange(Options.ZoomLevel, Antiban.Zoom.Min, Antiban.Zoom.Max) then
+    begin
+      zoom := Min(Antiban.Zoom.Max, Max(Antiban.Zoom.Min, Options.ZoomLevel));
+      zoom := Biometrics.RandomModeInteger(zoom, Antiban.Zoom.Min, Antiban.Zoom.Max);
+      RSMouseZoom.SetZoomLevel(zoom);
     end;
 
     if not Options.RoofsHidden then
@@ -91,24 +97,37 @@ WriteLn GameTabs.GetCurrent();
 function TRSGameTabs.GetCurrent(): ERSGameTab; override;
 begin
   Result := inherited();
-  if Result <> ERSGameTab.NONE then Exit;
 
-  if Bank.IsOpen() then Exit(ERSGameTab.INVENTORY);
-  if CargoHold.IsOpen() then Exit(ERSGameTab.INVENTORY);
-  if Shop.IsOpen() then Exit(ERSGameTab.INVENTORY);
+  case Result of
+    ERSGameTab.NONE:
+    begin
+      if Bank.IsOpen() then
+        Exit(ERSGameTab.INVENTORY);
+      if DepositBox.IsOpen() then
+        Exit(ERSGameTab.INVENTORY);
+      if CargoHold.IsOpen() then
+        Exit(ERSGameTab.INVENTORY);
+      if Shop.IsOpen() then
+        Exit(ERSGameTab.INVENTORY);
+      if not HouseOptions.IsOpen() then
+        Exit(ERSGameTab.OPTIONS);
+      Exit;
+    end;
 
-  if not HouseOptions.IsOpen() then Exit;
-  Result := ERSGameTab.OPTIONS;
-  if RSMouseZoom.SettingChecked then Exit;
-  if Options.GetTab() <> ERSOptionsTab.DISPLAY then Exit;
+    ERSGameTab.OPTIONS:
+    begin
+      if RSMouseZoom.SettingChecked then
+        Exit;
+      if Options.GetTab() <> ERSOptionsTab.DISPLAY then
+        Exit;
 
-  RSMouseZoom.Enabled := not Target.HasColor($0000C8, 0, 1, GameTab.Bounds);
-  RSMouseZoom.SettingChecked := True;
+      RSMouseZoom.Enabled := not Target.HasColor($0000C8, 0, 1, GameTab.Bounds);
+      RSMouseZoom.SettingChecked := True;
+      Options.ZoomLevel := Options._GetZoomLevel();
 
-  if not RSMouseZoom.Enabled then
-  begin
-    RSMouseZoom.ZoomLevel := -1;
-    Options.ZoomLevel := -1;
+      if not RSMouseZoom.Enabled then
+        RSMouseZoom.ZoomLevel := -1;
+    end;
   end;
 end;
 
@@ -123,8 +142,9 @@ function TRSGameTabs.Open(tab: ERSGameTab; fkeyProbability: Single = -1): Boolea
 begin
   if Self.IsOpen(tab) then Exit(True);
 
-  //TODO: add deposit box and Store
-  if MSInterface.IsOpen() and (Bank.IsOpen()) then
+  if MSInterface.IsOpen() and (
+    Bank.IsOpen() or DepositBox.IsOpen() or Shop.IsOpen() or CargoHold.IsOpen()
+  ) then
     MSInterface.Close();
 
   Result := inherited(tab, fkeyProbability);
@@ -318,3 +338,21 @@ begin
     Result := Options.SetZoomLevel(level);
   end;
 end;
+
+(*
+## Options.SetZoomLevel override
+```pascal
+function TRSOptions.SetZoomLevel(level: Int32): Boolean; override;
+```
+Overrides {ref}`Options.SetZoomLevel` to also set the {ref}`RSMouseZoom`
+`ZoomLevel`.
+*)
+function TRSOptions.SetZoomLevel(level: Int32): Boolean; override;
+begin
+  Result := inherited();
+  if not Result then
+    level := Options.GetZoomLevel(False);
+
+  RSMouseZoom.ZoomLevel := RSMouseZoom.Slider2Level(level);
+end;
+

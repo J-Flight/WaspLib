@@ -635,7 +635,7 @@ begin
     // check if doors need to be passed to reach target
     if hasPath or Self.Walker^.WebGraph^.WalkableClusters.InSameTPA(me, closest) then
     begin
-      if not Self.Walker^.MakePointVisible(closest) and not Self.Walker^.WebWalkEx(me, closest, Self.MinDistance, 0.15) then
+      if not TRSWalker.MakePointVisibleEx(me, closest) and not Self.Walker^.WebWalkEx(me, closest, Self.MinDistance, 0.15) then
         Exit;
     end
     else

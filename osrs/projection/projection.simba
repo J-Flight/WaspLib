@@ -585,7 +585,7 @@ var
   pt: TPoint;
 begin
   pt := Minimap.GetDots(ERSMinimapDot.ITEM)[0]; //find an item dot and returns it's coodinates.
-  Options.SetZoomLevel(Minimap.GetZoomToPoint(pt));
+  RSMouseZoom.SetZoomLevel(Minimap.GetZoomToPoint(pt));
 end.
 ```
 *)
@@ -620,7 +620,7 @@ begin
   begin
     if Abs(level-Options.GetZoomLevel(True)) < randomness then
       Exit(True);
-    Result := Options.SetZoomLevel(level);
+    Result := RSMouseZoom.SetZoomLevel(level);
   end;
 end;
 
