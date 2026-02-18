@@ -42,7 +42,7 @@ Main record used to interact with the {ref}`Minimap`.
 *)
   TRSMinimap = record
     Orbs: array of TRSMinimapOrb;
-    Bounds: TBox;
+    Bounds, _PolyBounds: TBox;
     Center: TPoint;
     Radius: Integer;
     Polygon: TPolygon;
@@ -54,11 +54,6 @@ Main record used to interact with the {ref}`Minimap`.
 
     Mask: TPointArray;
 
-    const DotIMGs: array [ERSMinimapDot] of TImage = [
-      ImageFromString('IMG:AQAAAAIAAAACAAAAAAAAAFzsuAkAAAAACAAAAAAAAAAgAAAAAAAAAMBkSgABAAAAAAAAAAAAAAAgAAAAAAAAAOD7MgcAAAAArlsBAAEAAACQU1wAAAAAAJAcugYAAAAAtnayBgAAAACIHLoGAAAAAFzsuAkAAAAAXOy4CQAAAAAg/DIHAAAAAHBgAQABiVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAABnRSTlMAAAAAAABupgeRAAAAEUlEQVR4nGP4BwYMQPDmzRsARBgIuYq1W6UAAAAASUVORK5CYII='),
-      ImageFromString('IMG:AQAAAAIAAAACAAAAAAAAANf7QpQykwAAEDgu0v9/AADABkYIAAAAABgAAAAAAAAAAAAAAAAAAADAAV4AAQAAAND7MgcAAAAAf00BAAEAAAAX+0KUMpMAAIRosgYAAAAAAAAAAAAAAACEaLIGAAAAABD8MgcAAAAAkaIAAAEAAAAQ/DIHAAAAAAAAAAAAiVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAABnRSTlMAAAAAAABupgeRAAAAFElEQVR4nGP484fp61cGEHj7lgEAL5AFvzCPessAAAAASUVORK5CYII='),
-      ImageFromString('IMG:AQAAAAIAAAACAAAAAAAAANf7QpQykwAAEDgu0v9/AABgG7AHAAAAABgAAAAAAAAAAAAAAAAAAADAAV4AAQAAAND7MgcAAAAAf00BAAEAAAAX+0KUMpMAAIRosgYAAAAAAAAAAAAAAACEaLIGAAAAABD8MgcAAAAAkaIAAAEAAAAQ/DIHAAAAAAAAAAAAiVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAABnRSTlMAAAAAAABupgeRAAAAFUlEQVR4nGP4p6Dwh42NAQg+MjAAABzlAzh9c63TAAAAAElFTkSuQmCC')
-    ];
     const FLAG: TImage = ImageFromString('IMG:AQAAAAIAAAACAAAAAAAAAIDjPwEAAAAA7joBAAEAAACQ4z8BAAAAALEMAQABAAAAgH8GCQAAAAAAiAYJAAAAAAgAAAAIAAAAgH8GCQAAAAABAAAAAgAAAAIAAAAYAAAAAAAAAAAAAAAAAAAAAwAAABgIEAgICAAAAAEAAAIAAAAAAAAAAAAAAAAAAAAAiVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFUlEQVR4nGP4z8AQayzIcCyMBUgBABrmA2K2r4OdAAAAAElFTkSuQmCC');
   end;
 
@@ -156,6 +151,7 @@ begin
 
   Self.Center := Self.Bounds.Center;
   Self.Polygon := tpa.Offset(Self.Center);
+  Self._PolyBounds := Self.Polygon.Bounds();
   MainScreen.Mask.DrawPolygonFilled(Self.Polygon.Expand(9));
   MainScreen.Mask.DrawCircleFilled(Self.Center.Offset(63,56), 14);
 end;
@@ -1140,53 +1136,58 @@ Your result should look something like this on the minimap:
 ```{figure} ../../images/npcdots.png
 ```
 *)
-function TRSMinimap._GetDots(img: TImage): TPointArray;
+function TRSMinimap._GetDots(dot: ERSMinimapDot; img: TImage; offset: TPoint): TPointArray;
+const
+  COLORS: array [ERSClient] of array [ERSMinimapDot] of array [0..1] of TColor = [
+    //PLAYER              NPC                 ITEM
+    [[$FEFEFE, $ECECEC], [$02FCFC, $00EDED], [$0606FC, $0000F1]], //UNKNOWN
+    [[$FEFEFE, $ECECEC], [$02FCFC, $00EDED], [$0606FC, $0000F1]], //LEGACY
+    [[$FEFEFE, $ECECEC], [$02FCFC, $00EDED], [$0606FC, $0000F1]], //RUNELITE
+    [[$FEFEFE, $ECECEC], [$00F1FE, $00DFEC], [$0000FE, $0000EC]]  //OFFICIAL
+  ];
 var
-  dot: ERSMinimapDot;
-  tmp: TTarget;
+  y,x: Integer;
 begin
-  tmp := new TTarget();
-  tmp.SetImage(img.Copy());
-  for dot in [ERSMinimapDot.PLAYER, ERSMinimapDot.NPC, ERSMinimapDot.ITEM] do
-    Result += tmp.FindImageEx(Self.DotIMGs[dot], 0, -1);
+  for y := 0 to img.Height-2 do
+    for x := 0 to img.Width-2 do
+    begin
+      if img.Pixel[x,y] <> COLORS[RSClient.Client][dot][0] then Continue;
+      if img.Pixel[x+1,y] <> COLORS[RSClient.Client][dot][1] then Continue;
+      //TODO: maybe confirm dot shadow or confirm other dots in range.
+      //Some dots are detected twice, especially players.
+      Result += [x + offset.X, y + offset.Y-1];
+    end;
 end;
 
 function TRSMinimap.GetDots(dot: ERSMinimapDot; bounds: TBox): TPointArray;
-const
-  COLORS: array [ERSMinimapDot] of array [0..1] of TColor = [
-    [$FEFEFE, $ECECEC], [$02FCFC, $00EDED], [$0606FC, $0000F1]
-  ];
 var
   img: TImage;
-  y,x: Integer;
 begin
-  bounds := bounds.Clip(Self.Polygon.Bounds());
+  bounds := bounds.Clip(Self._PolyBounds);
   img := Target.GetImage(bounds);
-
-  for y := 0 to img.Height-2 do
-    for x := 0 to img.Width-2 do
-      if (img.Pixel[x,y] = COLORS[dot][0]) and (img.Pixel[x+1,y] = COLORS[dot][1]) then
-        Result += [x + bounds.X1+2, y + bounds.Y1-1];
+  Result := Self._GetDots(dot, img, bounds.TopLeft);
 end;
 
 function TRSMinimap.GetDots(dot: ERSMinimapDot): TPointArray; overload;
 begin
-  Result := Self.GetDots(dot, Self.Polygon.Bounds());
+  Result := Self.GetDots(dot, Self._PolyBounds);
 end;
 
 function TRSMinimap.GetDots(dots: ERSMinimapDots; bounds: TBox): TRSMinimapDotArray; overload;
 var
   dot: ERSMinimapDot;
-  b: TBox;
+  img: TImage;
 begin
-  b := bounds.Clip(Self.Polygon.Bounds());
+  bounds := bounds.Clip(Self._PolyBounds);
+  img := Target.GetImage(bounds);
+
   for dot in dots do
-    Result[dot] := Target.FindImageEx(Self.DotIMGs[dot], 0, -1, b);
+    Result[dot] := Self._GetDots(dot, img, bounds.TopLeft);
 end;
 
 function TRSMinimap.GetDots(dots: ERSMinimapDots = [ERSMinimapDot.PLAYER, ERSMinimapDot.NPC, ERSMinimapDot.ITEM]): TRSMinimapDotArray; overload;
 begin
-  Result := Self.GetDots(dots, Self.Polygon.Bounds());
+  Result := Self.GetDots(dots, Self._PolyBounds);
 end;
 
 
@@ -1277,10 +1278,13 @@ var
   tpa: TPointArray;
   pt: TPoint;
   bounds: TBox;
+  dot: ERSMinimapDot;
 begin
   bounds := [1,1,img.Width-2, img.Height-2];
-  for pt in Self._GetDots(img) do
-    tpa += _DotTPA(pt, bounds);
+
+  for dot := ERSMinimapDot.PLAYER to ERSMinimapDot.ITEM do
+    for pt in Self._GetDots(dot, img, [0,0]) do
+      tpa += _DotTPA(pt, bounds);
 
   with img.Center do
   begin
