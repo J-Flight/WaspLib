@@ -54,7 +54,8 @@ begin
     begin
       Self.Y := Self.Player.Y - 674;
       Self.ZOffset := -1650;
-      Self.Offset := [4,4];
+      with RSClient.Bounds do
+        Self.Offset := [X1+4,Y1+4];
       Self.MinScale := 181;
       Self.MaxScale := 1448;
       Self.MaxZ := 1851;
@@ -64,7 +65,8 @@ begin
     begin
       Self.Y := Self.Player.Y - 842;
       Self.ZOffset := -2054;
-      Self.Offset := [0,0];
+      with RSClient.Bounds do
+        Self.Offset := [X1,Y1];
       //scale increases with client height between 272 and 574 for min and 2180 and 4599 for max
       percent := (MainScreen.Bounds.Height - 503) / (1061-503);
       Self.MinScale := 272+Round((574-272) * percent);

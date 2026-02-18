@@ -66,13 +66,13 @@ end;
 
 {$H-}
 procedure TargetResized(sender: TTarget; data: TTargetEventData);
+var
+  rads: Single;
 begin
   WriteLn(GetDebugLn('RSClient', 'Client was resized, updating coordinates.'));
   RSClient.Mode := ERSMode.UNKNOWN;
+  RSClient.Clear();
 
-  {$IFNDEF WL_DISABLE_FAKE_INPUT}
-  RSClient.Canvas.Clear();
-  {$ENDIF}
   LoginWorldSwitcher.Setup();
   Lobby.Setup();
   Login.Setup();
@@ -82,10 +82,15 @@ begin
   if RSClient.Mode = ERSMode.UNKNOWN then
     RSClient.Mode := ERSMode.FIXED;
 
-  MM2MS.Setup(RSClient.Mode);
-  if Options.ZoomLevel > -1 then
-    MM2MS.Update(Options.ZoomLevel, Minimap.CompassRadians);
   SetupInterfaces();
+
+  Projection.Setup();
+  if Options.ZoomLevel > -1 then
+  begin
+    rads := Minimap.CompassRadians;
+    MM2MS.Update(Options.ZoomLevel, rads);
+    RSCamera.Update(Options.ZoomLevel, rads);
+  end;
 end;
 {$H+}
 

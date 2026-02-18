@@ -296,7 +296,6 @@ begin
     coordinates += pt;
 
     vector := Self.Walker^.Point2MMVec(me, pt, radians);
-    pt := vector.ToPoint();
     vector := vector.Rotate(-radians, Minimap.Center);
 
     Result += Self._GetBounds(meLocal, vector, Self.Size, h, radians, DegToRad(Self.Rotations[i]));
