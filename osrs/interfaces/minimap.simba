@@ -10,7 +10,8 @@ Methods to interact with the minimap interface:
 
 type
 (*
-## ERSMinimapDots
+(ERSMinimapDots)=
+## ERSMinimapDot enum
 ```pascal
 ERSMinimapDot  = enum(PLAYER, NPC, ITEM);
 ```
@@ -21,7 +22,8 @@ Enum representing the available minimap dots.
   TRSMinimapDotArray = array [ERSMinimapDot] of TPointArray;
 
 (*
-## ERSMinimapOrb
+(ERSMinimapOrb)=
+## ERSMinimapOrb enum
 ```pascal
 ERSMinimapOrb  = enum(HITPOINTS, PRAYER, ENERGY, SPECIAL);
 ```
@@ -1108,7 +1110,7 @@ end;
 (*
 ## Minimap.GetDots
 ```pascal
-function TRSMinimap._GetDots(img: TImage): TPointArray;
+function TRSMinimap._GetDots(dot: ERSMinimapDot; img: TImage; offset: TPoint): TPointArray;
 function TRSMinimap.GetDots(dot: ERSMinimapDot; bounds: TBox): TPointArray;
 function TRSMinimap.GetDots(dot: ERSMinimapDot): TPointArray; overload;
 function TRSMinimap.GetDots(dots: ERSMinimapDots; bounds: TBox): TRSMinimapDotArray; overload;
@@ -1135,6 +1137,32 @@ end.
 Your result should look something like this on the minimap:
 ```{figure} ../../images/npcdots.png
 ```
+
+Finding minimap dots accurately is quite complex as they can overlap each other
+and the way WaspLib does it is not perfect.
+
+It basically comes down to whether you want a simple solution that people can
+reason with or something complex that does it accurately.
+WaspLib goes with the first option.
+
+This means that depending on the type of {ref}`ERSMinimapDot` you are trying to
+find and the {ref}`ERSClient` you are using, you might get 2 `TPoints` per dot.
+
+This is because the way it works is as follows:
+- We try to find the 2 bottom center pixels (blue square on the image below)
+- These 2 pixels are always guaranteed to be visible and any other combination of pixels can be covered by other dots overlapping when there's too many
+- When we find those 2 pixels, we return the top left center pixel of the dot (green cross below)
+```{figure} ../../images/minimap_getdots_java.png
+```
+
+However, with `ERSMinimapDot.PLAYER` and every dot on `ERSClient.OFFICIAL` you
+have the following issue:
+```{figure} ../../images/minimap_getdots_cpp.png
+```
+The 2 bottom center pixels are not unique anymore which makes it so you get 2 points returned per dot
+(the 2 green crosses)
+
+So do have that in mind when writing your scripts.
 *)
 function TRSMinimap._GetDots(dot: ERSMinimapDot; img: TImage; offset: TPoint): TPointArray;
 const
