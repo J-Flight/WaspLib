@@ -209,7 +209,7 @@ begin
 end;
 
 
-procedure TImage.DrawCuboid(cuboid: TCuboid);
+procedure TImage.DrawCuboid(const cuboid: TCuboid);
 begin
   Self.DrawColor := $00FFFF;
   Self.DrawTPA(cuboid.Bottom.Corners.Connect().Grow(1));
@@ -219,7 +219,7 @@ begin
   Self.DrawTPA(cuboid.Edges());
 end;
 
-procedure ShowOnTarget(cuboid: TCuboid); overload;
+procedure ShowOnTarget(const cuboid: TCuboid); overload;
 var
   img: TImage;
 begin
@@ -229,7 +229,7 @@ begin
 end;
 
 
-procedure TImage.DrawCuboidArray(cuboids: TCuboidArray);
+procedure TImage.DrawCuboidArray(const cuboids: TCuboidArray);
 var
   i: Integer;
 begin
@@ -245,7 +245,7 @@ begin
     Self.DrawTPA(cuboids[i].Edges());
 end;
 
-procedure ShowOnTarget(cuboids: TCuboidArray); overload;
+procedure ShowOnTarget(const cuboids: TCuboidArray); overload;
 var
   img: TImage;
 begin
@@ -254,6 +254,16 @@ begin
   img.Show();
 end;
 
+
+function TPointArray.ExtractCuboid(const cuboid: TCuboid): TPointArray;
+begin
+  Result := Self.Intersection(cuboid.ShapeFill());
+end;
+
+function TPointArray.ExcludeCuboid(const cuboid: TCuboid): TPointArray;
+begin
+  Result := Self.Difference(cuboid.ShapeFill());
+end;
 
 type
   TBoxFilter = record

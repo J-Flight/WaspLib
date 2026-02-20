@@ -15,6 +15,24 @@ retrive your position on that image by finding the most similar place to your
 
 type
 (*
+(EPositionMode)=
+## EPositionMode enum
+```pascal
+EPositionMode = enum(SPEED, ACCURACY);
+```
+Enum representing the modes that {ref}`Image Map` can use.
+
+The default mode is `EPositionMode.SPEED`.
+`EPositionMode.ACCURACY` gives you between 0-30% more accuracy at the cost of
+almost half the speed and is generally not worth while unless you really are
+having positioning issues.
+
+Use {ref}`ImageMap.DebugPosition` and plan accordingly whether this is worth
+using or not.
+*)
+  EPositionMode = enum(SPEED, ACCURACY);
+
+(*
 ## TRSMapSample
 Record used to customize the sample retrieved from the minimap for TRSMap.
 *)
@@ -28,7 +46,6 @@ Record responsible for positioning.
 *)
   TRSImageMap = record
     Map, HalfMap, DownscaledMap: TImage;
-
     Walker: TRSWalker;
     Similarity: Single;
     Cache: TMatchTemplateCache;
@@ -36,6 +53,7 @@ Record responsible for positioning.
     IsSetup: Boolean;
     Downscale: Integer;
     Graph: TWebGraph;
+    Mode: EPositionMode;
   end;
 
 function TRSImageMap.Position(): TPoint; forward;
@@ -108,6 +126,7 @@ end;
 (*
 ## ImageMap.FullSearch
 ```pascal
+function TRSImageMap.FullSearchEx(const template, map: TImage; position: TPoint; scale: UInt32; out match: Single): TPoint; static;
 function TRSImageMap.FullSearch(template, map: TImage; position: TPoint; out match: Single): TPoint;
 ```
 Internal TRSImageMap method used to get the player position.
@@ -119,6 +138,40 @@ This likelyhood is returned with `match` which ranges from `0.0` to `1.0`.
 
 You probably won't ever need to call this directly.
 *)
+function TRSImageMap.FullSearchEx(template, map: TImage; position: TPoint; scale: UInt32; out match: Single): TPoint; static;
+const
+  TEMPL_SIZE: Int32 = 80;
+var
+  size: Int32;
+  slice: TImage;
+  cache: TMatchTemplateCache;
+  matrix: TSingleMatrix;
+  area: TBox;
+begin
+  position.X := position.X div scale;
+  position.Y := position.Y div scale;
+
+  size := TEMPL_SIZE div scale;
+  area := [
+    Max(0, position.X - size),
+    Max(0, position.Y - size),
+    Min(map.Width  - 1, position.X + size),
+    Min(map.Height - 1, position.Y + size)
+  ];
+
+  slice := map.Copy(area);
+  cache := TMatchTemplateCache.Create(slice, template, ETMFormula.TM_CCOEFF_NORMED);
+  matrix := MatchTemplateMask(cache, template, ETMFormula.TM_CCOEFF_NORMED);
+  cache.Free();
+
+  with matrix.ArgMax() do
+  begin
+    match := matrix[Y, X];
+    Result.X := (area.X1 + X) * scale;
+    Result.Y := (area.Y1 + Y) * scale;
+  end;
+end;
+
 function TRSImageMap.FullSearch(template, map: TImage; position: TPoint; scale: UInt32; out match: Single): TPoint; static;
 const
   TEMPL_SIZE: Integer = 40;
@@ -179,11 +232,15 @@ begin
   results := Self.ScaledSearch(clean);
 
   half := Minimap.ScaleMinimap(clean, SCALE, Self.Sample.Radius);
-  half := half.Blend(half.FindColor($0, 0), 10);
+  if Self.Mode = EPositionMode.SPEED then
+    half := half.Blend(half.FindColor($0, 0), 10);
 
   for i := 0 to High(results) do
   begin
-    hit := TRSImageMap.FullSearch(half, Self.HalfMap, results[i], SCALE, match);
+    if Self.Mode = EPositionMode.SPEED then
+      hit := TRSImageMap.FullSearch(half, Self.HalfMap, results[i], SCALE, match)
+    else
+      hit := TRSImageMap.FullSearchEx(half, Self.HalfMap, results[i], SCALE, match);
 
     if match > Self.Similarity then
     begin

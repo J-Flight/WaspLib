@@ -46,8 +46,11 @@ Record responsible for positioning.
   TRSMap = record
     RegionIndex: Integer;
     Region: TRSMapRegion;
-
     Walker: TRSWalker;
+    Loader: TRSMapLoader;
+    Sample: TRSMapSample;
+    Filters: TBoxFilterArray;
+    Mode: EPositionMode;
 
     Similarity: Single;
     Cache: record
@@ -56,11 +59,6 @@ Record responsible for positioning.
       FullPosition: TRSPosition;
       MatchTemplate: TMatchTemplateCache;
     end;
-    Loader: TRSMapLoader;
-
-    Sample: TRSMapSample;
-
-    Filters: TBoxFilterArray;
 
     Normalize, DisableHeightmap, IsSetup: Boolean;
   end;
@@ -363,14 +361,19 @@ begin
 
   angle := Minimap.CompassRadians;
   clean := Minimap.GetCleanImage(angle, Self.Sample.Radius);
+
   results := Self.ScaledSearch(clean);
 
   half := Minimap.ScaleMinimap(clean, SCALE, Self.Sample.Radius);
-  half := half.Blend(half.FindColor($0, 0), 10);
+  if Self.Mode = EPositionMode.SPEED then
+    half := half.Blend(half.FindColor($0, 0), 10);
 
   for i := 0 to High(results) do
   begin
-    hit := TRSImageMap.FullSearch(half, Self.Loader.HalfMap, results[i], SCALE, match);
+    if Self.Mode = EPositionMode.SPEED then
+      hit := TRSImageMap.FullSearch(half, Self.Loader.HalfMap, results[i], SCALE, match)
+    else
+      hit := TRSImageMap.FullSearchEx(half, Self.Loader.HalfMap, results[i], SCALE, match);
 
     if match > Self.Similarity then
     begin

@@ -1220,38 +1220,13 @@ end;
 
 
 (*
-## Minimap.CleanImage
+## Minimap.GetCleanMask
 ```pascal
-function TRSMinimap.CleanImage(img: TImage; radius: Integer): TImage;
+function TRSMinimap.GetCleanMask(img: TImage): TPointArray;
 ```
-Cleans a TImage of the {ref}`Minimap` you pass into it.
-"Clean" means that minimap dots, the running flag and a few other things are
-removed and the colors around it will be blended in.
-
-The image i
-
-Example:
-```pascal
-{$I WaspLib/osrs.simba}
-
-var
-  before, after, combined: TImage;
-begin
-  before := Target.GetImage(Minimap.Bounds);
-  after := Minimap.CleanImage(before.Copy(), 65);
-
-  combined := new TImage(before.Width*2, before.Height);
-
-  combined.DrawImage(before, [0,0]);
-  combined.DrawImage(after, [before.Width+1, 0]);
-  combined.Show();
-end.
-```
-
-```{figure} ../../images/mmclean.png
-```
+Returns a TPA of a mask to clean the minimap.
 *)
-function TRSMinimap.CleanImage(img: TImage; radius: Integer): TImage;
+function TRSMinimap.GetCleanMask(img: TImage): TPointArray;
 
   function _DotTPA(pt: TPoint; bounds: TBox): TPointArray;
   var
@@ -1303,7 +1278,6 @@ function TRSMinimap.CleanImage(img: TImage; radius: Integer): TImage;
   end;
 
 var
-  tpa: TPointArray;
   pt: TPoint;
   bounds: TBox;
   dot: ERSMinimapDot;
@@ -1312,29 +1286,63 @@ begin
 
   for dot := ERSMinimapDot.PLAYER to ERSMinimapDot.ITEM do
     for pt in Self._GetDots(dot, img, [0,0]) do
-      tpa += _DotTPA(pt, bounds);
+      Result += _DotTPA(pt, bounds);
 
   with img.Center do
   begin
-    tpa += [X,Y];
-    tpa += [X-1,Y];
-    tpa += [X+1,Y];
-    tpa += [X,Y+1];
-    tpa += [X+1,Y+1];
-    tpa += [X-1,Y+1];
-    tpa += [X,Y-1];
-    tpa += [X-1,Y-1];
-    tpa += [X+1,Y-1];
+    Result += [X,Y];
+    Result += [X-1,Y];
+    Result += [X+1,Y];
+    Result += [X,Y+1];
+    Result += [X+1,Y+1];
+    Result += [X-1,Y+1];
+    Result += [X,Y-1];
+    Result += [X-1,Y-1];
+    Result += [X+1,Y-1];
   end;
 
-  tpa += img.FindColor($0000FF, 0); //flag
-  tpa += img.FindColor($0456C6, 0); //idk ask slacky/olly
-  tpa += img.FindColor($11335D, 0); //idk ask slacky/olly
+  Result += img.FindColor($0000FF, 0); //flag
+  Result += img.FindColor($0456C6, 0); //idk ask slacky/olly
+  Result += img.FindColor($11335D, 0); //idk ask slacky/olly
+  Result += img.FindColor($010000, 0); //replaced black
+end;
 
-  tpa += img.FindColor($010000, 0); //replaced black
-  tpa := tpa.SortFrom(img.Center);
 
-  Result := img.Blend(tpa, 6);
+(*
+## Minimap.CleanImage
+```pascal
+function TRSMinimap.CleanImage(img: TImage; radius: Integer): TImage;
+```
+Cleans a TImage of the {ref}`Minimap` you pass into it.
+"Clean" means that minimap dots, the running flag and a few other things are
+removed and the colors around it will be blended in.
+
+The image i
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+
+var
+  before, after, combined: TImage;
+begin
+  before := Target.GetImage(Minimap.Bounds);
+  after := Minimap.CleanImage(before.Copy(), 65);
+
+  combined := new TImage(before.Width*2, before.Height);
+
+  combined.DrawImage(before, [0,0]);
+  combined.DrawImage(after, [before.Width+1, 0]);
+  combined.Show();
+end.
+```
+
+```{figure} ../../images/mmclean.png
+```
+*)
+function TRSMinimap.CleanImage(img: TImage): TImage;
+begin
+  Result := img.Blend(Self.GetCleanMask(img).SortFrom(img.Center), 6);
 end;
 
 (*
@@ -1372,13 +1380,10 @@ var
 begin
   if angle = $FFFF then angle := Self.CompassRadians;
 
-  if radius = -1 then
-    radius := Self.Radius;
-
   img := Target.GetImage(Self.Bounds);
   img.ReplaceColor($0, $1, 0.23);
 
-  clean := Self.CleanImage(img, radius);
+  clean := Self.CleanImage(img);
 
   center := clean.Center;
   if RSClient.Mode = ERSMode.FIXED then
@@ -1386,7 +1391,10 @@ begin
   else
     center := center.Offset(-2, -1);
 
-  clean.Crop(TBox.Create(center, radius, radius));
+  if radius = -1 then
+    clean.Crop(TBox.Create(center, Self.Radius, Self.Radius))
+  else
+    clean.Crop(TBox.Create(center, radius, radius));
 
   Result := clean.Rotate(EImageRotateAlgo.BILINEAR, angle, False);
 end;
@@ -1434,7 +1442,8 @@ begin
   tpa := Result.FindColor($0, 0).SortFrom(Result.Center);
 
   Result := Result.Blend(tpa, 8);
-  Result := Result.Downsample(scaling);
+  if scaling > 1 then
+    Result := Result.Downsample(scaling);
 
   Result.DrawColor := $0;
   Result.DrawCircleInverted(Result.Center, radius div scaling);
