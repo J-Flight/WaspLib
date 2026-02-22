@@ -80,6 +80,39 @@ begin
   inherited;
 end;
 
+
+(*
+## Options.GetTab override
+```pascal
+function TRSOptions.GetTab(): ERSOptionsTab; override;
+```
+Override that basically sets the cached zoom level when the display tab is open.
+
+E.g., when the bank is open, all gametab buttons are hidden but you have the inventory open.
+
+Example:
+```pascal
+WriteLn GameTabs.GetCurrent();
+```
+*)
+function TRSOptions.GetTab(): ERSOptionsTab; override;
+begin
+  Result := inherited();
+  if Result <> ERSOptionsTab.DISPLAY then
+    Exit;
+
+  Options.ZoomLevel := Options._GetZoomLevel();
+
+  if RSMouseZoom.SettingChecked then
+    Exit;
+
+  RSMouseZoom.Enabled := not Target.HasColor($0000C8, 0, 1, GameTab.Bounds);
+  RSMouseZoom.SettingChecked := True;
+
+  if not RSMouseZoom.Enabled then
+    RSMouseZoom.ZoomLevel := -1;
+end;
+
 (*
 ## GameTabs.GetCurrent override
 ```pascal
@@ -101,33 +134,13 @@ begin
   case Result of
     ERSGameTab.NONE:
     begin
-      if Bank.IsOpen() then
-        Exit(ERSGameTab.INVENTORY);
-      if DepositBox.IsOpen() then
-        Exit(ERSGameTab.INVENTORY);
-      if CargoHold.IsOpen() then
-        Exit(ERSGameTab.INVENTORY);
-      if Shop.IsOpen() then
+      if Bank.IsOpen() or CargoHold.IsOpen() or Shop.IsOpen() then
         Exit(ERSGameTab.INVENTORY);
       if not HouseOptions.IsOpen() then
         Exit(ERSGameTab.OPTIONS);
-      Exit;
     end;
 
-    ERSGameTab.OPTIONS:
-    begin
-      if RSMouseZoom.SettingChecked then
-        Exit;
-      if Options.GetTab() <> ERSOptionsTab.DISPLAY then
-        Exit;
-
-      RSMouseZoom.Enabled := not Target.HasColor($0000C8, 0, 1, GameTab.Bounds);
-      RSMouseZoom.SettingChecked := True;
-      Options.ZoomLevel := Options._GetZoomLevel();
-
-      if not RSMouseZoom.Enabled then
-        RSMouseZoom.ZoomLevel := -1;
-    end;
+    ERSGameTab.OPTIONS: Options.GetTab(); //Because of the override above
   end;
 end;
 
@@ -140,13 +153,10 @@ Overrides {ref}`GameTabs.Open` to close the bank if the bank open.
 *)
 function TRSGameTabs.Open(tab: ERSGameTab; fkeyProbability: Single = -1): Boolean; override;
 begin
-  if Self.IsOpen(tab) then Exit(True);
-
-  if MSInterface.IsOpen() and (
-    Bank.IsOpen() or DepositBox.IsOpen() or Shop.IsOpen() or CargoHold.IsOpen()
-  ) then
+  if Self.IsOpen(tab) then
+    Exit(True);
+  if Bank.IsOpen() or Shop.IsOpen() or CargoHold.IsOpen() then
     MSInterface.Close();
-
   Result := inherited(tab, fkeyProbability);
 end;
 

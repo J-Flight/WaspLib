@@ -92,7 +92,7 @@ begin
   if tpa.IsEmpty then
     Exit;
 
-  atpa := tpa.Cluster(1.5);
+  atpa := tpa.Cluster(3);
 
   for tpa in atpa do
   begin
@@ -128,12 +128,20 @@ end;
 
 
 function TRSInterfaceArea.Close(escape: Boolean): Boolean;
+var
+  b: TBox;
 begin
   if not Self.IsOpen() then
     Exit(True);
 
   case escape of
-    False: Mouse.Click(Self.GetCloseButton(), EMouseButton.LEFT);
+    False:
+    begin
+      b := Self.GetCloseButton();
+      if b = Default(TBox) then
+        Exit;
+      Mouse.Click(b, EMouseButton.LEFT);
+    end;
     True:  Keyboard.KeyPress(EKeyCode.ESCAPE);
   end;
 
@@ -142,7 +150,8 @@ end;
 
 function TRSInterfaceArea.Close(escapeProbability: Single = -1): Boolean; overload;
 begin
-  if escapeProbability = -1 then escapeProbability := Biometrics.RandomDouble(0.5);
+  if escapeProbability = -1 then
+    escapeProbability := Biometrics.RandomDouble(0.5);
   Result := Self.Close(RandomBoolean(escapeProbability));
 end;
 

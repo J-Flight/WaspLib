@@ -274,7 +274,7 @@ begin
 
   WriteLn GetDebugLn('Options', 'Unknown zoom level, reading from the gametab...');
 
-  //Self.Zoom level is checked on TRSGameTabs.GetCurrent() override
+  //Self.Zoom level is checked on TRSOptions.GetTab() override
   if not Self.OpenTab(ERSOptionsTab.DISPLAY) then
     Exit;
 
