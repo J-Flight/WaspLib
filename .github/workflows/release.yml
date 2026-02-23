@@ -105,12 +105,16 @@ jobs:
               $end = [Math]::Min($start + $maxTestsPerShard, $testFiles.Count)
 
               for ($i = $start; $i -lt $end; $i++) {
-                  $filePath = $testFiles[$i].FullName
-                  Write-Output "[$arch] Running test: $filePath"
+                  $testPath = $testFiles[$i].FullName
+                  Write-Output "[$arch] Running test: $testPath"
 
-                  & ".\Simba-$arch.exe" --extractopenssl --run $filePath
+                  & ".\Simba-$arch.exe" --extractopenssl --run $testPath
+
+                  if ($LASTEXITCODE -ne 0) {
+                      throw "Test failed with exit code $LASTEXITCODE: $testPath"
+                  }
               }
-          }
+          } -ThrottleLimit 4
 
   release:
     needs: tests
