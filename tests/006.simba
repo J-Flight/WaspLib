@@ -1,6 +1,0 @@
-{$DEFINE WL_TEST}
-var
-  img: TImage;
-begin
-  img := 'hello';
-end;
