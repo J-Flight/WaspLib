@@ -14,7 +14,7 @@ jobs:
     outputs:
       build_hash: ${{ steps.simba-url.outputs.buildHash }}
       base_url: ${{ steps.simba-url.outputs.baseUrl }}
-      test_files: ${{ steps.list-simba.outputs.testFiles }}
+      test_files: ${{ steps.list-test-files.outputs.testFiles }}
     steps:
       - name: Fetch Simba 2 download URL
         id: simba-url
@@ -45,7 +45,7 @@ jobs:
         id: list-test-files
         run: |
           FILES=$(find . -maxdepth 1 -name '*.simba' -printf '"%f"' | paste -sd "," -)
-          echo $FILES
+          echo "Files found: $FILES"
           echo "testFiles=[$FILES]" >> $GITHUB_OUTPUT
 
   tests:
