@@ -14,23 +14,38 @@ jobs:
     outputs:
       build_hash: ${{ steps.simba-url.outputs.buildHash }}
       base_url: ${{ steps.simba-url.outputs.baseUrl }}
+      test_files: ${{ steps.list-simba.outputs.testFiles }}
     steps:
       - name: Fetch Simba 2 download URL
         id: simba-url
         run: |
           FULL_URL=$(curl -sSL "https://raw.githubusercontent.com/Villavu/Simba-Build-Archive/refs/heads/main/latest.win64" | tr -d '[:space:]')
-
           if [[ $FULL_URL =~ simba2000%20([^/]+)/Win64\.zip ]]; then
             BUILD_HASH="${BASH_REMATCH[1]}"
           else
             echo "Error: Could not extract build hash from $FULL_URL"
             exit 1
           fi
-
           BASE_URL="${FULL_URL%Win64.zip*}"
-
           echo "baseUrl=$BASE_URL" >> $GITHUB_OUTPUT
           echo "buildHash=$BUILD_HASH" >> $GITHUB_OUTPUT
+
+      - name: Checkout WaspLib
+        uses: actions/checkout@v5
+        with:
+          path: ./Includes/WaspLib
+
+      - name: Upload WaspLib repo
+        uses: actions/upload-artifact@v6
+        with:
+          name: wasplib
+          path: ./Includes/WaspLib
+
+      - name: List .simba files
+        id: list-test-files
+        run: |
+          FILES=$(find tests -maxdepth 1 -name '*.simba' -printf '%f\n' | paste -sd "," -)
+          echo "testFiles=$FILES" >> $GITHUB_OUTPUT
 
   tests:
     needs: setup
@@ -39,6 +54,7 @@ jobs:
       fail-fast: true
       matrix:
         arch: [Win32, Win64]
+        file: ${{ fromJSON('["' + needs.setup.outputs.test_files.replace(',', '","') + '"]') }}
     steps:
       - name: Check Simba64 cache
         uses: actions/cache@v4
@@ -80,19 +96,17 @@ jobs:
           repository: WaspScripts/wasp-plugins
           path: ./Plugins/wasp-plugins
 
-      - name: Checkout WaspLib
-        uses: actions/checkout@v5
+      - name: Download WaspLib repo artifacts
+        uses: actions/download-artifact@v7
         with:
+          name: wasplib
           path: ./Includes/WaspLib
 
       - name: Run tests
         shell: bash
         run: |
-          testFiles=(./Includes/WaspLib/tests/*.simba)
-          for testFile in "${testFiles[@]}"; do
-              echo "Running test: $testFile" on ${{ matrix.arch }}
-              ./Simba-${{ matrix.arch }}.exe --extractopenssl --run "$testFile"
-          done
+          echo "Running test ${{ matrix.file }} on ${{ matrix.arch }}"
+          ./Simba-${{ matrix.arch }}.exe --extractopenssl --run "./Includes/WaspLib/tests/${{ matrix.file }}"
 
   release:
     needs: tests
