@@ -95,7 +95,9 @@ jobs:
           Write-Output "Total tests: $($testFiles.Count), Shards: $shardCount"
 
           1..$shardCount | ForEach-Object -Parallel {
-              param($shardIndex, $testFiles, $maxTestsPerShard, $arch)
+              param($testFiles, $maxTestsPerShard, $arch)
+
+              $shardIndex = $_ - 1
               $start = $shardIndex * $maxTestsPerShard
               $end = [Math]::Min($start + $maxTestsPerShard, $testFiles.Count)
 
@@ -103,7 +105,7 @@ jobs:
                   Write-Output "[$arch] Running test: $($testFiles[$i].FullName)"
                   .\Simba-$arch.exe --extractopenssl --run $testFiles[$i].FullName
               }
-          } -ArgumentList ($_ - 1, $testFiles, $maxTestsPerShard, "${{ matrix.arch }}")
+          } -ArgumentList ($testFiles, $maxTestsPerShard, "${{ matrix.arch }}")
 
   release:
     needs: tests
