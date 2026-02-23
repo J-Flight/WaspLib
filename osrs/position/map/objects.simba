@@ -594,13 +594,13 @@ end;
 (*
 ## RSObject._WalkHoverHelper
 ```pascal
-function TRSObject._WalkHoverHelper(strings: TStringArray; walker: PRSWalker; minDist, attempt, attempts: Integer; const coordinates: TPointArray; out path: TPointArray): Boolean; static;
+function TRSObject._WalkHoverHelper(strings: TStringArray; walker: PRSWalker; dist, attempt, attempts: Integer; const coordinates: TPointArray): Boolean; static;
 ```
 Internal `TRSObject` helper method that is used by both {ref}`TRSObject.WalkHover`
 and {ref}`TRSEntity.WalkHover`.
 You probably don't need to use this directly.
 *)
-function TRSObject._WalkHoverHelper(strings: TStringArray; walker: PRSWalker; minDist, attempt, attempts: Integer; const coordinates: TPointArray; out path: TPointArray): Boolean; static;
+function TRSObject._WalkHoverHelper(strings: TStringArray; walker: PRSWalker; dist, attempt, attempts: Integer; const coordinates: TPointArray): Boolean; static;
 var
   me, closest: TPoint;
 begin
@@ -608,26 +608,19 @@ begin
     Exit(True);
 
   me := walker^.Position();
-  closest := walker^.GetClosestPoint(me, coordinates, path, 0.33);
+  closest := walker^.Graph^.NearestPathable(me, coordinates);
 
-  if path = [] then
+  if me.DistanceTo(closest) > dist then
   begin
-    path := walker^.WebGraph^.PathToNear(me, closest, 0.33);
-    if path = [] then
-      raise GetDebugLn('TRSObject', 'Can''t path to object.');
-  end;
-
-  if me.DistanceTo(closest) > minDist then
-  begin
-    walker^.WebWalkEx(me, closest, minDist, 0.15);
+    walker^.WebWalkEx(me, closest, dist, 0.33);
     Exit;
   end;
 
   if attempt < (attempts - 1) then
   begin
-    minDist := minDist div 2;
-    if me.DistanceTo(closest) > minDist then
-      walker^.WebWalkEx(me, closest, minDist, 0.15)
+    dist := dist div 2;
+    if me.DistanceTo(closest) > dist then
+      walker^.WebWalkEx(me, closest, dist, 0.15)
     else
       Minimap.CompassRadians := Minimap.CompassRadians + PI/3.6 * Random(-1,1);
   end;
@@ -809,7 +802,7 @@ it returns true.
 function TRSObject.WalkHover(action: TStringArray = []; attempts: Integer = 2): Boolean;
 var
   me, closest: TPoint;
-  coordinates, tpa, path: TPointArray;
+  coordinates, tpa: TPointArray;
   shouldExit: Boolean;
   attempt, i: Integer;
   atpa: T2DPointArray;
@@ -823,7 +816,7 @@ begin
   end;
 
   me :=  Self.Walker^.Position();
-  closest := Self.Walker^.GetClosestPoint(me, Self.Coordinates, path, 0.33);
+  closest := Self.Walker^.Graph^.NearestPathable(me, Self.Coordinates);
 
   Self.Walker^.TargetUpText := Copy(Self.UpText);
   Self.Walker^.ActionUpText := action;
@@ -831,7 +824,7 @@ begin
   try
     if not TRSWalker.MakePointVisibleEx(me, closest) then
     begin
-      if not Self.Walker^.WalkPath(path, Self.MinDistance) then
+      if not Self.Walker^.WebWalkEx(me, closest, Self.MinDistance, 0.33) then
         Exit;
 
       me := Self.Walker^.Position();
@@ -863,7 +856,7 @@ begin
         Sleep(50); //give uptext 1~ frame time to update
       end;
 
-      if TRSObject._WalkHoverHelper(Self.UpText + action, Self.Walker, Self.MinDistance, attempt, attempts, Self.Coordinates, path) then
+      if TRSObject._WalkHoverHelper(Self.UpText + action, Self.Walker, Self.MinDistance, attempt, attempts, Self.Coordinates) then
         Exit(True);
     end;
   finally

@@ -97,15 +97,15 @@ begin
   Result := AStarTPA(Self, start, goal, diagonalTravel);
 end;
 
-function T2DPointArray.InSameTPA(p, q: TPoint): Boolean;
+function T2DPointArray.InSameTPA(a, b: TPoint): Boolean;
 var
   i: Integer;
 begin
   for i := 0 to High(Self) do
     with Self[i].Bounds() do
-      if Contains(p) and Contains(q) then
-        case Length(Self[i].Intersection([p, q])) of
-          1: if p = q then Exit(True);
+      if Contains(a) and Contains(b) then
+        case Length(Self[i].Intersection([a, b])) of
+          1: if a = b then Exit(True) else Exit;
           2: Exit(True);
         end;
 end;

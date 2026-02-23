@@ -63,7 +63,7 @@ via the {ref}`Walker.Setup` method.
 
     WalkUpText, TargetUpText, ActionUpText: TStringArray;
 
-    WebGraph: PWebGraph;
+    Graph: PWebGraph;
     MapImage: TImage;
 
     OnWalkEvent, OnWaitMovingEvent: TRSWalkerEvent;
@@ -112,7 +112,7 @@ begin
 
   Self.WalkUpText := ['Walk here', 'alk her'];
   Self.AdaptiveWalk := True;
-  Self.WebGraph := graph;
+  Self.Graph := graph;
   Self.MapImage := mapImage;
 end;
 
@@ -926,68 +926,9 @@ begin
 end;
 
 
-(*
-## TRSWalker.GetClosestPoint
-```pascal
-function TRSWalker.GetClosestPoint(me: TPoint; destinations: TPointArray; out path: TPointArray; randomness: Double): TPoint;
-```
-Method used to get the closest `destination` point to `me`.
-*)
-function TRSWalker.GetClosestPoint(me: TPoint; destinations: TPointArray; out path: TPointArray; randomness: Double): TPoint;
-var
-  shortPaths: array of TPointArray;
-  best, dist, i: Integer;
-  destination: TPoint;
-  pathDist: Double;
-begin
-  best := $FFFFFF;
-
-  for destination in destinations do
-  begin
-    if not me.InRange(destination, best) then
-      Continue;
-
-    try
-      path := Self.WebGraph^.PathBetween(me, destination, randomness, 4);
-    except
-      Continue;
-    end;
-
-    if path = [] then
-      Continue;
-
-    pathDist := 0;
-    for i := 0 to High(path)-1 do
-    begin
-      pathDist += path[i].DistanceTo(path[i+1]);
-      if pathDist > best then
-        Continue(2);
-    end;
-
-    dist := Floor(pathDist);
-
-    if dist < best then
-    begin
-      shortPaths := [path];
-      best := dist;
-    end
-    else if dist = best then
-      shortPaths += path;
-
-    path := [];
-  end;
-
-  if shortPaths = [] then
-    Exit(destinations.NearestPoint(me));
-
-  path := shortPaths.Random();
-  Result := path.Last;
-end;
-
-
 function TRSWalker.GetPath(me, destination: TPoint; randomness: Double): TPointArray;
 begin
-  Result := Self.WebGraph^.PathBetween(me, destination, randomness, 4);
+  Result := Self.Graph^.PathBetween(me, destination, randomness, 4);
 end;
 
 (*
@@ -1026,11 +967,12 @@ begin
     raise GetDebugLn(Self.Name, 'WebWalk `randomness` must be between 0.0 an 1.0');
 
   me := Self.Position();
-  destination := Self.GetClosestPoint(me, destinations, path, randomness);
+  destination := Self.Graph^.NearestPathable(me, destinations);
 
   if me.InRange(destination, 3) then
     Exit(True);
 
+  path := Self.GetPath(me, destination, randomness);
   Result := Self.WalkPath(path, minDist, debug);
 end;
 
@@ -1074,5 +1016,5 @@ cluster.
 *)
 function TRSWalker.CheckConnection(a, b: TPoint): Boolean;
 begin
-  Result := Self.WebGraph^.WalkableClusters.InSameTPA(a, b);
+  Result := Self.Graph^.WalkableClusters.InSameTPA(a, b);
 end;
