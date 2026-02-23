@@ -15,6 +15,8 @@ jobs:
       build_hash: ${{ steps.simba-url.outputs.buildHash }}
       base_url: ${{ steps.simba-url.outputs.baseUrl }}
       test_files: ${{ steps.list-test-files.outputs.testFiles }}
+      plugins_hash: ${{ steps.wasp-plugins-hash.outputs.sha }}
+      assets_hash: ${{ steps.wasp-assets-hash.outputs.sha }}
     steps:
       - name: Fetch Simba 2 download URL
         id: simba-url
@@ -49,6 +51,18 @@ jobs:
           echo "Files found: $FILES"
           echo "testFiles=$FILES" >> $GITHUB_OUTPUT
 
+      - name: Get wasp-plugins hash
+        id: wasp-plugins-hash
+        run: |
+          $sha = git ls-remote https://github.com/WaspScripts/wasp-plugins.git HEAD | ForEach-Object { $_.Split("`t")[0] }
+          "sha=$sha" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Get wasp-assets hash
+        id: wasp-assets-hash
+        run: |
+          $sha = git ls-remote https://github.com/WaspScripts/wasp-assets.git HEAD | ForEach-Object { $_.Split("`t")[0] }
+          "sha=$sha" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
   tests:
     needs: setup
     runs-on: windows-latest
@@ -58,6 +72,7 @@ jobs:
         arch: [Win32, Win64]
         file: ${{ fromJSON(needs.setup.outputs.test_files) }}
     steps:
+      #Simba
       - name: Check Simba64 cache
         uses: actions/cache@v4
         id: simba-cache
@@ -78,18 +93,13 @@ jobs:
           Expand-Archive -Path $outputFile -DestinationPath . -Force
           Remove-Item -Path $outputFile -Force
 
-      - name: Get wasp-plugins hash
-        id: wasp-plugins-hash
-        run: |
-          $sha = git ls-remote https://github.com/WaspScripts/wasp-plugins.git HEAD | ForEach-Object { $_.Split("`t")[0] }
-          "sha=$sha" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-
+      #Plugins
       - name: Cache wasp-plugins
         uses: actions/cache@v4
         id: wasp-plugins-cache
         with:
           path: ./Plugins/wasp-plugins
-          key: wasp-plugins-${{ steps.wasp-plugins-hash.outputs.sha }}
+          key: wasp-plugins-${{ needs.setup.outputs.plugins_hash }}
 
       - name: Checkout wasp-plugins
         if: steps.wasp-plugins-cache.outputs.cache-hit != 'true'
@@ -97,6 +107,21 @@ jobs:
         with:
           repository: WaspScripts/wasp-plugins
           path: ./Plugins/wasp-plugins
+
+      #Assets
+      - name: Cache wasp-assets
+        uses: actions/cache@v4
+        id: wasp-assets-cache
+        with:
+          path: ./Data/Assets
+          key: wasp-assets-${{ needs.setup.outputs.assets_hash }}
+
+      - name: Checkout wasp-assets
+        if: steps.wasp-assets-cache.outputs.cache-hit != 'true'
+        uses: actions/checkout@v5
+        with:
+          repository: WaspScripts/wasp-assets
+          path: ./Data/Assets
 
       - name: Download WaspLib repo artifacts
         uses: actions/download-artifact@v7
