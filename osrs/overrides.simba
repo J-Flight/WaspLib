@@ -31,7 +31,9 @@ WriteLn RSClient.IsLoggedIn();
 function TRSClient.IsLoggedIn(): Boolean; override;
 var
   mode: ERSMode;
+  {$IFNDEF WL_TEST}
   zoom: Integer;
+  {$ENDIF}
 begin
   mode := Self.GetMode();
   Result := mode <> ERSMode.UNKNOWN;
