@@ -45,9 +45,9 @@ jobs:
         id: list-test-files
         run: |
           cd ./Includes/WaspLib/tests
-          FILES=$(find . -maxdepth 1 -name '*.simba' -printf '"%f"' | paste -sd "," -)
+          FILES=$(find . -maxdepth 1 -name '*.simba' -printf '%f\n' | jq -R . | jq -s -c .)
           echo "Files found: $FILES"
-          echo "testFiles=[$FILES]" >> $GITHUB_OUTPUT
+          echo "testFiles=$FILES" >> $GITHUB_OUTPUT
 
   tests:
     needs: setup
