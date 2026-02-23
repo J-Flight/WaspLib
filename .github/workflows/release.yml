@@ -44,8 +44,8 @@ jobs:
       - name: List .simba files
         id: list-test-files
         run: |
-          FILES=$(find tests -maxdepth 1 -name '*.simba' -printf '%f\n' | paste -sd "," -)
-          echo "testFiles=$FILES" >> $GITHUB_OUTPUT
+          FILES=$(find . -maxdepth 1 -name '*.simba' -printf '"%f"' | paste -sd "," -)
+          echo "testFiles=[$FILES]" >> $GITHUB_OUTPUT
 
   tests:
     needs: setup
@@ -54,7 +54,7 @@ jobs:
       fail-fast: true
       matrix:
         arch: [Win32, Win64]
-        file: ${{ fromJSON('["' + needs.setup.outputs.test_files.replace(',', '","') + '"]') }}
+        file: ${{ fromJSON(needs.setup.outputs.test_files) }}
     steps:
       - name: Check Simba64 cache
         uses: actions/cache@v4
