@@ -262,7 +262,6 @@ function TRSGameTabs.Open(tab: ERSGameTab; fkeyProbability: Single = -1): Boolea
 begin
   if Self.IsOpen(tab) then
     Exit(True);
-
   if Self.KeybindsEnabled then
   begin
     if fkeyProbability = -1 then fkeyProbability := Biometrics.RandomDouble(0.8);

@@ -214,17 +214,26 @@ end;
 
 function TRSBank._GetButtonDividers(): TPointArray;
 var
-  tpa: TPointArray;
+  tpa, dividers: TPointArray;
   atpa: T2DPointArray;
+
 begin
   with Self.Bounds do
     tpa := Target.FindColor($232B2E, 1, [X1+6, Y2-43, X2-6, Y2-6]);
   if tpa = [] then
     Exit;
   atpa := tpa.Cluster(1.5).ExtractDimensions(0, 0, 4, 30);
-  if Length(atpa) = 3 then
-    for tpa in atpa do
-      Result += tpa.First;
+  if Length(atpa) <> 3 then
+    Exit;
+
+  for tpa in atpa do
+    dividers += tpa.First;
+
+  if dividers[0].DistanceTo(dividers[1]) <> 191 then
+    Exit;
+  if dividers[0].DistanceTo(dividers[2]) <> 284 then
+    Exit;
+  Result := dividers;
 end;
 
 (*
@@ -245,7 +254,8 @@ var
   i: Integer;
   boxes: TBoxArray;
 begin
-  if Self.ButtonsOffset then Exit;
+  if Self.ButtonsOffset then
+    Exit;
 
   Self.ModeButtons[ERSBankModeButton.ARRANGEMENT].Bounds.X1 := tpa[0].X - 75;
   Self.ModeButtons[ERSBankModeButton.ARRANGEMENT].Bounds.X2 := tpa[0].X - 42;
