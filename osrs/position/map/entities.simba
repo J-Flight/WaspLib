@@ -32,7 +32,7 @@ Main type to handle {ref}`RSEntity`.
     Filter: TRSDotFilterArray;
     Finder: TColorFinder;
     MinimapDots: ERSMinimapDots;
-    LastCoordinate: TPoint;
+    LastCoordinate, DotOffset: TPoint;
     Walker: PRSWalker;
     MinDistance: Integer;
   end;
@@ -94,6 +94,7 @@ begin
   Result.Finder := Default(TColorFinder);
   Result.Walker := @walker;
   Result.MinDistance := 32;
+  Result.DotOffset := [1,1];
 
   for pt in coordinates do
     Result.Filter += TRSDotFilter.Create([], TCircle.Create(pt.X, pt.Y, radius), True);
@@ -161,6 +162,7 @@ begin
 
   Result.Walker := @walker;
   Result.MinDistance := 32;
+  Result.DotOffset := [1,1];
 end;
 
 (*
@@ -272,7 +274,7 @@ begin
     dots := dots.SortFrom(Minimap.Center);
     for i := 0 to High(dots) do
     begin
-      pt := Self.Walker^.MM2Map(me, dots[i], radians);
+      pt := Self.Walker^.MM2Map(me, dots[i] + Self.DotOffset, radians);
       coordinates += pt;
 
       vector := Self.Walker^.Point2MMVec(me, pt, radians);
@@ -808,13 +810,14 @@ begin
 end;
 
 (*
-## TImage.DrawEntity
+## DrawEntity
 ```pascal
-procedure TImage.DrawEntity(npc: TRSEntity);
+procedure TImage.DrawEntity(const entity: TRSEntity; alpha: Byte = $50);
+procedure TExternalCanvas.DrawEntity(const entity: TRSEntity; alpha: Byte = $50);
 ```
-Helper method to debug TRSEntity.
+Helper methods to debug TRSEntitys.
 *)
-procedure TImage.DrawEntity(entity: TRSEntity);
+procedure TImage.DrawEntity(const entity: TRSEntity; alpha: Byte = $50);
 var
   me: TPoint;
   atpa: T2DPointArray;
@@ -844,13 +847,56 @@ begin
   if entity.FindEx(me, boundsArray, coordinates, atpa) then
   begin
     Self.DrawColor := TColor.Random();
+    Self.DrawAlpha := alpha;
     Self.DrawATPA(atpa);
   end;
 
+  Self.DrawAlpha := $FF;
   Self.DrawColor := $FFFFF;
   for i := 0 to High(boundsArray) do
     Self.DrawTPA(boundsArray[i].Connect());
 end;
+
+procedure TExternalCanvas.DrawEntity(const entity: TRSEntity; alpha: Byte = $32);
+var
+  me: TPoint;
+  atpa: T2DPointArray;
+  boundsArray: TPolygonArray;
+  i: Integer;
+  filters: TRSDotFilterArray;
+  filter: TRSDotFilter;
+  coordinates: TPointArray;
+begin
+  me := entity.Walker^.Position();
+  filters := entity.Walker^.FiltersToMM(me, entity.Filter, Minimap.CompassRadians);
+
+  for filter in filters do
+  begin
+    if not Minimap.Bounds.Overlap(filter.Poly.Bounds()) and
+       not Minimap.Bounds.Overlap(filter.Circle.Bounds) then Continue;
+
+    if filter.Inside then
+      Self.DrawColor := $00FF00
+    else
+      Self.DrawColor := $0000FF;
+
+    Self.DrawPolygon(filter.Poly);
+    Self.DrawCircle(filter.Circle.Center, filter.Circle.Radius);
+  end;
+
+  if entity.FindEx(me, boundsArray, coordinates, atpa) then
+  begin
+    Self.DrawColor := TColor.Random();
+    Self.DrawAlpha := alpha;
+    Self.DrawATPA(atpa);
+  end;
+
+  Self.DrawAlpha := $FF;
+  Self.DrawColor := $FFFFF;
+  for i := 0 to High(boundsArray) do
+    Self.DrawTPA(boundsArray[i].Connect());
+end;
+
 
 (*
 ## ShowOnTarget TRSEntity

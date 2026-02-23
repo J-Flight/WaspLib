@@ -1079,13 +1079,14 @@ begin
 end;
 
 (*
-## TImage.DrawObject
+## DrawObject
 ```pascal
-procedure TImage.DrawObject(obj: TRSObject);
+procedure TImage.DrawObject(const obj: TRSObject; alpha: Byte = $32);
+procedure TExternalCanvas.DrawObject(const obj: TRSObject; alpha: Byte = $32);
 ```
-Helper method to debug TRSObjects.
+Helper methods to debug TRSObjects.
 *)
-procedure TImage.DrawObject(obj: TRSObject);
+procedure TImage.DrawObject(const obj: TRSObject; alpha: Byte = $32);
 var
   atpa: T2DPointArray;
   boundsArray: TPolygonArray;
@@ -1095,9 +1096,11 @@ begin
   if obj.FindEx(obj.Walker^.Position(), boundsArray, coordinates, atpa) then
   begin
     Self.DrawColor := TColor.Random();
+    Self.DrawAlpha := alpha;
     Self.DrawATPA(atpa);
   end;
 
+  Self.DrawAlpha := $FF;
   Self.DrawColor := $FFFFFF;
   if obj.Model = nil then
   begin
@@ -1109,6 +1112,34 @@ begin
   for i := 0 to High(boundsArray) do
     Self.DrawTPA(TPointArray(boundsArray[i]).Edges());
 end;
+
+procedure TExternalCanvas.DrawObject(const obj: TRSObject; alpha: Byte = $32);
+var
+  atpa: T2DPointArray;
+  boundsArray: TPolygonArray;
+  i: Integer;
+  coordinates: TPointArray;
+begin
+  if obj.FindEx(obj.Walker^.Position(), boundsArray, coordinates, atpa) then
+  begin
+    Self.DrawColor := TColor.Random();
+    Self.DrawAlpha := alpha;
+    Self.DrawATPA(atpa);
+  end;
+
+  Self.DrawAlpha := $FF;
+  Self.DrawColor := $FFFFFF;
+  if obj.Model = nil then
+  begin
+    for i := 0 to High(boundsArray) do
+      Self.DrawTPA(boundsArray[i].Connect());
+    Exit;
+  end;
+
+  for i := 0 to High(boundsArray) do
+    Self.DrawTPA(TPointArray(boundsArray[i]).Edges());
+end;
+
 
 (*
 ## ShowOnTarget TRSObject
