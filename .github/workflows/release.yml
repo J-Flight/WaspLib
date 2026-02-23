@@ -45,6 +45,7 @@ jobs:
         id: list-test-files
         run: |
           FILES=$(find . -maxdepth 1 -name '*.simba' -printf '"%f"' | paste -sd "," -)
+          echo $FILES
           echo "testFiles=[$FILES]" >> $GITHUB_OUTPUT
 
   tests:
