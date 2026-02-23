@@ -60,6 +60,14 @@ end.
 {$DEFINE WL_PROJECTION_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
+{$R-}
+
+{$IFDEF RANGECHECKS}
+begin
+  WriteLn GetDebugLn('Projection', 'Range checks are enabled for Projection, these should be disabled in production!', ELogLevel.WARN);
+end;
+{$ENDIF}
+
 type
   EProjector = enum(CAMERA, MM2MS);
 (*
@@ -900,4 +908,4 @@ begin
   if Projection.System = EProjector.CAMERA then
     RSCamera.SetPitch(RSCamera.MIN_PITCH);
 end;
-
+{$R+}

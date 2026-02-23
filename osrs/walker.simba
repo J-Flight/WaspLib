@@ -929,11 +929,11 @@ end;
 (*
 ## TRSWalker.GetClosestPoint
 ```pascal
-function TRSWalker.GetClosestPoint(me: TPoint; destinations: TPointArray; out path: TPointArray): TPoint;
+function TRSWalker.GetClosestPoint(me: TPoint; destinations: TPointArray; out path: TPointArray; randomness: Double): TPoint;
 ```
 Method used to get the closest `destination` point to `me`.
 *)
-function TRSWalker.GetClosestPoint(me: TPoint; destinations: TPointArray; out path: TPointArray): TPoint;
+function TRSWalker.GetClosestPoint(me: TPoint; destinations: TPointArray; out path: TPointArray; randomness: Double): TPoint;
 var
   shortPaths: array of TPointArray;
   best, dist, i: Integer;
@@ -948,7 +948,7 @@ begin
       Continue;
 
     try
-      path := Self.WebGraph^.PathBetween(me, destination, 0, 4);
+      path := Self.WebGraph^.PathBetween(me, destination, randomness, 4);
     except
       Continue;
     end;
@@ -1026,7 +1026,7 @@ begin
     raise GetDebugLn(Self.Name, 'WebWalk `randomness` must be between 0.0 an 1.0');
 
   me := Self.Position();
-  destination := Self.GetClosestPoint(me, destinations, path);
+  destination := Self.GetClosestPoint(me, destinations, path, randomness);
 
   if me.InRange(destination, 3) then
     Exit(True);
@@ -1059,4 +1059,20 @@ end;
 function TRSWalker.MakePointVisible(pt: TPoint): Boolean;
 begin
   Result := TRSWalker.MakePointVisibleEx(Self.Position(), pt);
+end;
+
+
+(*
+## TRSWalker.CheckConnection
+```pascal
+function TRSWalker.CheckConnection(a, b: TPoint): Boolean;
+```
+Tells you if `a` and `b` are on the same "walkable" space.
+To understand this better you should run `Map Debugger` and enable
+"Walkable clusters". This basically tells you if `a` and `b` are on the same
+cluster.
+*)
+function TRSWalker.CheckConnection(a, b: TPoint): Boolean;
+begin
+  Result := Self.WebGraph^.WalkableClusters.InSameTPA(a, b);
 end;

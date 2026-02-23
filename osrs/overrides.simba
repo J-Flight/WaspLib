@@ -96,21 +96,23 @@ WriteLn GameTabs.GetCurrent();
 ```
 *)
 function TRSOptions.GetTab(): ERSOptionsTab; override;
+var
+  z: Int32;
 begin
   Result := inherited();
   if Result <> ERSOptionsTab.DISPLAY then
     Exit;
 
-  Options.ZoomLevel := Options._GetZoomLevel();
+  z := Options._GetZoomLevel();
+  if RSMouseZoom.Enabled then
+    RSMouseZoom.ZoomLevel := RSMouseZoom.Slider2Level(z);
 
   if RSMouseZoom.SettingChecked then
     Exit;
 
   RSMouseZoom.Enabled := not Target.HasColor($0000C8, 0, 1, GameTab.Bounds);
   RSMouseZoom.SettingChecked := True;
-
-  if not RSMouseZoom.Enabled then
-    RSMouseZoom.ZoomLevel := -1;
+  RSMouseZoom.ZoomLevel := -1;
 end;
 
 (*

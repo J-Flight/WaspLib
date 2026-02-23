@@ -9,6 +9,14 @@ projections specifically, where `MM2MS` is unrivaled when doing
 {$DEFINE WL_CAMERA_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
+{$R-}
+
+{$IFDEF RANGECHECKS}
+begin
+  WriteLn GetDebugLn('RSCamera', 'Range checks are enabled for RSCamera, these should be disabled in production!', ELogLevel.WARN);
+end;
+{$ENDIF}
+
 type
 (*
 ## TRSCamera
@@ -178,6 +186,8 @@ function TRSCamera.Run(coordinate: TVector3): TPoint; overload;
 begin
   Result := Self.Run([coordinate]).First;
 end;
+
+{$R+}
 
 var
 (*

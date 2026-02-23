@@ -16,6 +16,14 @@ minimap as that's how we will be able to navigate it.
 {$DEFINE WL_HOUSELOADER_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
+{$R-}
+
+{$IFDEF RANGECHECKS}
+begin
+  WriteLn GetDebugLn('HouseLoader', 'Range checks are enabled for HouseLoader, these should be disabled in production!', ELogLevel.WARN);
+end;
+{$ENDIF}
+
 type
 (*
 ## THouseLoader
@@ -425,3 +433,4 @@ begin
       end;
     end;
 end;
+{$R+}

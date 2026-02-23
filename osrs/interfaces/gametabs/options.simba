@@ -247,9 +247,16 @@ function TRSOptions._GetZoomLevel(): Integer;
 begin
   Result := Self.Sliders[ERSOptionsSlider.ZOOM].GetLevel();
   if Result = -1 then
-    WriteLn GetDebugLn('Options', 'Failed to read zoom!', ELogLevel.ERROR)
-  else
-    WriteLn GetDebugLn('Options', 'Current zoom level: ' + ToString(Result), ELogLevel.SUCCESS);
+  begin
+    WriteLn GetDebugLn('Options', 'Failed to read zoom!', ELogLevel.ERROR);
+    Exit;
+  end;
+
+  if Result <> Self.ZoomLevel then
+  begin
+    Self.ZoomLevel := Result;
+    WriteLn GetDebugLn('Options', 'Current zoom level: ' + ToStr(Result), ELogLevel.SUCCESS);
+  end;
 end;
 
 (*
@@ -275,10 +282,7 @@ begin
   WriteLn GetDebugLn('Options', 'Unknown zoom level, reading from the gametab...');
 
   //Self.Zoom level is checked on TRSOptions.GetTab() override
-  if not Self.OpenTab(ERSOptionsTab.DISPLAY) then
-    Exit;
-
-  Result := Self.ZoomLevel;
+  Self.OpenTab(ERSOptionsTab.DISPLAY);
 end;
 
 (*

@@ -17,6 +17,14 @@ Credits: Torwent
 
 {.$DEFINE WL_GENERATE_GRAPH_ALWAYS}
 
+{$R-}
+
+{$IFDEF RANGECHECKS}
+begin
+  WriteLn GetDebugLn('MapLoader', 'Range checks are enabled for MapLoader, these should be disabled in production!', ELogLevel.WARN);
+end;
+{$ENDIF}
+
 type
 (*
 ## TRSMapRegion
@@ -701,3 +709,4 @@ begin
     Self.Padding := padding;
   Self.Add(chunks, downscale, Self.Padding);
 end;
+{$R+}

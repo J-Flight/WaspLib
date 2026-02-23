@@ -604,7 +604,7 @@ function TRSEntity.WalkHover(action: TStringArray = []; attempts: Integer = 2): 
 var
   me, closest: TPoint;
   path: TPointArray;
-  hasPath, shouldExit: Boolean;
+  shouldExit: Boolean;
   attempt, i: Integer;
   atpa: T2DPointArray;
   coordinates, tpa: TPointArray;
@@ -617,34 +617,21 @@ begin
   end;
 
   me :=  Self.Walker^.Position();
-  closest := Self.Walker^.GetClosestPoint(me, Self.Coordinates, path);
-
-  //if the point is not reachable with the webgraph (like a banker behind a booth) then pick nearest node as target
-  if path = [] then
-  begin
-    path := Self.Walker^.WebGraph^.PathToNear(me, closest, 0.33);
-    if path = [] then
-      raise GetDebugLn('TRSEntity', 'Can''t path to object.');
-    hasPath := True;
-  end;
+  closest := Self.Walker^.GetClosestPoint(me, Self.Coordinates, path, 0.33);
 
   Self.Walker^.TargetUpText := Copy(Self.UpText);
   Self.Walker^.ActionUpText := action;
 
   try
-    // check if doors need to be passed to reach target
-    if hasPath or Self.Walker^.WebGraph^.WalkableClusters.InSameTPA(me, closest) then
+    if not TRSWalker.MakePointVisibleEx(me, closest) then
     begin
-      if not TRSWalker.MakePointVisibleEx(me, closest) and not Self.Walker^.WebWalkEx(me, closest, Self.MinDistance, 0.15) then
+      if not Self.Walker^.WalkPath(path, Self.MinDistance) then
         Exit;
-    end
-    else
-    if not Self.Walker^.WebWalk(closest, Self.MinDistance, 0.15) then
-      Exit;
 
-    me := Self.Walker^.Position();
-    if not TRSWalker.MakePointVisibleEx(me, Self.Coordinates.NearestPoint(me)) then
-      Exit;
+      me := Self.Walker^.Position();
+      if not TRSWalker.MakePointVisibleEx(me, Self.Coordinates.NearestPoint(me)) then
+        Exit;
+    end;
 
     Result := Self._UpTextCheck(shouldExit, action) or Self.Walker^.RedClicked;
     if shouldExit then Exit;

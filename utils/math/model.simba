@@ -14,6 +14,14 @@ If you are curious about how the projection works you should read about
 {$DEFINE WL_MODEL_INCLUDED}
 {$INCLUDE_ONCE WaspLib/utils.simba}
 
+{$R-}
+
+{$IFDEF RANGECHECKS}
+begin
+  WriteLn GetDebugLn('Models', 'Range checks are enabled for TModel, these should be disabled in production!', ELogLevel.WARN);
+end;
+{$ENDIF}
+
 type
 (*
 (TModelFace)=
@@ -505,12 +513,12 @@ begin
       polygon := [];
     end;
 
-
-    img.DrawColor := $00FFFF;
-    img.DrawTPA(triangles);
-    if outline then
-    begin
-      img.DrawColor := $FFFFFF;
-      img.DrawTPA(edge.Edges());
-    end;
+  img.DrawColor := $00FFFF;
+  img.DrawTPA(triangles);
+  if outline then
+  begin
+    img.DrawColor := $FFFFFF;
+    img.DrawTPA(edge.Edges());
+  end;
 end;
+{$R+}

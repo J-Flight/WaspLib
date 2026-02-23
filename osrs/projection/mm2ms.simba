@@ -53,6 +53,14 @@ accurate for certain tasks.
 {$DEFINE WL_MM2MS_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
+{$R-}
+
+{$IFDEF RANGECHECKS}
+begin
+  WriteLn GetDebugLn('MM2MS', 'Range checks are enabled for MM2MS, these should be disabled in production!', ELogLevel.WARN);
+end;
+{$ENDIF}
+
 type
 (*
 ## TMM2MS
@@ -371,6 +379,7 @@ begin
   for i := 0 to High(coords) do
     Result += Self.ReverseMinimapOffset(Self.ReverseTransform(coords[i], Self.InvertedTransformMatrix)).ToPoint();
 end;
+{$R+}
 
 var
 (*
