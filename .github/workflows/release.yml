@@ -85,36 +85,14 @@ jobs:
         with:
           path: ./Includes/WaspLib
 
-      - name: Run tests in parallel dynamically
-        shell: pwsh
+      - name: Run tests
+        shell: bash
         run: |
-          $maxTestsPerShard = 1
-          $testFiles = Get-ChildItem -Path .\Includes\WaspLib\tests -Filter *.simba | Sort-Object Name
-          $arch = "${{ matrix.arch }}"
-
-          $shardCount = [Math]::Ceiling($testFiles.Count / $maxTestsPerShard)
-          Write-Output "Total tests: $($testFiles.Count), Shards: $shardCount"
-
-          1..$shardCount | ForEach-Object -Parallel {
-              $testFiles = $using:testFiles
-              $maxTestsPerShard = $using:maxTestsPerShard
-              $arch = $using:arch
-
-              $shardIndex = $_ - 1
-              $start = $shardIndex * $maxTestsPerShard
-              $end = [Math]::Min($start + $maxTestsPerShard, $testFiles.Count)
-
-              for ($i = $start; $i -lt $end; $i++) {
-                  $testPath = $testFiles[$i].FullName
-                  Write-Output "[$arch] Running test: $testPath"
-
-                  & ".\Simba-$arch.exe" --extractopenssl --run $testPath
-
-                  if ($LASTEXITCODE -ne 0) {
-                      throw "Test failed with exit code ${LASTEXITCODE}: $testPath"
-                  }
-              }
-          } -ThrottleLimit 4
+          testFiles=(./Includes/WaspLib/tests/*.simba)
+          for testFile in "${testFiles[@]}"; do
+              echo "Running test: $testFile" on ${{ matrix.arch }}
+              ./Simba-${{ matrix.arch }}.exe --extractopenssl --run "$testFile"
+          done
 
   release:
     needs: tests
