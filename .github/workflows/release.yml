@@ -44,6 +44,7 @@ jobs:
       - name: List .simba files
         id: list-test-files
         run: |
+          cd ./Includes/WaspLib/tests
           FILES=$(find . -maxdepth 1 -name '*.simba' -printf '"%f"' | paste -sd "," -)
           echo "Files found: $FILES"
           echo "testFiles=[$FILES]" >> $GITHUB_OUTPUT
