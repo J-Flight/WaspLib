@@ -10,7 +10,7 @@ Methods and functions related to geometry.
 {$R-}
 {$IFDEF RANGECHECKS}
 begin
-  WriteLn GetDebugLn('Geometry', 'Range checks are enabled for geometry, these should be disabled in production!', ELogLevel.WARN);
+  WriteLn('Geometry: Range checks are enabled for geometry, these should be disabled in production!');
 end;
 {$ENDIF}
 

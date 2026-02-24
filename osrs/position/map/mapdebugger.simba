@@ -19,6 +19,13 @@ end.
 {$DEFINE WL_MAPDEBUGGER_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
+{$R-}
+{$IFDEF RANGECHECKS}
+begin
+  WriteLn GetDebugLn('TMapDebugger', 'Range checks are enabled for map debugger, these should be disabled in production!', ELogLevel.WARN);
+end;
+{$ENDIF}
+
 type
 (*
 ## TMapDebugger
@@ -45,13 +52,6 @@ procedure TMapDebugger.OnChange(sender: TLazObject);
 begin
   Self.ImageBox.SetImage(Self.Images[TLazComboBox(sender).ItemIndex]);
 end;
-
-{$R-}
-{$IFDEF RANGECHECKS}
-begin
-  WriteLn GetDebugLn('TMapDebugger', 'Range checks are enabled for map debugger, these should be disabled in production!', ELogLevel.WARN);
-end;
-{$ENDIF}
 
 {$H-}
 procedure TMapDebugger.ImgBoxPaint(sender: TImageBox; canvas: TImageBoxCanvas; r: TLazRect);

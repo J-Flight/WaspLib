@@ -2,6 +2,12 @@
 {$INCLUDE_ONCE WaspLib/utils.simba}
 
 {$R-}
+{$IFDEF RANGECHECKS}
+begin
+  WriteLn GetDebugLn('Conversions', 'Range checks are enabled for conversions, these should be disabled in production!', ELogLevel.WARN);
+end;
+{$ENDIF}
+
 function String.CreateFromBytes(bytes: TByteArray): String; static;
 var
   len: Integer;
