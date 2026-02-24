@@ -51,7 +51,6 @@ var
   i, j: Int32;
   boxes: TBoxArray;
   items: TKDItems;
-  hash: String;
 begin
   boxes := Self.WalkableClusters.BoundsArray();
 
