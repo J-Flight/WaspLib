@@ -33,7 +33,7 @@ context visit this [wikipedia page](https://en.wikipedia.org/wiki/Graph_(discret
     WalkableSpace: TPointArray;
     WalkableClusters, ObjectClusters: T2DPointArray;
     Blocking: TIntegerArray;
-    Tree: TKDPointTree;
+    KDTree: TKDTree;
   end;
 
   PWebGraph = ^TWebGraph;
@@ -47,8 +47,20 @@ It sets up `TWebGraph.Tree`, a {ref}`TKDPointTree` used to compare distances bet
 nodes very fast.
 *)
 procedure TWebGraph.Setup();
+var
+  i, j: Int32;
+  boxes: TBoxArray;
+  items: TKDItems;
+  hash: String;
 begin
-  Self.Tree := TKDPointTree.Create(Self.Nodes.Copy());
+  boxes := Self.WalkableClusters.BoundsArray();
+
+  for i := 0 to High(Self.Nodes) do
+    for j := 0 to High(Self.WalkableClusters) do
+      if boxes[j].Contains(Self.Nodes[i]) then
+        if Self.WalkableClusters[j].Contains(Self.Nodes[i]) then
+          items += [j,  [Self.Nodes[i].X, Self.Nodes[i].Y]];
+  Self.KDTree := TKDTree.Create(items);
 end;
 
 
@@ -130,52 +142,27 @@ var
   i, n: Integer;
   near: TPoint;
   hidden: TIntegerArray;
-  tpa: TPointArray;
-  b: TBox;
+  item: TKDItem;
 begin
-  n := -1;
-  for i := 0 to High(Self.WalkableClusters) do
+  item := Self.KDTree.KNearest([pt.X, pt.Y], 1, False).First;
+  n := item.Ref;
+
+  while (Length(Result) < amount) and (Length(hidden) < Self.KDTree.Size) do
   begin
-    b := Self.WalkableClusters[i].Bounds();
-    if b.Contains(pt) and Self.WalkableClusters[i].Contains(pt) then
-    begin
-      n := i;
-      Break;
-    end;
-  end;
-
-  if n = -1 then
-  begin
-    tpa := Self.Tree.KNearest(pt, amount, True);
-
-    for i := 0 to High(tpa) do
-    begin
-      n := Self.Nodes.IndexOf(tpa[i]);
-      if n = -1 then Continue;
-      Result += n;
-    end;
-    Exit;
-  end;
-
-  while (Length(Result) < amount) and (Length(hidden) < Self.Tree.Size) do
-  begin
-    near := Self.Tree.Nearest(pt, True);
-
-    if not b.Contains(near) then
-      Break;
-
-    i := Self.Tree.IndexOf(near);
-    Self.Tree.Hide(i);
+    item := Self.KDTree.KNearest([pt.X, pt.Y], 1, True).First;
+    i := Self.KDTree.IndexOf(item.Vector);
+    Self.KDTree.Data[i].Hidden := True;
     hidden += i;
 
-    if not Self.WalkableClusters[n].Contains(near) then
-      Continue;
-
-    Result += Self.Nodes.IndexOf(near);
+    if n = item.Ref then
+    begin
+      near := Point(Round(item.Vector[0]), Round(item.Vector[1]));
+      Result += Self.Nodes.IndexOf(near);
+    end;
   end;
 
   for i in hidden do
-    Self.Tree.Data[i].idden := False;
+    Self.KDTree.Data[i].Hidden := False;
 end;
 
 
@@ -495,10 +482,14 @@ connect exactly the nodes you want at times.
 *)
 procedure TWebGraph.ConnectNodesEx(a,b: TPoint; notEqual: Boolean = False);
 var
+  item: TKDItem;
   p, q: TPoint;
 begin
-  p := Self.Tree.Nearest(a, notEqual);
-  q := Self.Tree.Nearest(b, notEqual);
+  item := Self.KDTree.KNearest([a.X, a.Y], 1, notEqual).First;
+  p := Point(Round(item.Vector[0]), Round(item.Vector[1]));
+
+  item := Self.KDTree.KNearest([b.X, b.Y], 1, notEqual).First;
+  q := Point(Round(item.Vector[0]), Round(item.Vector[1]));
 
   Self.ConnectNodes(p,q);
 end;
