@@ -159,7 +159,6 @@ begin
   Self.ImgBoxMouseMove(sender, shift, x, y);
   WriteLn('Clicked: ' + Self.Coordinate.Caption);
 end;
-{$R+}
 
 procedure TMapDebugger.GraphOnChange(sender: TLazObject);
 begin
@@ -412,6 +411,7 @@ begin
 
   Self.Show();
 end;
+{$R+}
 
 var
 (*
@@ -424,3 +424,4 @@ procedure TRSMap.Debug();
 begin
   MapDebugger.Setup(Self.Loader);
 end;
+

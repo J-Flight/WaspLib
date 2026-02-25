@@ -67,15 +67,15 @@ end;
 
 function TWebGraphGenerator.BuildGraph(name: String; map: TImage): TWebGraph;
 var
-  white, gray, tpa, nodes, tmp, merged, graySubset, subset: TPointArray;
-  i, hiY, hiX, half, y, x, start, n, idx, mX, mY: Int32;
+  white, gray, tpa, nodes, tmp, subset: TPointArray;
+  i, hiY, hiX, size, y, x, start, n, mX, mY: Int32;
   t: UInt64;
   pt, adjacent: TPoint;
-  whiteClusters, clusters, mergedClusters: T2DPointArray;
+  wClusters, clusters, mClusters: T2DPointArray;
   matrix: TIntegerMatrix;
-  bounds, rangeBox: TBox;
-  neighbours: TPointArray;
-  tree: TKDPointTree;
+  kdtree: TKDTree;
+  items, query: TKDItems;
+  itemA, itemB: TKDItem;
 begin
   WriteLn GetDebugLn('WebGraphGenerator', 'Generating webgraph: ' + name + ' this can take a few seconds.');
   t := GetTimeRunning();
@@ -85,21 +85,13 @@ begin
 
   matrix := map.ToMatrix();
 
-  hiY := matrix.Height-1;
-  hiX := matrix.Width-1;
+  hiY := matrix.Height - 1 - Self.Spacing;
+  hiX := matrix.Width -1 - Self.Spacing;
 
-  bounds := Box(0,0,hiX,hiY);
+  size := Self.Spacing + (Self.Spacing div 2);
 
-  neighbours := [
-    [-Self.Spacing,0],  [Self.Spacing,0],  [0,-Self.Spacing], [0,Self.Spacing],
-    [-Self.Spacing,-Self.Spacing], [Self.Spacing,-Self.Spacing],
-    [-Self.Spacing,Self.Spacing], [Self.Spacing,Self.Spacing]
-  ];
-
-  half := Self.Spacing div 2;
-
-  for y := Self.Spacing to hiY - Self.Spacing with Self.Spacing do
-    for x := Self.Spacing to hiX - Self.Spacing with Self.Spacing do
+  for y := Self.Spacing to hiY with Self.Spacing do
+    for x := Self.Spacing to hiX with Self.Spacing do
     begin
       for mY := y to y+Self.Spacing-1 do
         for mX := x to x+Self.Spacing-1 do
@@ -116,65 +108,64 @@ begin
 
   white := map.FindColor($FFFFFF, 0);
   gray := map.FindColor($333333, 0);
-  whiteClusters := white.Cluster(1).SortBySize(True);
+  wClusters := white.Cluster(1).SortBySize(True).ExcludeSize(6, EComparator.__LE__);
 
-  for i := 0 to High(whiteClusters) do
+  for i := 0 to High(wClusters) do
   begin
-    if Length(whiteClusters[i]) <= 6 then
-      Continue;
-
-    nodes := whiteClusters[i].Intersection(tpa);
+    nodes := wClusters[i].Intersection(tpa);
     if nodes = [] then
       Continue;
 
     start := Length(Result.Nodes);
-
     Result.Nodes += nodes;
-    tree := TKDPointTree.Create(nodes);
-
     SetLength(Result.Paths, Length(Result.Nodes));
+
+    items := [];
     for n := start to High(Result.Nodes) do
     begin
       pt := Result.Nodes[n];
-      tree.Hide(pt);
-      rangeBox := TBox.Create(pt, Self.Spacing+half, Self.Spacing+half);
-      tmp := tree.RangeQuery(rangeBox, False);
+      items += [n, [pt.X, pt.Y]];
+    end;
+    kdtree := TKDTree.Create(items);
 
-      if tmp = [] then
+    for n := 0 to High(kdtree.Data) do
+    begin
+      itemA := kdtree.Data[n].Split;
+      kdtree.Data[n].Hidden := True;
+
+      query := kdtree.RangeQuery(
+            [itemA.Vector[0]-size, itemA.Vector[1]-size],
+            [itemA.Vector[0]+size, itemA.Vector[1]+size], [ETreeSetting.IgnoreHidden]);
+      if query = [] then
         Continue;
 
-      subset := whiteClusters[i].ExtractBox(rangeBox);
+      pt := Point(Round(itemA.Vector[0]), Round(itemA.Vector[1]));
+      subset := wClusters[i].ExtractBox(Box(pt, size, size));
 
-      for adjacent in tmp do
+      for itemB in query do
       begin
-        clusters := subset.ExtractBox(TBox.Create(pt, adjacent)).Cluster(1);
-        if Length(clusters) > 1 then
-          if not clusters.InSameTPA(pt, adjacent) then
-            Continue;
+        adjacent := Point(Round(itemB.Vector[0]), Round(itemB.Vector[1]));
+        if subset.ExtractBox(Box(pt, adjacent)).AStar(pt, adjacent, False) = [] then
+          Continue;
 
-        idx := Result.Nodes.IndexOf(adjacent);
-
-        Result.Paths[n] += idx;
-        Result.Paths[idx] += n;
+        Result.Paths[itemA.Ref] += itemB.Ref;
+        Result.Paths[itemB.Ref] += itemA.Ref;
       end;
     end;
   end;
 
   clusters := gray.Cluster(1);
 
-  for i := 0 to High(whiteClusters) do
+  for i := 0 to High(wClusters) do
   begin
-    if Length(whiteClusters[i]) <= 6 then
-      Continue;
+    subset := gray.ExtractBox(wClusters[i].Bounds().Expand(80));
+    tpa := wClusters[i] + subset;
+    mClusters := tpa.Cluster(1);
 
-    graySubset := gray.ExtractBox(whiteClusters[i].Bounds().Expand(80));
-    merged := whiteClusters[i] + graySubset;
-    mergedClusters := merged.Cluster(1);
-
-    for n := 0 to High(mergedClusters) do
-      if mergedClusters[n].Contains(whiteClusters[i, 0]) then
+    for n := 0 to High(mClusters) do
+      if mClusters[n].Contains(wClusters[i, 0]) then
       begin
-        Result.WalkableClusters += mergedClusters[n];
+        Result.WalkableClusters += mClusters[n];
         Break;
       end;
   end;

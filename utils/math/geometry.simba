@@ -17,12 +17,18 @@ end;
 const
   TAU: Double = 2 * PI;
 
-function TBox.Create(p, q: TPoint): TBox; static; overload;
+function TBox.Create(a, b: TPoint): TBox; static; overload;
 begin
   Result := TBox.Create(
-    Min(p.X,q.X), Min(p.Y,q.Y), Max(p.X,q.X), Max(p.Y,q.Y)
+    Min(a.X,b.X), Min(a.Y,b.Y), Max(a.X,b.X), Max(a.Y,b.Y)
   );
 end;
+
+function Box(a, b: TPoint): TBox; static; overload;
+begin
+  Result := TBox.Create(a, b);
+end;
+
 
 function TBox.ContainsBox(other: TBox): Boolean;
 begin
