@@ -178,7 +178,7 @@ jobs:
           du -sh .
 
   version:
-    needs: [tests, release]
+    needs: [setup, tests, release]
     if: ${{ github.repository_owner == 'WaspScripts' }}
     runs-on: ubuntu-latest
 
