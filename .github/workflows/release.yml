@@ -273,7 +273,7 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-          SIMBA_BUILD_HASH: ${{ needs.tests.outputs.simba_build_hash }}
+          SIMBA_BUILD_HASH: ${{ needs.setup.outputs.build_hash }}
         run: |
           DATA=$(jq -nc \
             --arg version "$TAG_NAME" \
