@@ -37,7 +37,7 @@ Main record used to hold core values of the {ref}`Map Debugger`.
 
     Graph: TWebGraph;
 
-    Selected: Integer;
+    Selected: Int32;
     Path: TPointArray;
 
     GetLocal: function (pt: TPoint; offset: TPoint = [0,0]): TPoint of object;
@@ -59,7 +59,7 @@ var
   p: TPoint;
   b: TBox;
   tpa: TPointArray;
-  i: Integer;
+  i: Int32;
 begin
   if Self.ShowWalkableSpace then
     canvas.DrawPoints(Self.Graph.WalkableSpace, Self.ColorArray.Last);
@@ -99,10 +99,10 @@ begin
 end;
 {$H+}
 
-procedure TMapDebugger.ImgBoxMouseMove(sender: TImageBox; shift: ELazShiftStates; x, y: Integer);
+procedure TMapDebugger.ImgBoxMouseMove(sender: TImageBox; shift: ELazShiftStates; x, y: Int32);
 var
   pt, g: TPoint;
-  i: Integer;
+  i: Int32;
 begin
   pt := TPoint.Create(x,y);
   if Self.Normalize then
@@ -128,7 +128,7 @@ begin
   sender.Repaint();
 end;
 
-procedure TMapDebugger.ImgBoxMouseDown(sender: TImageBox; button: ELazMouseButton; shift: ELazShiftStates; x, y: Integer);
+procedure TMapDebugger.ImgBoxMouseDown(sender: TImageBox; button: ELazMouseButton; shift: ELazShiftStates; x, y: Int32);
 var
   pt, g: TPoint;
 begin
@@ -363,7 +363,7 @@ procedure TMapDebugger.Setup(var loader: TRSMapLoader);
 var
   collision: TImage;
   pt: TPoint;
-  x, y, i: Integer;
+  x, y, i: Int32;
   node: TPoint;
 begin
   collision := loader.Collision.Copy();

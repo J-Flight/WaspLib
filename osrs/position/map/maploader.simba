@@ -37,7 +37,7 @@ This is an internal type. Don't use it if you don't know what you are doing.
     Chunks: TPointArray;
     Original: TBox;
     Region: TBox;
-    Plane: Integer;
+    Plane: Int32;
     Offset: TPoint;
   end;
 
@@ -77,7 +77,7 @@ This is an internal type. Don't use it if you don't know what you are doing.
     MapBox: TBox;
     Graph: TWebGraph;
     Regions: array of TRSMapRegion;
-    Padding, Downscale: Integer;
+    Padding, Downscale: Int32;
 
     Unzipping: Boolean;
     Timeout: TCountDown;
@@ -124,12 +124,12 @@ matching the pixel [100, 100] on the global map. Instead it matches the pixel
 (*
 ### TRSMapLoader.LocalIndex
 ```pascal
-function TRSMapLoader.LocalIndex(pt: TPoint): Integer;
+function TRSMapLoader.LocalIndex(pt: TPoint): Int32;
 ```
 Returns the index of the TRSMapRegion a {ref}`Local point` is at.
 Returns `-1` if none is found.
 *)
-function TRSMapLoader.LocalIndex(pt: TPoint): Integer;
+function TRSMapLoader.LocalIndex(pt: TPoint): Int32;
 begin
   for Result := 0 to High(Self.Regions) do
     if pt in Self.Regions[Result].Region then
@@ -140,12 +140,12 @@ end;
 (*
 ### TRSMapLoader.GlobalIndex
 ```pascal
-function TRSMapLoader.GlobalIndex(pt: TPoint): Integer;
+function TRSMapLoader.GlobalIndex(pt: TPoint): Int32;
 ```
 Returns the index of the TRSMapRegion a {ref}`Global point` is at.
 Returns `-1` if none is found.
 *)
-function TRSMapLoader.GlobalIndex(pt: TPoint): Integer;
+function TRSMapLoader.GlobalIndex(pt: TPoint): Int32;
 begin
   for Result := 0 to High(Self.Regions) do
     if pt in Self.Regions[Result].Original then
@@ -157,7 +157,7 @@ end;
 (*
 ### TRSMapLoader.GetGlobal
 ```pascal
-function TRSMapLoader.GetGlobal(regionIdx: Integer; pt: TPoint; offset: TPoint = [0,0]): TPoint;
+function TRSMapLoader.GetGlobal(regionIdx: Int32; pt: TPoint; offset: TPoint = [0,0]): TPoint;
 function TRSMapLoader.GetGlobal(pt: TPoint; offset: TPoint = [0,0]): TPoint; overload;
 ```
 Converts a {ref}`Local point` to a {ref}`Global point`.
@@ -167,14 +167,14 @@ For points in bulk from the same region specifying it is better as you save Simb
 
 The specified `pt` is returned unmodified if not region index matching the point is found.
 *)
-function TRSMapLoader.GetGlobal(regionIdx: Integer; pt: TPoint; offset: TPoint = [0,0]): TPoint;
+function TRSMapLoader.GetGlobal(regionIdx: Int32; pt: TPoint; offset: TPoint = [0,0]): TPoint;
 begin
   Result := pt + Self.Regions[regionIdx].Offset - [Self.Regions[regionIdx].Region.X1, Self.Regions[regionIdx].Region.Y1] + offset;
 end;
 
 function TRSMapLoader.GetGlobal(pt: TPoint; offset: TPoint = [0,0]): TPoint; overload;
 var
-  regionIdx: Integer;
+  regionIdx: Int32;
 begin
   regionIdx := Self.LocalIndex(pt);
   if regionIdx = -1 then Exit(pt);
@@ -185,8 +185,8 @@ end;
 (*
 ### TRSMapLoader.GetLocal
 ```pascal
-function TRSMapLoader.GetLocal(regionIdx: Integer; pt: TPoint; offset: TPoint = [0,0]): TPoint;
-function TRSMapLoader.GetLocal(regionIdx: Integer; b: TBox; offset: TPoint = [0,0]): TBox; overload;
+function TRSMapLoader.GetLocal(regionIdx: Int32; pt: TPoint; offset: TPoint = [0,0]): TPoint;
+function TRSMapLoader.GetLocal(regionIdx: Int32; b: TBox; offset: TPoint = [0,0]): TBox; overload;
 function TRSMapLoader.GetLocal(pt: TPoint; offset: TPoint = [0,0]): TPoint; overload;
 function TRSMapLoader.GetLocal(tpa: TPointArray; offset: TPoint = [0,0]): TPointArray; overload;
 ```
@@ -197,12 +197,12 @@ You can also optionally specify points in bulk as a `tpa`.
 
 The specified `pt` is returned unmodified if not region index matching the point is found.
 *)
-function TRSMapLoader.GetLocal(regionIdx: Integer; pt: TPoint; offset: TPoint = [0,0]): TPoint;
+function TRSMapLoader.GetLocal(regionIdx: Int32; pt: TPoint; offset: TPoint = [0,0]): TPoint;
 begin
   Result := pt - Self.Regions[regionIdx].Offset + Self.Regions[regionIdx].Region.TopLeft + offset;
 end;
 
-function TRSMapLoader.GetLocal(regionIdx: Integer; b: TBox; offset: TPoint = [0,0]): TBox; overload;
+function TRSMapLoader.GetLocal(regionIdx: Int32; b: TBox; offset: TPoint = [0,0]): TBox; overload;
 var
   topLeft, btmRight: TPoint;
 begin
@@ -213,7 +213,7 @@ end;
 
 function TRSMapLoader.GetLocal(pt: TPoint; offset: TPoint = [0,0]): TPoint; overload;
 var
-  regionIdx: Integer;
+  regionIdx: Int32;
 begin
   regionIdx := Self.GlobalIndex(pt);
   if regionIdx = -1 then Exit(pt);
@@ -288,7 +288,7 @@ begin
     end;
 end;
 
-procedure TRSMapLoader.Setup(downscale: Integer);
+procedure TRSMapLoader.Setup(downscale: Int32);
 var
   timer: TCountDown;
   emap: ERSMap;
@@ -321,16 +321,16 @@ end;
 (*
 ## MapLoader.GetFile
 ```pascal
-function TRSMapLoader.GetFile(chunk: TPoint; plane: Integer; map: ERSMap): TImage;
+function TRSMapLoader.GetFile(chunk: TPoint; plane: Int32; map: ERSMap): TImage;
 ```
 Internal method that returns a chunk image.
 If possible, it will be loaded from a cached .bmp file.
 If no .bmp file exists, the .png file is loaded instead, it's saved as .bmp for future uses and the .png file is deleted.
 *)
-function TRSMapLoader.GetFile(chunk: TPoint; plane: Integer; map: ERSMap): TImage;
+function TRSMapLoader.GetFile(chunk: TPoint; plane: Int32; map: ERSMap): TImage;
 var
   filename: String;
-  idx: Integer;
+  idx: Int32;
 begin
   filename := ToStr(plane) + '-' + ToStr(chunk.X) + '-' + ToStr(chunk.Y) + '.png';
 
@@ -338,19 +338,19 @@ begin
   if idx > -1 then
     Exit(Self.MapReader[map].LoadImage(idx));
 
-  Result := new TImage(RSTranslator.MapChunkSide, RSTranslator.MapChunkSide);
+  Result := new TImage(RSTranslator.MAP_CHUNK_SIZE, RSTranslator.MAP_CHUNK_SIZE);
 end;
 
 (*
 ## MapLoader.GetMap
 ```pascal
-function TRSMapLoader.GetMap(chunks: TPointArray; plane: Integer; map: ERSMap): TImage;
+function TRSMapLoader.GetMap(chunks: TPointArray; plane: Int32; map: ERSMap): TImage;
 ```
 Internal method that returns a `TImage` of all the `chunks` you pass into it.
 *)
-function TRSMapLoader.GetMap(chunks: TPointArray; plane: Integer; map: ERSMap): TImage;
+function TRSMapLoader.GetMap(chunks: TPointArray; plane: Int32; map: ERSMap): TImage;
 var
-  i, x, y, n: Integer;
+  i, x, y, n: Int32;
   lo, hi: TPoint;
   chunkMaps: array of record
     Point: TPoint;
@@ -373,7 +373,7 @@ begin
     hi := [Max(x, hi.X), Max(y, hi.Y)];
   end;
 
-  n := RSTranslator.MapChunkSide;
+  n := RSTranslator.MAP_CHUNK_SIZE;
 
   Result := new TImage((hi.X-lo.X) * n + 1 + n, (hi.Y-lo.Y) * n + 1 + n);
 
@@ -455,7 +455,7 @@ end;
 (*
 ## MapLoader.GetGraph
 ```pascal
-function TRSMapLoader.GetGraph(name: String; plane: Integer; map: TImage): TWebGraph;
+function TRSMapLoader.GetGraph(name: String; plane: Int32; map: TImage): TWebGraph;
 ```
 Returns a TWebGraph for the given `map`.
 
@@ -466,7 +466,7 @@ with {ref}`WebGraph Generator` and save it into cache.
 This is an internal method. Don't use it if you don't know what you are doing.
 ```
 *)
-function TRSMapLoader.GetGraph(name: String; plane: Integer; map: TImage): TWebGraph;
+function TRSMapLoader.GetGraph(name: String; plane: Int32; map: TImage): TWebGraph;
 var
   path: String;
 begin
@@ -495,9 +495,9 @@ begin
 end;
 
 
-function TRSMapLoader.SetupGraph(region: TRSMapRegion; padding: Integer; collision: TImage): TWebGraph;
+function TRSMapLoader.SetupGraph(region: TRSMapRegion; padding: Int32; collision: TImage): TWebGraph;
 var
-  i: Integer;
+  i: Int32;
   offset: TPoint;
 begin
   Result := Self.GetGraph(region.Name, region.Plane, collision);
@@ -531,7 +531,7 @@ procedure TRSMapLoader.Add(chunks: array of TRSMapChunk; downscale: UInt32 = 8; 
 var
   chunk: TRSMapChunk;
   region: TRSMapRegion;
-  i, j, k, plane, regionCount: Integer;
+  i, j, k, plane, regionCount: Int32;
   maps, heightmaps, collisionmaps: TImageArray;
   topLeft, btmRight, offset: TPoint;
   graphs: array of TWebGraph;
@@ -551,20 +551,17 @@ begin
     begin
       for i := 0 to High(Self.Regions) do
         if (Self.Regions[i].Plane = plane) and
-           (RSTranslator.Global2Chunk(Self.Regions[i].Original) = chunk.Chunk) then
+           (RSTranslator.Global2Chunk(Self.Regions[i].Original) = chunk.Box) then
           Continue(2);
 
-      topLeft  := Point(Min(chunk.Chunk.X1, chunk.Chunk.X2), Max(chunk.Chunk.Y1, chunk.Chunk.Y2));
-      btmRight := Point(Max(chunk.Chunk.X1, chunk.Chunk.X2), Min(chunk.Chunk.Y1, chunk.Chunk.Y2));
-      chunk.Chunk := TBox.Create(topLeft.X, topLeft.Y, btmRight.X, btmRight.Y);
+      topLeft  := Point(Min(chunk.Box.X1, chunk.Box.X2), Max(chunk.Box.Y1, chunk.Box.Y2));
+      btmRight := Point(Max(chunk.Box.X1, chunk.Box.X2), Min(chunk.Box.Y1, chunk.Box.Y2));
+      chunk.Box := TBox.Create(topLeft.X, topLeft.Y, btmRight.X, btmRight.Y);
 
       region.Chunks := RSTranslator.GetChunks(topLeft, btmRight);
       region.Plane := plane;
 
-      if plane = 0 then
-        region.Original := RSTranslator.Chunk2Coordinate(chunk.Chunk)
-      else
-        region.Original := RSTranslator.Chunk2Coordinate(chunk.Chunk).Offset([RSTranslator.MapWidth * plane, 0]);
+      region.Original := RSTranslator.Chunk2Coordinate(chunk.Box, plane);
 
       with RSTranslator.Chunk2Coordinate(topLeft) do
         region.Offset := [X + RSTranslator.MapWidth * plane - padding, Y - padding];
@@ -671,7 +668,7 @@ end;
 (*
 ## MapLoader.Load
 ```pascal
-procedure TRSMapLoader.Load(chunks: TRSMapChunkArray; downscale: Integer = 8; padding: Integer = 40);
+procedure TRSMapLoader.Load(chunks: TRSMapChunkArray; downscale: Int32 = 8; padding: Int32 = 40);
 ```
 Loads a map and sets the {ref}`TRSMapLoader` internal values, the most important
 ones being:
@@ -702,7 +699,7 @@ end.
 This is an internal method. Usually, {ref}`TRSMap` `Load` methods will call this for you.
 ```
 *)
-procedure TRSMapLoader.Load(chunks: TRSMapChunkArray; downscale: Integer = 8; padding: Integer = 40);
+procedure TRSMapLoader.Load(chunks: TRSMapChunkArray; downscale: Int32 = 8; padding: Int32 = 40);
 begin
   Self.Setup(downscale);
   if Self.Padding = 0 then

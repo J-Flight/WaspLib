@@ -5,6 +5,7 @@ that can be used by Simba and back.
 *)
 
 {$DEFINE WL_RSTRANSLATOR_INCLUDED}
+{$INCLUDE_ONCE WaspLib/utils.simba}
 
 type
 (*
@@ -13,24 +14,20 @@ Record responsible for conversions or internal RuneScape values to values
 that can be used by Simba and back.
 *)
   TRSTranslator = record
-    const TileSize: Integer = 4;
-    const TileArea: Integer = 16;
-    const MaxHeight: Integer = 6048;
-    const Planes: Integer = 3;
-
     RSMap: record
-      const ChunkSide: Integer = 64;
+      const ChunkSide: Int32 = 64;
       const Dimensions: TPoint = [100,200];
       const Scope: TBox = [0, 19, 99, 196];
     end;
 
-    const MapChunkSide: Integer = 256;
+    const TILE_SIZE: Int32 = 4;
+    const MAP_CHUNK_SIZE: Int32 = 256;
   end;
 
 (*
 ## RSTranslator.MapWidth
 ```pascal
-property TRSTranslator.MapWidth: UInteger;
+property TRSTranslator.MapWidth: UInt32;
 ```
 Returns the full width in pixels of the OldSchool RuneScape map.
 
@@ -39,15 +36,15 @@ Example:
 WriteLn RSTranslator.MapWidth;
 ```
 *)
-property TRSTranslator.MapWidth: Integer;
+property TRSTranslator.MapWidth: Int32;
 begin
-  Result := Self.RSMap.Scope.Width * Self.MapChunkSide;
+  Result := Self.RSMap.Scope.Width * Self.MAP_CHUNK_SIZE;
 end;
 
 (*
 ## RSTranslator.MapHeight
 ```pascal
-property TRSTranslator.MapHeight: Integer;
+property TRSTranslator.MapHeight: Int32;
 ```
 Returns the full height in pixels of the OldSchool RuneScape map.
 
@@ -56,9 +53,9 @@ Example:
 WriteLn RSTranslator.MapHeight;
 ```
 *)
-property TRSTranslator.MapHeight: Integer;
+property TRSTranslator.MapHeight: Int32;
 begin
-  Result := Self.RSMap.Scope.Height * Self.MapChunkSide;
+  Result := Self.RSMap.Scope.Height * Self.MAP_CHUNK_SIZE;
 end;
 
 
@@ -79,8 +76,8 @@ function TRSTranslator.Global2Chunk(pt: TPoint): TPoint;
 begin
   while pt.X > Self.MapWidth do
     pt.X -= Self.MapWidth;
-  Result.X := Self.RSMap.Scope.X1 + Floor(pt.X / Self.MapChunkSide);
-  Result.Y := Self.RSMap.Scope.Y2 - Floor(pt.Y / Self.MapChunkSide);
+  Result.X := Self.RSMap.Scope.X1 + Floor(pt.X / Self.MAP_CHUNK_SIZE);
+  Result.Y := Self.RSMap.Scope.Y2 - Floor(pt.Y / Self.MAP_CHUNK_SIZE);
 end;
 
 function TRSTranslator.Global2Chunk(b: TBox): TBox; overload;
@@ -106,57 +103,42 @@ Example:
 WriteLn RSTranslator.Chunk2Coordinate(Point(53, 50));
 ```
 *)
-function TRSTranslator.Chunk2Coordinate(p: TPoint): TPoint;
+function TRSTranslator.Chunk2Coordinate(pt: TPoint; plane: Int32 = 0): TPoint;
 begin
-  Result.X := p.X * Self.MapChunkSide;
-  Result.Y := (Self.RSMap.Scope.Y2 - p.Y) * Self.MapChunkSide;
+  Result.X := pt.X * Self.MAP_CHUNK_SIZE;
+  Result.Y := (Self.RSMap.Scope.Y2 - pt.Y) * Self.MAP_CHUNK_SIZE;
+  if plane > 0 then
+    Result += [Self.MapWidth * plane, 0];
 end;
 
-function TRSTranslator.Chunk2Coordinate(b: TBox): TBox; overload;
+function TRSTranslator.Chunk2Coordinate(b: TBox; plane: Int32 = 0): TBox; overload;
 var
-  s, f: TPoint;
+  topLeft, btmRight: TPoint;
 begin
-  s := Self.Chunk2Coordinate([b.X1, b.Y1]);
-  f := Self.Chunk2Coordinate([b.X2+1, b.Y2-1]);
-  Result := [s.X, s.Y, f.X-1, f.Y-1];
+  topLeft := Self.Chunk2Coordinate([b.X1, b.Y1], plane);
+  btmRight := Self.Chunk2Coordinate([b.X2+1, b.Y2-1], plane);
+  Result := Box(topLeft.X, topLeft.Y, btmRight.X-1, btmRight.Y-1);
 end;
 
 
-function TRSTranslator.Height2Color(height: Single): Integer;
+function TRSTranslator.Height2Color(height: Single): Int32;
 const
-  H_VALUE := Self.MaxHeight / $FFFFFF;
+  H_VALUE = 6048 / $FFFFFF;
 begin
   Result := Round((height / H_VALUE) / 4 * 128);
 end;
 
-function TRSTranslator.Color2Height(color: Integer): Single;
+function TRSTranslator.Color2Height(color: Int32): Single;
 const
-  H_VALUE := Self.MaxHeight / $FFFFFF;
+  H_VALUE = 6048 / $FFFFFF;
 begin
   Result := color * H_VALUE * 4 / 128;
 end;
 
 
-function TRSTranslator.Normalize(p: TPoint): TPoint;
+function TRSTranslator.Normalize(pt: TPoint): TPoint;
 begin
-  Result := [p.X - (p.X mod Self.TileSize), p.Y - (p.Y mod Self.TileSize) + (Self.TileSize div 2)];
-end;
-
-function TRSTranslator.NormalizeDoor(p: TPoint): TPoint;
-begin
-  Result := [p.X - (p.X mod Self.TileSize) + 1, p.Y - (p.Y mod Self.TileSize) + 1];
-end;
-
-
-//This normalizes to the nearest tile rather than the tile the current point is on. So if the coordinate gived would be on the fourth column, it returns the tile to the right of it rather that the tile the coordinate is on
-//This should be used whenever you expect that there can be deviations to any side of the coordinate you want and want to prevent that if you go one pixel to the left, you end up with the tile to the left of the one you want
-
-function TRSTranslator.NormalizeNearestTile(pt: TPoint): TPoint;
-begin
-  if (pt.X mod Self.TileSize) = 3 then
-    Result := [pt.X - (pt.X mod Self.TileSize) + 4, pt.Y - (pt.Y mod Self.TileSize) + (Self.TileSize div 2)]
-  else
-    Result := [pt.X - (pt.X mod Self.TileSize), pt.Y - (pt.Y mod Self.TileSize) + (Self.TileSize div 2)];
+  Result := [pt.X - (pt.X mod Self.TILE_SIZE), pt.Y - (pt.Y mod Self.TILE_SIZE) + (Self.TILE_SIZE div 2)];
 end;
 
 
@@ -177,7 +159,7 @@ WriteLn RSTranslator.GetChunks([20,20], [22,22]);
 *)
 function TRSTranslator.GetChunks(start, finish: TPoint): TPointArray; static;
 var
-  x, y: Integer;
+  x, y: Int32;
 begin
   for x := Min(start.X, finish.X) to Max(start.X, finish.X) do
     for y := Min(start.Y, finish.Y) to Max(start.Y, finish.Y) do

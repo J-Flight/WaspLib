@@ -246,7 +246,7 @@ function TRSEntity.GetBoundsArray(me: TPoint; angle: Single = $FFFF): TCuboidArr
 Internal function that returns an array of cuboids of the entity if it's visible
 on the {ref}`MainScreen`.
 *)
-function TRSEntity.GetBoundsArray(me: TPoint; out coordinates: TPointArray; radians: Single = $FFFF): TPolygonArray;
+function TRSEntity.GetBoundsArray(me: TPoint; out coordinates: TPointArray; radians: Single): TPolygonArray;
 var
   weights: TDoubleArray;
   meLocal, pt: TPoint;
@@ -355,7 +355,7 @@ If not, the cuboids area are returned as the match.
 *)
 function TRSEntity.FindEx(me: TPoint; out boundsArray: TPolygonArray; out coordinates: TPointArray; out atpa: T2DPointArray): Boolean;
 begin
-  boundsArray := Self.GetBoundsArray(me, coordinates);
+  boundsArray := Self.GetBoundsArray(me, coordinates, Minimap.CompassRadians);
   if boundsArray = [] then Exit;
   atpa := Self.FindOnMainScreen(coordinates, boundsArray);
 

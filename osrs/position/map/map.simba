@@ -29,7 +29,7 @@ Record holding a player's full position:
 - Plane which is the player's current plane if several planes are being used.
 *)
   TRSPosition = record
-    X, Y, Plane: Integer;
+    X, Y, Plane: Int32;
     Z: Single;
   end;
 
@@ -44,7 +44,7 @@ type
 Record responsible for positioning.
 *)
   TRSMap = record
-    RegionIndex: Integer;
+    RegionIndex: Int32;
     Region: TRSMapRegion;
     Walker: TRSWalker;
     Loader: TRSMapLoader;
@@ -95,7 +95,7 @@ end;
 (*
 ## Map.AddGlobalFilter
 ```pascal
-procedure TRSMap.AddGlobalFilter(regionIdx: Integer; filter: TBox; inside: Boolean);
+procedure TRSMap.AddGlobalFilter(regionIdx: Int32; filter: TBox; inside: Boolean);
 ```
 Adds a position filter to the `TRSMap`.
 
@@ -105,7 +105,7 @@ This is a way to making it impossible for you to get positions inside of the
 It's useful to understand the different between local and global coordinates to
 know if you should use this or {ref}`Map.AddLocalFilter` instead.
 *)
-procedure TRSMap.AddGlobalFilter(regionIdx: Integer; filter: TBox; inside: Boolean);
+procedure TRSMap.AddGlobalFilter(regionIdx: Int32; filter: TBox; inside: Boolean);
 begin
   filter := Self.Loader.GetLocal(regionIdx, filter);
   filter := filter.Clip(Self.Loader.Regions[regionIdx].Region);
@@ -123,7 +123,7 @@ This is caleld automatically for you and you shouldn't need to call it.
 procedure TRSMap.InternalSetup();
 var
   img, sample: TImage;
-  i: Integer;
+  i: Int32;
   b: TBox;
 begin
   if Self.Sample.Amount = 0 then Self.Sample.Amount := 4;
@@ -155,14 +155,14 @@ begin
     Self.AddLocalFilter(b, True);
   end;
 
+  Self.Walker.Setup(
+    @Self.Position, @Self.Height, @Self.Loader.GetLocal,
+    @Self.Loader.Graph, Self.Loader.Map
+  );
+  Self.Walker.Name := 'Map.Walker';
+
   if not Self.IsSetup then
   begin
-    Self.Walker.Setup(
-      @Self.Position, @Self.Height, @Self.Loader.GetLocal,
-      @Self.Loader.Graph, Self.Loader.Map
-    );
-    Self.Walker.Name := 'Map.Walker';
-
     Self.Normalize := True;
     Self.IsSetup := True;
   end;
@@ -188,7 +188,7 @@ begin
 
   for i := 0 to High(boxes) do
   begin
-    chunk.Chunk := boxes[i];
+    chunk.Box := boxes[i];
     chunks += chunk;
   end;
 
@@ -231,7 +231,7 @@ begin
 
   for i := 0 to High(boxes) do
   begin
-    chunk.Chunk := boxes[i];
+    chunk.Box := boxes[i];
     chunks += chunk;
   end;
 
@@ -244,7 +244,7 @@ var
   chunk: TRSMapChunk;
 begin
   for chunk in chunks do
-    Self.AddEx([chunk.Chunk], chunk.Planes, downscale);
+    Self.AddEx([chunk.Box], chunk.Planes, downscale);
 end;
 
 procedure TRSMap.Add(echunks: set of ERSChunk; downscale: UInt32 = 8); overload;
@@ -273,7 +273,7 @@ function TRSMap.ScaledSearch(img: TImage): TPointArray;
 var
   sample: TImage;
   matrix: TSingleMatrix;
-  w, h, i, loops, width, height, padding: Integer;
+  w, h, i, loops, width, height, padding: Int32;
   pt, loaderOffset: TPoint;
   filters: TBoxArray;
   {$IFDEF WL_DEBUG_MAP}
@@ -347,11 +347,11 @@ WriteLn(Map.Similarity); // Check to see the match percentage if needed
 *)
 function TRSMap.Position(): TPoint;
 const
-  SCALE: Integer = 2;
+  SCALE: Int32 = 2;
 var
   clean, half: TImage;
   results: TPointArray;
-  i: Integer;
+  i: Int32;
   hit, center: TPoint;
   angle, match: Single;
 begin
@@ -655,7 +655,7 @@ var
   quad: TQuad;
   arr, tpa: TPointArray;
   pt, q, loc, currLoc: TPoint;
-  x,y: Integer;
+  x,y: Int32;
   vector: TVector3;
   corners: TVector3Array;
   angle, h: Single;

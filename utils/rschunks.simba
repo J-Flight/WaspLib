@@ -10,7 +10,7 @@ type
 Helper record to store chunk data with a name associated with.
 *)
   TRSMapChunk = record
-    Chunk: TBox;
+    Box: TBox;
     Planes: TIntegerArray;
   end;
   TRSMapChunkArray = array of TRSMapChunk;
@@ -25,7 +25,7 @@ Helper functions to create {ref}`TRSMapChunk`s.
 *)
 function Chunk(b: TBox; planes: TIntegerArray): TRSMapChunk;
 begin
-  Result.Chunk := b;
+  Result.Box := b;
   Result.Planes := planes;
 end;
 
