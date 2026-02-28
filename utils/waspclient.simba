@@ -231,18 +231,23 @@ begin
 end;
 
 
-procedure TWaspClient.ResetPayload();
+procedure TWaspClient.ResetPayload(waitLock: Boolean = True);
 begin
-  if not Self.IsSetup then Exit;
-  if not Self.Lock.TryEnter() then Exit;
+  if not Self.IsSetup then
+    Exit;
+
+  if waitLock then
+    Self.Lock.Enter();
 
   Self.Payload.Item['experience'].AsInt := 0;
   Self.Payload.Item['gold'].AsInt := 0;
   Self.Payload.Item['runtime'].AsInt := 0;
-  Self.Lock.Leave();
+
+  if waitLock then
+    Self.Lock.Leave();
 end;
 
-procedure TWaspClient.UpdatePayload(xp, gp: Integer);
+function TWaspClient.UpdatePayload(xp, gp: Integer): Boolean;
 var
   item: TJSONItem;
 begin
@@ -254,6 +259,7 @@ begin
   item := Self.Payload.Item['gold'];
   item.AsInt := item.AsInt + gp;
   Self.Lock.Leave();
+  Result := True;
 end;
 
 
@@ -275,16 +281,17 @@ begin
                 Self.Server + 'stats/' + Self.Script.ID + '/', Self.Payload.Format()
               );
   status := Self.Client.ResponseStatus.AsInteger;
+
+  case status of
+    200..299, 406: Self.ResetPayload(False);
+    403, 404: Self.IsSetup := False;
+  end;
+
   Self.Lock.Leave();
 
   if status > 299 then
     logLevel := ELogLevel.WARN;
   WriteLn GetDebugLn('WaspClient', '[' + ToStr(status) + ']: ' + response, logLevel);
-
-  case status of
-    200..299, 406: Self.ResetPayload();
-    403, 404: Self.IsSetup := False;
-  end;
 end;
 
 procedure TWaspClient.SubmitStats();
