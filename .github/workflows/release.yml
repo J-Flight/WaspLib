@@ -21,16 +21,31 @@ jobs:
       - name: Fetch Simba 2 download URL
         id: simba-url
         run: |
-          FULL_URL=$(curl -sSL "https://raw.githubusercontent.com/Villavu/Simba-Build-Archive/refs/heads/main/latest.win64" | tr -d '[:space:]')
-          if [[ $FULL_URL =~ simba2000%20([^/]+)/Win64\.zip ]]; then
+          README_URL="https://raw.githubusercontent.com/Villavu/Simba-Build-Archive/refs/heads/main/README.md"
+          README=$(curl -sSL "$README_URL")
+          FULL_URL=$(echo "$README" | grep -oP '\[Win64\]\(/[^)]*simba2000[^)]*Win64\.zip\?raw=true\)' | head -n1 | sed 's/^\[Win64\](//; s/)$//')
+          
+          if [[ -z "$FULL_URL" ]]; then
+            echo "Error: Could not find simba2000 Win64 URL in README"
+            exit 1
+          fi
+          
+          FULL_URL="https://raw.githubusercontent.com/Villavu/Simba-Build-Archive/refs/heads/main${FULL_URL}"
+          
+          if [[ $FULL_URL =~ /([^/]+)/Win64\.zip ]]; then
             BUILD_HASH="${BASH_REMATCH[1]}"
           else
             echo "Error: Could not extract build hash from $FULL_URL"
             exit 1
-          fi
+          fi 
+          
           BASE_URL="${FULL_URL%Win64.zip*}"
           echo "baseUrl=$BASE_URL" >> $GITHUB_OUTPUT
           echo "buildHash=$BUILD_HASH" >> $GITHUB_OUTPUT
+          echo "fullUrl=$FULL_URL" >> $GITHUB_OUTPUT
+          echo "FULL_URL=$FULL_URL"
+          echo "BUILD_HASH=$BUILD_HASH"
+          echo "BASE_URL=$BASE_URL"
 
       - name: Checkout WaspLib
         uses: actions/checkout@v5
