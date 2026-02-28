@@ -281,8 +281,10 @@ begin
     logLevel := ELogLevel.WARN;
   WriteLn GetDebugLn('WaspClient', '[' + ToStr(status) + ']: ' + response, logLevel);
 
-  if InRange(status, 200, 299) then
-    Self.ResetPayload();
+  case status of
+    200..299, 406: Self.ResetPayload();
+    403, 404: Self.IsSetup := False;
+  end;
 end;
 
 procedure TWaspClient.SubmitStats();
