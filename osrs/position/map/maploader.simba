@@ -556,7 +556,7 @@ begin
 
       topLeft  := Point(Min(chunk.Box.X1, chunk.Box.X2), Max(chunk.Box.Y1, chunk.Box.Y2));
       btmRight := Point(Max(chunk.Box.X1, chunk.Box.X2), Min(chunk.Box.Y1, chunk.Box.Y2));
-      chunk.Box := TBox.Create(topLeft.X, topLeft.Y, btmRight.X, btmRight.Y);
+      chunk.Box := Box(topLeft.X, topLeft.Y, btmRight.X, btmRight.Y);
 
       region.Chunks := RSTranslator.GetChunks(topLeft, btmRight);
       region.Plane := plane;
@@ -566,25 +566,29 @@ begin
       with RSTranslator.Chunk2Coordinate(topLeft) do
         region.Offset := [X + RSTranslator.MapWidth * plane - padding, Y - padding];
 
-      maps += Self.GetMap(region.Chunks, plane, ERSMap.NORMAL);
-      maps.Last.Pad(padding);
-
-      heightmaps += Self.GetMap(region.Chunks, plane, ERSMap.HEIGHT);
-      heightmaps.Last.Pad(padding);
-
-      collisionmaps += Self.GetMap(region.Chunks, plane, ERSMap.COLLISION);
-
-      if not WebGraphGenerator.Disabled then
-        graphs += Self.SetupGraph(region, padding, collisionmaps.Last);
-
-      collisionmaps.Last.Pad(padding);
-
-      boxes += TBox.Create(0, 0, maps.Last.Width, maps.Last.Height);
       Self.Regions += region;
     end;
 
   if Length(Self.Regions) = regionCount then
     Exit;
+
+  for i := regionCount to High(Self.Regions) do
+  begin
+    region := Self.Regions[i];
+
+    maps += Self.GetMap(region.Chunks, plane, ERSMap.NORMAL);
+    heightmaps += Self.GetMap(region.Chunks, plane, ERSMap.HEIGHT);
+    collisionmaps += Self.GetMap(region.Chunks, plane, ERSMap.COLLISION);
+
+    if not WebGraphGenerator.Disabled then
+      graphs += Self.SetupGraph(region, padding, collisionmaps.Last);
+
+    maps.Last.Pad(padding);
+    heightmaps.Last.Pad(padding);
+    collisionmaps.Last.Pad(padding);
+
+    boxes += Box(0, 0, maps.Last.Width, maps.Last.Height);
+  end;
 
   SetLength(oldRegions, regionCount);
   for i := 0 to regionCount - 1 do
