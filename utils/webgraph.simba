@@ -574,7 +574,7 @@ Merges `graph` into the current `TWebGraph`.
 *)
 procedure TWebGraph.Merge(graph: TWebGraph);
 var
-  i, j, len: Integer;
+  i, n, len: Integer;
 begin
   len := Length(Self.Nodes);
 
@@ -583,8 +583,8 @@ begin
     Self.Nodes += graph.Nodes[i];
     Self.Paths += graph.Paths[i];
 
-    for j := 0 to High(Self.Paths[len+i]) do
-      Self.Paths[len+i,j] += len;
+    for n := 0 to High(Self.Paths[len+i]) do
+      Self.Paths[len+i,n] += len;
   end;
 
   Self.WalkableSpace    += graph.WalkableSpace;

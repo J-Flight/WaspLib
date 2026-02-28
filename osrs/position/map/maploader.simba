@@ -531,7 +531,7 @@ procedure TRSMapLoader.Add(chunks: array of TRSMapChunk; downscale: UInt32 = 8; 
 var
   chunk: TRSMapChunk;
   region: TRSMapRegion;
-  i, j, k, plane, regionCount: Int32;
+  i, idx, n, plane, regionCount: Int32;
   maps, heightmaps, collisionmaps: TImageArray;
   topLeft, btmRight, offset: TPoint;
   graphs: array of TWebGraph;
@@ -546,13 +546,16 @@ begin
 
   regionCount := Length(Self.Regions);
 
+  for i := 0 to High(Self.Regions) do
+    boxes += RSTranslator.Global2Chunk(Self.Regions[i].Original);
+
   for chunk in chunks do
+  begin
     for plane in chunk.Planes do
     begin
-      for i := 0 to High(Self.Regions) do
-        if (Self.Regions[i].Plane = plane) and
-           (RSTranslator.Global2Chunk(Self.Regions[i].Original) = chunk.Box) then
-          Continue(2);
+      for i := 0 to High(boxes) do
+        if (Self.Regions[i].Plane = plane) and (boxes[i] = chunk.Box) then
+            Continue(2);
 
       topLeft  := Point(Min(chunk.Box.X1, chunk.Box.X2), Max(chunk.Box.Y1, chunk.Box.Y2));
       btmRight := Point(Max(chunk.Box.X1, chunk.Box.X2), Min(chunk.Box.Y1, chunk.Box.Y2));
@@ -568,26 +571,30 @@ begin
 
       Self.Regions += region;
     end;
+  end;
 
   if Length(Self.Regions) = regionCount then
     Exit;
 
+  boxes := [];
   for i := regionCount to High(Self.Regions) do
   begin
     region := Self.Regions[i];
 
-    maps += Self.GetMap(region.Chunks, plane, ERSMap.NORMAL);
-    heightmaps += Self.GetMap(region.Chunks, plane, ERSMap.HEIGHT);
-    collisionmaps += Self.GetMap(region.Chunks, plane, ERSMap.COLLISION);
+    maps += Self.GetMap(region.Chunks, region.Plane, ERSMap.NORMAL);
+    heightmaps += Self.GetMap(region.Chunks, region.Plane, ERSMap.HEIGHT);
+    collisionmaps += Self.GetMap(region.Chunks, region.Plane, ERSMap.COLLISION);
+
+    idx := High(maps);
 
     if not WebGraphGenerator.Disabled then
-      graphs += Self.SetupGraph(region, padding, collisionmaps.Last);
+      graphs += Self.SetupGraph(region, padding, collisionmaps[idx]);
 
-    maps.Last.Pad(padding);
-    heightmaps.Last.Pad(padding);
-    collisionmaps.Last.Pad(padding);
+    maps[idx].Pad(padding);
+    heightmaps[idx].Pad(padding);
+    collisionmaps[idx].Pad(padding);
 
-    boxes += Box(0, 0, maps.Last.Width, maps.Last.Height);
+    boxes += Box(0, 0, maps[idx].Width, maps[idx].Height);
   end;
 
   SetLength(oldRegions, regionCount);
@@ -621,11 +628,11 @@ begin
 
   for i := regionCount to High(Self.Regions) do
   begin
-    j := i - regionCount;
+    idx := i - regionCount;
     topLeft := Self.Regions[i].Region.TopLeft;
-    newMap.DrawImage(maps[j], topLeft);
-    newHeightmap.DrawImage(heightmaps[j], topLeft);
-    newCollision.DrawImage(collisionmaps[j], topLeft);
+    newMap.DrawImage(maps[idx], topLeft);
+    newHeightmap.DrawImage(heightmaps[idx], topLeft);
+    newCollision.DrawImage(collisionmaps[idx], topLeft);
   end;
 
   Self.Map := newMap;
@@ -641,25 +648,25 @@ begin
   begin
     offset := Self.Regions[i].Region.TopLeft - oldRegions[i].TopLeft;
 
-    if offset <> [0, 0] then
+    if offset <> Default(TPoint) then
     begin
-      for j := 0 to High(Self.Graph.Nodes) do
-        if Self.Graph.Nodes[j] in oldRegions[i] then
-          Self.Graph.Nodes[j] := Self.Graph.Nodes[j] + offset;
+      for idx := 0 to High(Self.Graph.Nodes) do
+        if Self.Graph.Nodes[idx] in oldRegions[i] then
+          Self.Graph.Nodes[idx] := Self.Graph.Nodes[idx] + offset;
 
-      for j := 0 to High(Self.Graph.WalkableSpace) do
-        if Self.Graph.WalkableSpace[j] in oldRegions[i] then
-          Self.Graph.WalkableSpace[j] := Self.Graph.WalkableSpace[j] + offset;
+      for idx := 0 to High(Self.Graph.WalkableSpace) do
+        if Self.Graph.WalkableSpace[idx] in oldRegions[i] then
+          Self.Graph.WalkableSpace[idx] := Self.Graph.WalkableSpace[idx] + offset;
 
-      for j := 0 to High(Self.Graph.WalkableClusters) do
-        for k := 0 to High(Self.Graph.WalkableClusters[j]) do
-          if Self.Graph.WalkableClusters[j][k] in oldRegions[i] then
-            Self.Graph.WalkableClusters[j][k] := Self.Graph.WalkableClusters[j][k] + offset;
+      for idx := 0 to High(Self.Graph.WalkableClusters) do
+        for n := 0 to High(Self.Graph.WalkableClusters[idx]) do
+          if Self.Graph.WalkableClusters[idx][n] in oldRegions[i] then
+            Self.Graph.WalkableClusters[idx][n] := Self.Graph.WalkableClusters[idx][n] + offset;
 
-      for j := 0 to High(Self.Graph.ObjectClusters) do
-        for k := 0 to High(Self.Graph.ObjectClusters[j]) do
-          if Self.Graph.ObjectClusters[j][k] in oldRegions[i] then
-            Self.Graph.ObjectClusters[j][k] := Self.Graph.ObjectClusters[j][k] + offset;
+      for idx := 0 to High(Self.Graph.ObjectClusters) do
+        for n := 0 to High(Self.Graph.ObjectClusters[idx]) do
+          if Self.Graph.ObjectClusters[idx][n] in oldRegions[i] then
+            Self.Graph.ObjectClusters[idx][n] := Self.Graph.ObjectClusters[idx][n] + offset;
     end;
   end;
 
