@@ -388,6 +388,21 @@ begin
 end;
 
 
+(*
+## TLazLabel.SetURL
+```pascal
+procedure TLazLabel.SetURL();
+```
+Makes a `TLazLabel` a clickable URL that will open in the browser.
+
+You must set the caption yourself.
+
+Example:
+```pascal
+lbl.Caption := 'https://waspscripts.dev';
+lbl.SetURL();
+```
+*)
 procedure TLazLabel.SetURL();
 begin
   Self.OnMouseEnter := @FormUtils.OnMouseEnterURL;

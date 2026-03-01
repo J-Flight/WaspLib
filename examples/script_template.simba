@@ -17,6 +17,7 @@ type
 function TTemplate.GetReportValues(): TStringArray;
 var
   actionsStr, sleepInfo: String;
+  xp: UInt64;
 begin
   actionsStr := ToStr(Self.Actions);
   if Self.MaxActions <> 0 then
@@ -27,12 +28,17 @@ begin
   else
     sleepInfo := Antiban.TimeUntilSleep(Antiban.Sleeps.First, TIME_SHORT);
 
+  xp := XPBar.TotalEarnedXP(False);
   Result := [
     GetTimeStamp(TIME_SHORT),
     Logger.TimeRunning.ElapsedFmt(TIME_SHORT),
     Antiban.TimeRunning.ElapsedFmt(TIME_SHORT),
     sleepInfo,
-    actionsStr
+    actionsStr,
+    FormatNumber(Self.Actions / Logger.TimeRunning.Elapsed * ONE_HOUR),
+    FormatNumber(xp),
+    FormatNumber(xp / Logger.TimeRunning.Elapsed * ONE_HOUR),
+    ToStr(Stats.GetLevel(ERSSkill.TOTAL))
   ];
 end;
 
@@ -43,7 +49,7 @@ begin
     'Template',
     [
       'Script runtime:', 'Botting runtime:', 'Antiban runtime:', 'Next sleep:',
-      'Actions:'
+      'Actions:', 'Actions/H:', 'Total XP:', 'XP/H:', 'Total level:'
     ],
     @Self.GetReportValues
   );
@@ -116,7 +122,7 @@ var
 
 procedure TScriptForm.OnStart(sender: TLazObject); override;
 begin
-  inherited;
+  inherited();
 
   Template.FormSetting := FormCheckbox.IsChecked();
   if TemplateConfig.Data.Has('form_setting') then

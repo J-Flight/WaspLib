@@ -25,6 +25,7 @@ Do feel free to read the source code though if you so desire.
   TMiscFormHelper = record
     LoginPanel, ClientPanel: TLazPanel;
     EmailEdit, PasswordEdit: TLazEdit;
+    LoggedInInfo: TLazLabel;
     RecorderLength: TLazSpinEdit;
     RecorderLengthLbl1, RecorderLengthLbl2: TLazLabel;
     Config: TConfigJSON;
@@ -36,20 +37,61 @@ begin
 end;
 
 
+{$H-}
 procedure TMiscFormHelper.OnLogin(sender: TLazObject);
 begin
   WaspClient.Login(Self.EmailEdit.Text, Self.PasswordEdit.Text);
 
   if WaspClient.LoggedIn then
-    TLazButton(sender).Parent.Hide();
+  begin
+    Self.LoginPanel.Hide();
+    Self.LoggedInInfo.Caption := 'You are logged in as ' + WaspClient.User.Username;
+    Self.ClientPanel.Show();
+  end
+  else
+  begin
+    Self.LoginPanel.Show();
+    Self.ClientPanel.Hide();
+  end;
 end;
 
 procedure TMiscFormHelper.OnLogout(sender: TLazObject);
 begin
-  WaspClient.Login(Self.EmailEdit.Text, Self.PasswordEdit.Text);
+  WaspClient.Logout();
 
   if WaspClient.LoggedIn then
-    TLazButton(sender).Parent.Hide();
+  begin
+    Self.LoginPanel.Hide();
+    Self.ClientPanel.Show();
+  end
+  else
+  begin
+    Self.LoginPanel.Show();
+    Self.ClientPanel.Hide();
+  end;
+end;
+{$H+}
+
+procedure TMiscFormHelper.OnEmailKeyPress(sender: TLazObject; var key: Char);
+begin
+  if key = #13 then
+  begin
+    if Self.PasswordEdit.IsEmpty() then
+      Self.PasswordEdit.SetFocus()
+    else
+      Self.OnLogin(sender);
+  end;
+end;
+
+procedure TMiscFormHelper.OnPasswordKeyPress(sender: TLazObject; var key: Char);
+begin
+  if key = #13 then
+  begin
+    if Self.EmailEdit.IsEmpty() then
+      Self.EmailEdit.SetFocus()
+    else
+      Self.OnLogin(sender);
+  end;
 end;
 
 
@@ -69,8 +111,10 @@ begin
   info.Font.Name := 'Courier New';
 
   Self.EmailEdit := TLazEdit.CreateEx(Self.LoginPanel, 'Email:', 'Username to login to WaspScripts', 20, info.Bottom + 20, 200);
+  Self.EmailEdit.OnKeyPress := @Self.OnEmailKeyPress;
   Self.PasswordEdit := TLazEdit.CreateEx(Self.LoginPanel, 'Password:', 'Password to login to WaspScripts', Self.EmailEdit.Right + 20, Self.EmailEdit.Top, 200);
   Self.PasswordEdit.PasswordChar := '*';
+  Self.PasswordEdit.OnKeyPress := @Self.OnPasswordKeyPress;
 
   btn := TLazButton.CreateEx(Self.LoginPanel, 'Login', '', Self.LoginPanel.Width div 2 - 100, Self.EmailEdit.Bottom + 20, 200);
   btn.OnClick := @Self.OnLogin;
@@ -81,21 +125,20 @@ end;
 
 procedure TMiscFormHelper.SetupClientPanel(parent: TLazComponent);
 var
-  info: TLazLabel;
   btn: TLazButton;
 begin
   Self.ClientPanel := TLazPanel.CreateEx(parent, TLazTabSheet(parent).Width div 2 - 240, 20, 480, 220);
   Self.ClientPanel.BevelWidth := 0;
 
-  info := TLazLabel.CreateEx(Self.ClientPanel, 'You are logged in as ' + WaspClient.User.Username, '', 60, 20, 0, 90);
-  info.Alignment := ELazAlignment.Center;
-  info.Font.Name := 'Courier New';
+  WriteLn Self.ClientPanel.Width;
+  Self.LoggedInInfo := TLazLabel.CreateEx(Self.ClientPanel, 'You are logged in as ' + WaspClient.User.Username, '', 80, 80, 0, 30);
+  Self.LoggedInInfo.Font.Name := 'Courier New';
 
-  btn := TLazButton.CreateEx(Self.LoginPanel, 'Login', '', Self.LoginPanel.Width div 2 - 100, Self.EmailEdit.Bottom + 20, 200);
+  btn := TLazButton.CreateEx(Self.ClientPanel, 'Logout', '', Self.ClientPanel.Width div 2 - 100, Self.LoggedInInfo.Bottom + 20, 200);
   btn.OnClick := @Self.OnLogout;
 
-  if WaspClient.LoggedIn then
-    Self.LoginPanel.Hide();
+  if not WaspClient.LoggedIn then
+    Self.ClientPanel.Hide();
 end;
 
 
@@ -225,6 +268,7 @@ begin
 
   MiscForm.Setup();
   MiscForm.SetupLoginPanel(Result);
+  MiscForm.SetupClientPanel(Result);
   MiscForm.SetupRecorderPanel(Result);
   MiscForm.Setup();
 end;

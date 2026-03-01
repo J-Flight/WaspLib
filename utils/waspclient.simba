@@ -84,8 +84,8 @@ var
   response: String;
   json: TJSONParser;
 begin
-  if not Self.Lock.TryEnter() then Exit;
   if not Self.IsSetup then Exit;
+  Self.Lock.Enter();
 
   try
     response := Self.Client.Post(Self.Database + 'auth/v1/token?grant_type=' + grantType, payload);
@@ -122,6 +122,32 @@ begin
     Self.User.ID := Item['id'].AsString;
     Self.User.Username := Item['user_metadata'].Item['custom_claims'].Item['global_name'].AsString;
   end;
+  Self.Lock.Leave();
+end;
+
+procedure TWaspClient.Logout();
+var
+  response: String;
+begin
+  if not Self.IsSetup then Exit;
+  Self.Lock.Enter();
+
+  try
+    response := Self.Client.Post(Self.Database + 'auth/v1/logout', '');
+  except
+    WriteLn GetDebugLn('WaspClient', GetExceptionMessage());
+    Self.IsSetup := False;
+    Self.Lock.Leave();
+    Exit;
+  end;
+
+  if Self.Client.ResponseStatus.AsInteger = 204 then
+  begin
+    Self.User.ID := '';
+    Self.User.Username := '';
+    Self.LoggedIn := False;
+  end;
+
   Self.Lock.Leave();
 end;
 
@@ -205,22 +231,21 @@ begin
     Self.AsyncRefreshSession();
 end;
 
-function TWaspClient.SetSchema(schema: String = 'public'): Boolean;
+procedure TWaspClient.SetSchema(schema: String = 'public');
 begin
-  if not Self.Lock.TryEnter() then Exit;
+  Self.Lock.Enter();
   if schema = 'public' then
     Self.Client.RequestHeader['Accept-Profile'] := ''
   else
     Self.Client.RequestHeader['Accept-Profile'] := schema;
   Self.Lock.Leave();
-  Result := True;
 end;
 
 function TWaspClient.CheckScriptAccess(): Boolean;
 var
   url: String;
 begin
-  if not Self.Lock.TryEnter() then Exit;
+  Self.Lock.Enter();
   if not Self.Script.ID.IsUUID() then Exit;
 
   url := Self.Database + 'storage/v1/object/authenticated/scripts/' +
