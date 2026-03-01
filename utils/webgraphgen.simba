@@ -28,7 +28,7 @@ type
 Record responsible for generating webgraphs from collision map images.
 *)
   TWebGraphGenerator = record
-    Spacing: Int32;
+    Spacing, MinSpace: UInt32;
     Disabled: Boolean;
   end;
 
@@ -36,7 +36,7 @@ function TWebGraphGenerator.Hash(): String;
 var
   data: TIntegerArray;
 begin
-  data := [Self.Spacing];
+  data := [Self.Spacing, Self.MinSpace];
   Result := HashData(EHashAlgo.CRC32, @data[0], Length(data) * SizeOf(Int32));
 end;
 
@@ -48,34 +48,38 @@ procedure TWebGraphGenerator.Setup(spacing: Int32);
 Sets up the `TWebGraphGenerator` with the following settings which are the
 defaults:
 ```pascal
-WebGraphGenerator.Setup(16);
+WebGraphGenerator.Setup(16, 16);
 ```
 
 Parameters explanation
 - `spacing`: Just the spacing between the nodes. Larger spacing means the graph
 faster to generate with some resolution loss.
+- `minSpace`: if a the space where a node is is lower than this value, the node
+won't be added.
 
 Feel free to change the settings to suit your need and use the
 {ref}`Map Debugger` to see what the results look like.
 
 To do so you **MUST DO IT BEFORE** setting up your {ref}`Map`.
 *)
-procedure TWebGraphGenerator.Setup(spacing: Int32);
+procedure TWebGraphGenerator.Setup(spacing, minSpace: UInt32);
 begin
   Self.Spacing := spacing;
+  Self.MinSpace := minSpace;
 end;
 
 function TWebGraphGenerator.BuildGraph(name: String; map: TImage): TWebGraph;
 var
-  white, gray, tpa, nodes, tmp, subset: TPointArray;
+  white, gray, walls, tpa, nodes, tmp, subset: TPointArray;
   i, hiY, hiX, size, y, x, start, n, mX, mY: Int32;
   t: UInt64;
   pt, adjacent: TPoint;
-  wClusters, clusters, mClusters: T2DPointArray;
+  wClusters, clusters: T2DPointArray;
   matrix: TIntegerMatrix;
   kdtree: TKDTree;
   items, query: TKDItems;
   itemA, itemB: TKDItem;
+  b: TBox;
 begin
   WriteLn GetDebugLn('WebGraphGenerator', 'Generating webgraph: ' + name + ' this can take a few seconds.');
   t := GetTimeRunning();
@@ -101,14 +105,14 @@ begin
       if tmp = [] then
         Continue;
 
-      clusters := tmp.Cluster(1);
-      tpa += clusters.Means();
+      tpa += tmp.Cluster(1).Means();
       tmp := [];
     end;
 
   white := map.FindColor($FFFFFF, 0);
   gray := map.FindColor($333333, 0);
-  wClusters := white.Cluster(1).SortBySize(True).ExcludeSize(6, EComparator.__LE__);
+  walls := map.FindColor($0, 0) + map.FindColor($FF, 0);
+  wClusters := white.Cluster(1).SortBySize(True).ExcludeSize(Self.MinSpace, EComparator.__LE__);
 
   for i := 0 to High(wClusters) do
   begin
@@ -154,24 +158,23 @@ begin
     end;
   end;
 
-  clusters := gray.Cluster(1);
-
   for i := 0 to High(wClusters) do
   begin
-    subset := gray.ExtractBox(wClusters[i].Bounds().Expand(80));
+    b := wClusters[i].Bounds().Expand(80);
+    subset := gray.ExtractBox(b) + walls.ExtractBox(b);
     tpa := wClusters[i] + subset;
-    mClusters := tpa.Cluster(1);
+    clusters := tpa.Cluster(1);
 
-    for n := 0 to High(mClusters) do
-      if mClusters[n].Contains(wClusters[i, 0]) then
+    for n := 0 to High(clusters) do
+      if clusters[n].Contains(wClusters[i, 0]) then
       begin
-        Result.WalkableClusters += mClusters[n];
+        Result.WalkableClusters += clusters[n];
         Break;
       end;
   end;
 
   Result.WalkableSpace  := white + gray;
-  Result.ObjectClusters := clusters;
+  Result.ObjectClusters := gray.Cluster(1);
 
   WriteLn GetDebugLn('WebGraphGenerator', 'Generating webgraph took ' + ToStr(Round(((GetTimeRunning()-t)/1000), 2)) + ' seconds.', ELogLevel.SUCCESS);
 end;

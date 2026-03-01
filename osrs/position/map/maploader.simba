@@ -332,7 +332,7 @@ var
   filename: String;
   idx: Int32;
 begin
-  filename := ToStr(plane) + '-' + ToStr(chunk.X) + '-' + ToStr(chunk.Y) + '.png';
+  filename := Format('%d-%d-%d.png', [plane, chunk.X, chunk.Y]);
 
   idx := Self.MapReader[map].Find(filename);
   if idx > -1 then
@@ -352,37 +352,29 @@ function TRSMapLoader.GetMap(chunks: TPointArray; plane: Int32; map: ERSMap): TI
 var
   i, x, y, n: Int32;
   lo, hi: TPoint;
-  chunkMaps: array of record
-    Point: TPoint;
-    Image: TImage;
-  end;
+  img: TImage;
 begin
-  SetLength(chunkMaps, Length(chunks));
-
   lo := [$FFFFFF, $FFFFFF];
+  hi := [-$FFFFFF, -$FFFFFF];
 
   for i := 0 to High(chunks) do
   begin
-    chunkMaps[i].Image := Self.GetFile(chunks[i], plane, map);
-
     x := chunks[i].X;
     y := 199 - chunks[i].Y;
 
-    chunkMaps[i].Point := [x,y];
     lo := [Min(x, lo.X), Min(y, lo.Y)];
     hi := [Max(x, hi.X), Max(y, hi.Y)];
   end;
 
   n := RSTranslator.MAP_CHUNK_SIZE;
-
   Result := new TImage((hi.X-lo.X) * n + 1 + n, (hi.Y-lo.Y) * n + 1 + n);
 
-  for i := 0 to High(chunkMaps) do
+  for i := 0 to High(chunks) do
   begin
-    x := (chunkMaps[i].Point.X - lo.X) * n;
-    y := (chunkMaps[i].Point.Y - lo.Y) * n;
-
-    Result.DrawImage(chunkMaps[i].Image, Point(x, y));
+    x := (chunks[i].X - lo.X) * n;
+    y := ((199 - chunks[i].Y) - lo.Y) * n;
+    img := Self.GetFile(chunks[i], plane, map);
+    Result.DrawImage(img, [x, y]);
   end;
 end;
 

@@ -74,19 +74,18 @@ WriteLn RSTranslator.Global2Chunk(Point(2000, 2000));
 *)
 function TRSTranslator.Global2Chunk(pt: TPoint): TPoint;
 begin
-  while pt.X > Self.MapWidth do
-    pt.X -= Self.MapWidth;
+  pt.X := pt.X mod Self.MapWidth;
   Result.X := Self.RSMap.Scope.X1 + Floor(pt.X / Self.MAP_CHUNK_SIZE);
   Result.Y := Self.RSMap.Scope.Y2 - Floor(pt.Y / Self.MAP_CHUNK_SIZE);
 end;
 
 function TRSTranslator.Global2Chunk(b: TBox): TBox; overload;
 var
-  s, f: TPoint;
+  lo, hi: TPoint;
 begin
-  s := Self.Global2Chunk([b.X1, b.Y1]);
-  f := Self.Global2Chunk([b.X2, b.Y2]);
-  Result := [s.X, s.Y, f.X, f.Y];
+  lo := Self.Global2Chunk(b.TopLeft);
+  hi := Self.Global2Chunk(b.BottomRight);
+  Result := Box(lo.X, lo.Y, hi.X, hi.Y);
 end;
 
 
@@ -108,16 +107,16 @@ begin
   Result.X := pt.X * Self.MAP_CHUNK_SIZE;
   Result.Y := (Self.RSMap.Scope.Y2 - pt.Y) * Self.MAP_CHUNK_SIZE;
   if plane > 0 then
-    Result += [Self.MapWidth * plane, 0];
+    Result.X += Self.MapWidth * plane;
 end;
 
 function TRSTranslator.Chunk2Coordinate(b: TBox; plane: Int32 = 0): TBox; overload;
 var
-  topLeft, btmRight: TPoint;
+  lo, hi: TPoint;
 begin
-  topLeft := Self.Chunk2Coordinate([b.X1, b.Y1], plane);
-  btmRight := Self.Chunk2Coordinate([b.X2+1, b.Y2-1], plane);
-  Result := Box(topLeft.X, topLeft.Y, btmRight.X-1, btmRight.Y-1);
+  lo := Self.Chunk2Coordinate(b.TopLeft, plane);
+  hi := Self.Chunk2Coordinate([b.X2+1, b.Y2-1], plane);
+  Result := Box(lo.X, lo.Y, hi.X-1, hi.Y-1);
 end;
 
 
@@ -145,10 +144,11 @@ end;
 (*
 ## TRSTranslator.GetChunks
 ```pascal
-function TRSTranslator.GetChunks(start, finish: TPoint): TPointArray; static;
+function TRSTranslator.GetChunks(lo, hi: TPoint): TPointArray; static;
 ```
-Simple methods that will return all chunks in between a `start` and `finish` chunks.
-This will also fix their order if required, as osrs chunks are oddly numbered from bottom to top on the Y axis.
+Simple methods that will return all chunks in between a `lo` and `hi` chunks.
+This will also fix their order if required, as osrs chunks are oddly numbered
+from bottom to top on the Y axis.
 
 Example:
 ```pascal
@@ -157,12 +157,15 @@ WriteLn RSTranslator.GetChunks([20,20], [22,22]);
 //[[20, 20], [20, 21], [20, 22], [21, 20], [21, 21], [21, 22], [22, 20], [22, 21], [22, 22]];
 ```
 *)
-function TRSTranslator.GetChunks(start, finish: TPoint): TPointArray; static;
+function TRSTranslator.GetChunks(lo, hi: TPoint): TPointArray; static;
 var
-  x, y: Int32;
+  y, x: Int32;
 begin
-  for x := Min(start.X, finish.X) to Max(start.X, finish.X) do
-    for y := Min(start.Y, finish.Y) to Max(start.Y, finish.Y) do
+  if lo.X > hi.X then Swap(lo.X, hi.X);
+  if lo.Y > hi.Y then Swap(lo.Y, hi.Y);
+
+  for y := lo.Y to hi.Y do
+    for x := lo.X to hi.X do
       Result += [x,y];
 end;
 

@@ -99,7 +99,7 @@ Map.Loader.Graph.BlockArea([6478, 34358, 6565, 34445]);
 *)
 procedure TWebGraph.BlockArea(area: TBox; inside: Boolean = True);
 var
-  i, c: Integer;
+  i, c: Int32;
 begin
   SetLength(Self.Blocking, Length(Self.Nodes));
 
@@ -129,24 +129,23 @@ end;
 (*
 ## TWebGraph.NearNodesIndices
 ```pascal
-function TWebGraph.NearNodesIndices(pt: TPoint; amount: Integer): TIntegerArray;
+function TWebGraph.NearNodesIndices(pt: TPoint; amount: Int32): TIntegerArray;
 ```
 Returns the indices of the `amount` of nearest nodes to `pt` on the webgraph
 that can be walked to to and from `pt`.
 
 The result returned is sorted by shortest distance to `pt`.
 *)
-function TWebGraph.NearNodesIndices(pt: TPoint; amount: Integer): TIntegerArray;
+function TWebGraph.NearNodesIndices(item: TKDItem; amount: Int32): TIntegerArray;
 var
-  i, ref: Integer;
-  near: TPoint;
-  item: TKDItem;
+  i, ref: Int32;
+  pt, near: TPoint;
   items: TKDItems;
   tpa: TPointArray;
 begin
-  item := Self.KDTree.KNearest([pt.X, pt.Y], 1, [ETreeSetting.IgnoreHidden]).First;
   ref := item.Ref;
-  items := Self.KDTree.KNearest([pt.X, pt.Y], amount, [ETreeSetting.NotEqual, ETreeSetting.RefSensitive, ETreeSetting.IgnoreHidden], ref);
+  items := Self.KDTree.KNearest(item.Vector, amount, [ETreeSetting.NotEqual, ETreeSetting.RefSensitive, ETreeSetting.IgnoreHidden], ref);
+  pt := Point(Round(item.Vector[0]), Round(item.Vector[1]));
 
   for item in items do
   begin
@@ -165,11 +164,28 @@ begin
     raise GetDebugLn('WebGraph', 'There''s no nodes near [' + ToStr(pt.X) + ',' + ToStr(pt.Y) + '] on the same cluster (' + ToStr(ref) + ').');
 end;
 
+function TWebGraph.NearClusteredNodes(a, b: TPoint; amount: Int32): TKDItems;
+var
+  iA, iB: Int32;
+  itemsA, itemsB: TKDItems;
+begin
+  itemsA := Self.KDTree.KNearest([a.X, a.Y], amount, [ETreeSetting.IgnoreHidden]);
+  itemsB := Self.KDTree.KNearest([b.X, b.Y], amount, [ETreeSetting.IgnoreHidden]);
+
+  for iA to High(itemsA) do
+    for iB to High(itemsB) do
+      if itemsA[iA].Ref = itemsB[iB].Ref then
+        Exit([itemsA[iA], itemsB[iB]]);
+
+  if Result = [] then
+    raise GetDebugLn('WebGraph', 'There''s no nodes near [' + ToStr(a.X) + ',' + ToStr(a.Y) + '] and [' + ToStr(b.X) + ',' + ToStr(b.Y) + '] on the same cluster.');
+end;
+
 
 (*
 ## TWebGraph.FindPath
 ```pascal
-function TWebGraph.FindPath(start, finish: Integer; rnd: Double = 0): TIntegerArray;
+function TWebGraph.FindPath(start, finish: Int32; rnd: Double = 0): TIntegerArray;
 ```
 Finds a path between `start` and `finish` with the ability to introduce some
 randomness through `rnd`.
@@ -178,13 +194,13 @@ This is basically a weighted BFS algorithm.
 
 For more information on the algorithm read the [wikipedia page on breadth-first search](https://en.wikipedia.org/wiki/Breadth-first_search).
 *)
-function TWebGraph.FindPath(start, finish: Integer; rnd: Double = 0): TIntegerArray;
+function TWebGraph.FindPath(start, finish: Int32; rnd: Double = 0): TIntegerArray;
 type TNode = record Indices: TIntegerArray; Score: Double; end;
 var queue: array of TNode;
 
   function GetNextShortest(): TNode;
   var
-    i, node: Integer;
+    i, node: Int32;
   begin
     Result := queue[0];
     for i := 1 to High(queue) do
@@ -198,7 +214,7 @@ var queue: array of TNode;
 
 var
   visited: TBooleanArray;
-  cIdx, pathIdx, i: Integer;
+  cIdx, pathIdx, i: Int32;
   current, node: TNode;
   p, q: TPoint;
   hyp: Double;
@@ -242,38 +258,40 @@ end;
 (*
 ## TWebGraph.PathBetween
 ```pascal
-function TWebGraph.PathBetween(a, b: TPoint; rnd: Double = 0; attempts: Integer = 3): TPointArray;
+function TWebGraph.PathBetween(a, b: TPoint; rnd: Double = 0; attempts: Int32 = 3): TPointArray;
 ```
 Returns a path between `a` and `b` with the ability to introduce some randomness
 through `rnd`.
 
 The returned path comes in the form of a `TPointArray`.
 *)
-function TWebGraph.PathBetween(a, b: TPoint; rnd: Double = 0; attempts: Integer = 3): TPointArray;
+function TWebGraph.PathBetween(a, b: TPoint; rnd: Double = 0; attempts: Int32 = 3): TPointArray;
 var
-  i, j: Integer;
-  nS, nG, indices: TIntegerArray;
+  items: TKDItems;
+  i, j: Int32;
+  intsA, intsB, indices: TIntegerArray;
 begin
-  nS := Self.NearNodesIndices(a, attempts);
-  nG := Self.NearNodesIndices(b, attempts);
+  items := Self.NearClusteredNodes(a,b, attempts);
+  intsA := Self.NearNodesIndices(items[0], attempts);
+  intsB := Self.NearNodesIndices(items[1], attempts);
 
-  if nS[0] = nG[0] then
+  if intsA[0] = intsB[0] then
     Exit([a, b]);
 
-  if (Length(nG) = 1) and (Self.Paths[nG[0]] = []) then
+  if (Length(intsB) = 1) and (Self.Paths[intsB[0]] = []) then
     raise GetDebugLn('WebGraph', 'Points ' + ToStr(a) + ' and ' + ToStr(b) + ' don''t connect! No paths available.');
 
-  for i := 0 to High(nS) do
+  for i := 0 to High(intsA) do
   begin
-    if nS[i] = -1 then
+    if intsA[i] = -1 then
       Continue;
-    for j := 0 to High(nG) do
+    for j := 0 to High(intsB) do
     begin
-      if nG[j] = -1 then
+      if intsB[j] = -1 then
         Continue;
-      if nS[i] = nG[j] then Continue;
+      if intsA[i] = intsB[j] then Continue;
 
-      indices := Self.FindPath(nS[i],nG[j], rnd);
+      indices := Self.FindPath(intsA[i],intsB[j], rnd);
       if Length(indices) > 0 then
         Break(2);
     end;
@@ -290,43 +308,6 @@ end;
 
 
 (*
-## TWebGraph.PathToNear
-```pascal
-function TWebGraph.PathToNear(a: TPoint; out b: TPoint; rnd: Double = 0): TPointArray;
-```
-Returns a path between `a` and and whatever the nearest node to `b` is with the
-ability to introduce some randomness through `rnd`.
-
-The nearest node to `b` is also returned through `b`.
-
-The returned path comes in the form of a `TPointArray`.
-*)
-function TWebGraph.PathToNear(a: TPoint; out b: TPoint; rnd: Double = 0): TPointArray;
-var
-  i: Integer;
-  cluster: TPointArray;
-  best: TIntegerArray;
-begin
-  for i := 0 to High(Self.WalkableClusters) do
-    if Self.WalkableClusters[i].Contains(a) then
-    begin
-      cluster := Self.WalkableClusters[i];
-      Break;
-    end;
-
-  if cluster = [] then
-    raise GetDebugLn('WebGraph', 'Can''t find player cluster containg: ' + ToStr(a));
-
-  best := Self.NearNodesIndices(b, 12);
-  for i := 0 to High(best) do
-  begin
-    b := Self.Nodes[best[i]];
-    if cluster.Contains(b) then
-      Exit(Self.PathBetween(a, b, rnd, 2));
-  end;
-end;
-
-(*
 ## TWebGraph.NearestPathable
 ```pascal
 function TWebGraph.NearestPathable(me: TPoint; destinations: TPointArray): TPoint;
@@ -338,7 +319,7 @@ function TWebGraph.NearestPathable(me: TPoint; destinations: TPointArray): TPoin
 var
   path: TPointArray;
   shortPaths: array of TPointArray;
-  best, dist, i: Integer;
+  best, dist, i: Int32;
   destination: TPoint;
   pathDist: Double;
 begin
@@ -389,15 +370,15 @@ end;
 (*
 ## TWebGraph.AddNode
 ```pascal
-function TWebGraph.AddNode(pt: TPoint; fromNode: Integer): Boolean;
+function TWebGraph.AddNode(pt: TPoint; fromNode: Int32): Boolean;
 ```
 Adds a new node to the `TWebGraph` with a connection to `fromNode`.
 
 You can specify it's coordinate through `pt`.
 *)
-function TWebGraph.AddNode(pt: TPoint; fromNode: Integer): Boolean;
+function TWebGraph.AddNode(pt: TPoint; fromNode: Int32): Boolean;
 var
-  i: Integer;
+  i: Int32;
 begin
   if fromNode < 0 then
     Exit(False);
@@ -416,9 +397,9 @@ end;
 (*
 ## TWebGraph.ConnectNodes
 ```pascal
-procedure TWebGraph.ConnectNodes(a,b: Integer);
+procedure TWebGraph.ConnectNodes(a,b: Int32);
 procedure TWebGraph.ConnectNodes(a,b: TPoint); overload;
-procedure TWebGraph.ConnectNodes(a: Integer; b: TPoint); overload;
+procedure TWebGraph.ConnectNodes(a: Int32; b: TPoint); overload;
 ```
 Connects nodes `a` and `b`.
 
@@ -428,7 +409,7 @@ node in the graph.
 Using indices is always better for performance but overtime they may change if
 the shape of the graph changes.
 *)
-procedure TWebGraph.ConnectNodes(a,b: Integer);
+procedure TWebGraph.ConnectNodes(a,b: Int32);
 begin
   if not Self.Paths[a].Contains(b) then
     Self.Paths[a] += b;
@@ -438,7 +419,7 @@ end;
 
 procedure TWebGraph.ConnectNodes(a,b: TPoint); overload;
 var
-  i, idxA, idxB: Integer;
+  i, idxA, idxB: Int32;
 begin
   idxA := -1;
   idxB := -1;
@@ -457,9 +438,9 @@ begin
   Self.ConnectNodes(idxA,idxB);
 end;
 
-procedure TWebGraph.ConnectNodes(a: Integer; b: TPoint); overload;
+procedure TWebGraph.ConnectNodes(a: Int32; b: TPoint); overload;
 var
-  i: Integer;
+  i: Int32;
 begin
   i := Self.Nodes.IndexOf(b);
   if i = -1 then Exit;
@@ -503,13 +484,13 @@ end;
 (*
 ## TWebGraph.DeleteNode
 ```pascal
-function TWebGraph.DeleteNode(node: Integer): Integer;
+function TWebGraph.DeleteNode(node: Int32): Int32;
 ```
 Deletes a `Node` from a `TWebGraph` along with all the connections to it.
 *)
-function TWebGraph.DeleteNode(node: Integer): Integer;
+function TWebGraph.DeleteNode(node: Int32): Int32;
 var
-  i,j,n,curr: Integer;
+  i,j,n,curr: Int32;
   marked: TIntegerArray;
 begin
   marked += node;
@@ -557,7 +538,7 @@ Map.Loader.Graph.DeleteNodes([6478, 34358, 6565, 34445]);
 *)
 procedure TWebGraph.DeleteNodes(b: TBox);
 var
-  i: Integer;
+  i: Int32;
 begin
   for i := High(Self.Nodes) downto 0 do
     if b.Contains(Self.Nodes[i]) then
@@ -574,7 +555,7 @@ Merges `graph` into the current `TWebGraph`.
 *)
 procedure TWebGraph.Merge(graph: TWebGraph);
 var
-  i, n, len: Integer;
+  i, n, len: Int32;
 begin
   len := Length(Self.Nodes);
 
@@ -603,7 +584,7 @@ Used for `TWebGraph` debugging.
 *)
 procedure TWebGraph.Draw(img: TImage);
 var
-  i,j: Integer;
+  i,j: Int32;
 begin
   if Self.Nodes = [] then Exit;
 
@@ -619,7 +600,7 @@ end;
 
 procedure TWebGraph.Draw(canvas: TImageBoxCanvas); overload;
 var
-  i,j: Integer;
+  i,j: Int32;
 begin
   if Self.Nodes = [] then Exit;
 
