@@ -62,19 +62,18 @@ begin
   end;
   {$ENDIF}
 
-  WriteLn {$MACRO DIR} + 'recorder_subprocess.simba';
-  RunSimbaScript({$MACRO DIR} + 'recorder_subprocess.simba',
-    [
-      'script=' + ToStr(GetProcessID()),
-      'target=' + window,
-      'time=' + ToStr(Self.BufferSeconds),
-      plugin,
-      'path=' + WLEnv.VideosDir
-    ]
-  );
+  //TODO: Simba is bugged with this.
+  //RunSimbaScript({$MACRO DIR} + 'recorder_subprocess.simba',
+  //  [
+  //    'script=' + ToStr(GetProcessID()),
+  //    'target=' + window,
+  //    'time=' + ToStr(Self.BufferSeconds),
+  //    plugin,
+  //    'path=' + WLEnv.VideosDir
+  //  ]
+  //);
   Self.IsRecording := True;
 end;
 
 var
   SimbaRecorder: TSimbaRecorder;
-
