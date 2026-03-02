@@ -27,19 +27,13 @@ var
   Recorder: TRecorder;
   Window: TWindowHandle;
 begin
-  WriteLn('SUBPROCESS');
   Process := StrToInt(GetProcessArg('script'));
-  WriteLn Process;
   Window := StrToInt(GetProcessArg('target'));
-  WriteLn Window;
-  WriteLn GetProcessArg('plugin');
   case GetProcessArg('plugin') of
     'remote-input': Target.SetPlugin({$MACRO LOADEDLIB(libremoteinput)}, ToStr(Window.GetPID()));
     'wasp-input': Target.SetPlugin({$MACRO LOADEDLIB(waspinput)}, ToStr(Window.GetPID()));
     else Target.SetWindow(Window);
   end;
-
-  Target.GetImage().Save(GetProcessArg('path') + '/img.png');
 
   Recorder := TRecorder.Create(
     StrToInt(GetProcessArg('time'), 20), GetProcessArg('path'),
