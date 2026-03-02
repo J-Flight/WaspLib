@@ -34,6 +34,7 @@ Main record used to interact with the remote input plugin.
 *)
   TRemoteInput = record
     Target: Pointer;
+    Window: TWindowHandle;
   end;
 
 (*
@@ -47,19 +48,18 @@ This is automatically called for you on the {ref}`RemoteInput variable`.
 procedure TRemoteInput.Setup();
 var
   timer: TCountDown;
-  window: TWindowHandle;
   pid: TProcessID;
 begin
   {$IFDEF SIMBAHEADLESS}
-  window := StrToInt(Target.ToString().Between('Handle=', ','));
+  Self.Window := StrToInt(Target.ToString().Between('Handle=', ','));
   {$ELSE}
-  window := GetSimbaTargetWindow();
+  Self.Window := GetSimbaTargetWindow();
   {$ENDIF}
 
-  if window.GetClassName() <> 'SunAwtCanvas' then
+  if Self.Window.GetClassName() <> 'SunAwtCanvas' then
     Exit;
 
-  pid := window.GetPID();
+  pid := Self.Window.GetPID();
 
   try
     RIInject(pid);
@@ -129,6 +129,7 @@ Main record used to interact with the wasp input plugin.
 *)
   TWaspInput = record
     Target: Pointer;
+    Window: TWindowHandle;
   end;
 
 (*
@@ -141,19 +142,18 @@ This is automatically called for you on the {ref}`WaspInput variable`.
 *)
 procedure TWaspInput.Setup();
 var
-  window: TWindowHandle;
   pid: TProcessID;
 begin
   {$IFDEF SIMBAHEADLESS}
-  window := StrToInt(Target.ToString().Between('Handle=', ','));
+  Self.Window := StrToInt(Target.ToString().Between('Handle=', ','));
   {$ELSE}
-  window := GetSimbaTargetWindow();
+  Self.Window := GetSimbaTargetWindow();
   {$ENDIF}
 
-  if window.GetClassName() <> 'JagRenderView' then
+  if Self.Window.GetClassName() <> 'JagRenderView' then
     Exit;
 
-  pid := window.GetPID();
+  pid := Self.Window.GetPID();
   Inject({$MACRO LOADEDLIB(waspinput)}, pid);
   Target.SetPlugin({$MACRO LOADEDLIB(waspinput)}, ToStr(pid), RSClient.Canvas);
   Self.Target := @pid;
@@ -356,3 +356,5 @@ begin
   WriteLn(GetDebugLn('RSClient', 'InjectInput method is not implemented without a fake input tool.', ELogLevel.WARN));
   {$ENDIF}
 end;
+
+

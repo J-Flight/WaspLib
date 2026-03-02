@@ -18,7 +18,6 @@ end;
 *)
 
 {$DEFINE WL_FRAMERECORDER_INCLUDED}
-{$INCLUDE_ONCE WaspLib/utils.simba}
 
 type
 (*
@@ -54,7 +53,7 @@ var
   selectedDir: String;
   imagesDir: String;
 begin
-  if not Target.IsValid then
+  if not Target.IsValid() then
     raise 'No target to screenshot';
     
   Self.FPS := fps;

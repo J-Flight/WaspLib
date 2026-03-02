@@ -111,9 +111,6 @@ begin
     else
       Self.ConfigData.AddInt('goal_level', Self.Goals.Level.Value);
   end;
-
-  if SimbaRecorder.Enabled then
-    SimbaRecorder.Start();
 end;
 {$H+}
 

@@ -130,7 +130,6 @@ begin
   Self.ClientPanel := TLazPanel.CreateEx(parent, TLazTabSheet(parent).Width div 2 - 240, 20, 480, 220);
   Self.ClientPanel.BevelWidth := 0;
 
-  WriteLn Self.ClientPanel.Width;
   Self.LoggedInInfo := TLazLabel.CreateEx(Self.ClientPanel, 'You are logged in as ' + WaspClient.User.Username, '', 80, 80, 0, 30);
   Self.LoggedInInfo.Font.Name := 'Courier New';
 

@@ -370,3 +370,19 @@ begin
   RSMouseZoom.ZoomLevel := RSMouseZoom.Slider2Level(level);
 end;
 
+
+(*
+## ScriptForm.OnStart override
+```pascal
+procedure TScriptForm.OnStart(sender: TLazObject); override;
+```
+Overrides TScriptForm.OnStart to perform certain tasks when the script starts
+running, e.g. start the `Simba Recorder`
+*)
+procedure TScriptForm.OnStart(sender: TLazObject); override;
+begin
+  inherited();
+
+  if SimbaRecorder.Enabled then
+    SimbaRecorder.Start();
+end;
