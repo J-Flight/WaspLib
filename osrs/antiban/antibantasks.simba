@@ -1040,9 +1040,18 @@ type
     Name: String;
     Method: TAntibanMethod;
   end;
+  TAntibanNamedMethodArray = array of TAntibanNamedMethod;
+
+function TAntibanNamedMethodArray.IndexOf(value: String): Integer; overload;
+begin
+  for Result := 0 to High(Self) do
+    if Self[Result].Name = value then
+      Exit;
+  Result := -1;
+end;
 
 const
-  ANTIBAN_TASKS: array of TAntibanNamedMethod := [
+  ANTIBAN_TASKS: TAntibanNamedMethodArray := [
     ['SmallRandomMouse',      @Antiban.SmallRandomMouse],
     ['LargeRandomMouse',      @Antiban.LargeRandomMouse],
     ['SmallCameraRotation',   @Antiban.SmallCameraRotation],
@@ -1086,4 +1095,32 @@ const
     ['RandomChatTask',        @Antiban.RandomChatTask],
     ['RandomBankTask',        @Antiban.RandomBankTask],
     ['RandomGETask',          @Antiban.RandomGETask]
+  ];
+
+  ANTIBAN_WALKING_TASKS: TAntibanNamedMethodArray := [
+    ['SmallRandomMouse',      @Antiban.SmallRandomMouse],
+    ['LargeRandomMouse',      @Antiban.LargeRandomMouse],
+    ['SmallCameraRotation',   @Antiban.SmallCameraRotation],
+    ['LoseFocus',             @Antiban.LoseFocus],
+    ['HoverSkills',           @Antiban.HoverSkills],
+    ['OpenSkills',            @Antiban.OpenSkills],
+    ['ChatScrolling',         @Antiban.ChatScrolling],
+    ['RandomChatTab',         @Antiban.RandomChatTab],
+    ['ToggleChatTab',         @Antiban.ToggleChatTab],
+    ['RightClickChatMessage', @Antiban.RightClickChatMessage],
+    ['RandomChatTabState',    @Antiban.RandomChatTabState],
+    ['RandomTab',             @Antiban.RandomTab],
+    ['ToggleTab',             @Antiban.ToggleTab],
+    ['RandomRightClick',      @Antiban.RandomRightClick],
+    ['AdjustZoom',            @Antiban.AdjustZoom],
+    ['Swivel',                @Antiban.Swivel],
+    ['ToggleRun',             @Antiban.ToggleRun],
+    ['TogglePray',            @Antiban.TogglePray],
+    ['HoverRandomNPC',        @Antiban.HoverRandomNPC],
+    ['HoverRandomPlayer',     @Antiban.HoverRandomPlayer],
+    ['HoverRandomGrounditem', @Antiban.HoverRandomGrounditem],
+    ['RandomCameraTask',      @Antiban.RandomCameraTask],
+    ['RandomMouseTask',       @Antiban.RandomMouseTask],
+    ['RandomGameTabTask',     @Antiban.RandomGameTabTask],
+    ['RandomChatTask',        @Antiban.RandomChatTask]
   ];

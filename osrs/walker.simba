@@ -497,13 +497,22 @@ procedure TRSWalker.WaitMoving(time: Integer = 15000; doAntiban: Boolean = True)
 var
   timeout, countdown: TCountDown;
   moving: Boolean;
+  tasks: PAntibanTaskArray;
+  i: Integer;
 begin
+  if doAntiban then
+  begin
+    tasks := Antiban.GetInactiveWalkTasks();
+    for i := 0 to High(tasks) do
+      tasks[i]^.Countdown.Resume();
+  end;
+
   timeout.Start(time);
   countdown.Start(500);
 
   repeat
     if doAntiban then
-      Antiban.WalkingTasks();
+      Antiban.DoWalkingAntiban();
 
     moving := Minimap.IsPlayerMoving();
 
@@ -511,6 +520,10 @@ begin
       countdown.Restart(0, 1000);
 
   until timeout.IsFinished or (not moving and countdown.IsFinished) or not Minimap.HasFlag();
+
+  if doAntiban then
+    for i := 0 to High(tasks) do
+      tasks[i]^.Countdown.Pause();
 end;
 
 
@@ -644,7 +657,8 @@ var
 begin
   shouldExit := True;
   t := Time();
-  if @Self.OnWalkEvent <> nil then Self.OnWalkEvent(@Self, me, mapPoint);
+  if @Self.OnWalkEvent <> nil then
+    Self.OnWalkEvent(@Self, me, mapPoint);
   if Time() - t > 100 then me := Self.Position(); //Check if event took too long and update position.
 
   if not Self.Walking or not Self.IsWalkable(mapPoint, me, minimapPoint, Minimap.CompassRadians) then

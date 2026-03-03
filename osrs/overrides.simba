@@ -261,32 +261,6 @@ begin
 end;
 {$R+}
 
-procedure TAntiban.WalkingTasks(); override;
-begin
-  case Random(0, 500) of //only about 1% chance of antiban while walking
-    0:
-    begin
-      if (Random(20) <= 17) then Self.RandomChatTab();
-    end;
-
-    1..5:
-    begin
-      if (Random(10) <= 3) then Self.SmallCameraRotation();
-    end;
-
-    6..10:
-    begin
-      if (Random(10) <= 3) then Self.RandomRightClick()
-      else Self.SmallRandomMouse();
-    end;
-
-    10, 14:
-    begin
-      if (Random(10) <= 9) then Self.RandomTab();
-    end;
-  end;
-end;
-
 (*
 ## Chat.LeveledUp override
 ```pascal
