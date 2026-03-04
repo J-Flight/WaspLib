@@ -172,8 +172,8 @@ begin
   itemsA := Self.KDTree.KNearest([a.X, a.Y], amount, [ETreeSetting.IgnoreHidden]);
   itemsB := Self.KDTree.KNearest([b.X, b.Y], amount, [ETreeSetting.IgnoreHidden]);
 
-  for iA to High(itemsA) do
-    for iB to High(itemsB) do
+  for iA := 0 to High(itemsA) do
+    for iB := 0 to High(itemsB) do
       if itemsA[iA].Ref = itemsB[iB].Ref then
         Exit([itemsA[iA], itemsB[iB]]);
 
@@ -282,22 +282,16 @@ begin
     raise GetDebugLn('WebGraph', 'Points ' + ToStr(a) + ' and ' + ToStr(b) + ' don''t connect! No paths available.');
 
   for i := 0 to High(intsA) do
-  begin
-    if intsA[i] = -1 then
-      Continue;
     for j := 0 to High(intsB) do
     begin
-      if intsB[j] = -1 then
+      if intsA[i] = intsB[j] then
         Continue;
-      if intsA[i] = intsB[j] then Continue;
-
       indices := Self.FindPath(intsA[i],intsB[j], rnd);
-      if Length(indices) > 0 then
+      if indices <> [] then
         Break(2);
     end;
-  end;
 
-  if Length(indices) = 0 then
+  if indices = [] then
     raise GetDebugLn('WebGraph', 'Points ' + ToStr(a) + ' and ' + ToStr(b) + ' don''t connect!');
 
   Result += a;
@@ -318,8 +312,7 @@ between.
 function TWebGraph.NearestPathable(me: TPoint; destinations: TPointArray): TPoint;
 var
   path: TPointArray;
-  shortPaths: array of TPointArray;
-  best, dist, i: Int32;
+  best, dist, i, n: Int32;
   destination: TPoint;
   pathDist: Double;
 begin
@@ -327,6 +320,7 @@ begin
 
   for destination in destinations do
   begin
+    //straight line is further than best, no point in going further
     if not me.InRange(destination, best) then
       Continue;
 
@@ -351,19 +345,20 @@ begin
 
     if dist < best then
     begin
-      shortPaths := [path];
+      Result := path.Last;
       best := dist;
-    end
-    else if dist = best then
-      shortPaths += path;
+      n := 1;
+      path := [];
+      Continue;
+    end;
+
+    if (dist = best) and (Random(Inc(n)) = 0) then
+      Result := path.Last; //if multiple 1/n chance of replacing best
 
     path := [];
   end;
 
-  if shortPaths = [] then
-    Exit(destinations.NearestPoint(me));
-
-  Result := shortPaths.Random().Last;
+  Result := destinations.NearestPoint(me);
 end;
 
 
