@@ -1,22 +1,22 @@
 (*
-# RemoteInput
-Remote Input is an external plugin which provides, well, "remote" input.
+# Fake Input
+Fake Input is achieved by external tools, usually by injecting the client.
 
-In other words, it's the tool WaspLib uses so Simba doesn't use your real mouse and
-keyboard while botting.
+Fake input is what WaspLib uses that allows you to use your mouse and keyboard
+freely while botting.
 
-Remote input also gives you a full reflection environment to bot with if you
-desire but in the case of WaspLib, it's used exclusively for input and you need to
-either include a reflection library, implement one yourself or use the plugin
-functions directly.
+There's 2 versions of fake input:
+- RemoteInput for java based clients
+- wasp-input for the official CPP client
 
-If you wish to completely disable remote input you can do so by adding the
+If you wish to completely disable fake input you can do so by adding the
 following compiler directive before you include WaspLib in your script:
 ```pascal
 {$DEFINE WL_DISABLE_FAKE_INPUT}
 ```
 
 You can find remote input source code here: https://github.com/Brandon-T/RemoteInput
+And wasp-input here: https://github.com/WaspScripts/wasp-input
 *)
 {$DEFINE WL_FAKE_INPUT_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}

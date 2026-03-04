@@ -1,4 +1,10 @@
-{.$DEFINE WL_DISABLE_FAKE_INPUT}
+(*
+(GPU ACA)=
+# Tool: GPU Auto Color Aid
+Creates a ACA window that is able to read the image of GPU rendered clients with
+the help of {ref}`Fake Input`.
+*)
+
 {$loadlib Plugins/wasp-plugins/libremoteinput/libremoteinput}
 
 
