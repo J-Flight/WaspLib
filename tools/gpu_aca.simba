@@ -1,0 +1,64 @@
+{.$DEFINE WL_DISABLE_FAKE_INPUT}
+{$loadlib Plugins/wasp-plugins/libremoteinput/libremoteinput}
+
+
+procedure SetupRemoteInput(pid: TProcessID);
+var
+  timer: TCountDown;
+  eios: Pointer;
+begin
+  RIInject(pid);
+
+  timer.Start(2000);
+  repeat
+    eios := EIOS_PairClient(pid);
+    if eios <> nil then
+      Break;
+    Sleep(100);
+  until timer.IsFinished;
+
+  if eios = nil then
+  begin
+    WriteLn('Invalid target for RemoteInput, RemoteInput will not be used.');
+    Exit;
+  end;
+
+  Target.SetPlugin({$MACRO LOADEDLIB(libremoteinput)}, ToStr(pid));
+end;
+
+{$IFDEF WINDOWS}
+{$loadlib Plugins/wasp-plugins/waspinput/waspinput}
+procedure SetupWaspInput(pid: TProcessID);
+begin
+  Inject({$MACRO LOADEDLIB(waspinput)}, pid);
+  Target.SetPlugin({$MACRO LOADEDLIB(waspinput)}, ToStr(pid));
+end;
+{$ENDIF}
+
+var
+  AcaForm: TACAForm;
+
+function GetImageForACA(): TImage;
+begin
+  Result := Target.GetImage();
+end;
+
+var
+  window: TWindowHandle;
+begin
+  window := GetSimbaTargetWindow();
+
+  case window.GetClassName() of
+    'SunAwtCanvas': SetupRemoteInput(window.GetPID());
+    {$IFDEF WINDOWS}
+    'JagRenderView': SetupWaspInput(window.GetPID());
+    {$ENDIF}
+  end;
+
+  AcaForm := TACAForm.Create(@GetImageForACA);
+  AcaForm.Width := 1600;
+  AcaForm.Height := 800;
+  AcaForm.ShowModal();
+  WriteLn('The best color was: ', AcaForm.BestColor);
+  AcaForm.Free();
+end;
