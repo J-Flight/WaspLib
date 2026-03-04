@@ -112,7 +112,7 @@ end;
 
 function TRSWorldSwitcher._IsOpen(): Boolean;
 begin
-  Result := Target.HasColor($0C0E10, 3, 134, Self.Buttons[ERSWorldSwitcherButton.CLOSE].Bounds);
+  Result := Target.HasColor([$0A0B0E, 5, EColorSpace.HSV, [0.368, 0.761, 1.873]], 90, Self.Buttons[ERSWorldSwitcherButton.CLOSE].Bounds);
 end;
 
 (*
