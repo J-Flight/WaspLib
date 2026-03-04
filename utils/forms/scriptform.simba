@@ -88,28 +88,31 @@ begin
   Self.Form.OnClose := nil;
   Self.Form.Close();
 
-  if (Self.Goals.Actions <> nil) then
+  if Self.ConfigData <> nil then
   begin
-    if Self.ConfigData.Has('goal_actions') then
-      Self.ConfigData.Item['goal_actions'].AsInt := Self.Goals.Actions.Value
-    else
-      Self.ConfigData.AddInt('goal_actions', Self.Goals.Actions.Value);
-  end;
+    if (Self.Goals.Actions <> nil) then
+    begin
+      if Self.ConfigData.Has('goal_actions') then
+        Self.ConfigData.Item['goal_actions'].AsInt := Self.Goals.Actions.Value
+      else
+        Self.ConfigData.AddInt('goal_actions', Self.Goals.Actions.Value);
+    end;
 
-  if (Self.Goals.Time <> nil) then
-  begin
-    if Self.ConfigData.Has('goal_time') then
-      Self.ConfigData.Item['goal_time'].AsInt := Self.Goals.Time.Value
-    else
-      Self.ConfigData.AddInt('goal_time', Self.Goals.Time.Value);
-  end;
+    if (Self.Goals.Time <> nil) then
+    begin
+      if Self.ConfigData.Has('goal_time') then
+        Self.ConfigData.Item['goal_time'].AsInt := Self.Goals.Time.Value
+      else
+        Self.ConfigData.AddInt('goal_time', Self.Goals.Time.Value);
+    end;
 
-  if (Self.Goals.Level <> nil) then
-  begin
-    if Self.ConfigData.Has('goal_level') then
-      Self.ConfigData.Item['goal_level'].AsInt := Self.Goals.Level.Value
-    else
-      Self.ConfigData.AddInt('goal_level', Self.Goals.Level.Value);
+    if (Self.Goals.Level <> nil) then
+    begin
+      if Self.ConfigData.Has('goal_level') then
+        Self.ConfigData.Item['goal_level'].AsInt := Self.Goals.Level.Value
+      else
+        Self.ConfigData.AddInt('goal_level', Self.Goals.Level.Value);
+    end;
   end;
 end;
 {$H+}

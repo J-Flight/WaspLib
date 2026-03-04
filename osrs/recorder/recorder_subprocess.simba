@@ -43,11 +43,6 @@ begin
 
   Recorder.SetFFMPEG(SimbaEnv.PluginsPath + 'wasp-plugins' + PATH_SEP + 'librecorder' + PATH_SEP + 'ffmpeg.exe');
 
-  try
-    Recorder.Run(LowerCase(GetProcessArg('debugging')) = 'true');
-  except
-    WriteLn GetExceptionMessage();
-  finally
-    Recorder.Free();
-  end;
+  Recorder.Run(LowerCase(GetProcessArg('debugging')) = 'true');
+  Recorder.Free();
 end;
