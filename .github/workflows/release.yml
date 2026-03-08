@@ -279,6 +279,8 @@ jobs:
             -H "Authorization: Bearer $SUPABASE_KEY" \
             -H "Content-Type: application/zip" \
             --data-binary @"$ZIP_NAME"
+          curl -X DELETE "$SUPABASE_URL/storage/v1/object/wasplib/latest.zip" \
+            -H "Authorization: Bearer $SUPABASE_KEY"
           curl -X POST "$SUPABASE_URL/storage/v1/object/copy" \
             -H "Authorization: Bearer $SUPABASE_KEY" \
             -H "Content-Type: application/json" \
