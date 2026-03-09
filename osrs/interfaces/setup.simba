@@ -175,6 +175,7 @@ begin
   WorldSwitcher.Setup();
   FairyRing.Setup();
 
+  Antiban.WalkCameraAdjustments := True;
   Antiban.TimeRunning.Start();
   Antiban.TimeRunning.Pause();
   Antiban.Zoom.Max := 100;

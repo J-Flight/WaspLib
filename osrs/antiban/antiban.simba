@@ -46,9 +46,7 @@ type
 Main record to handle the built-in WaspLib antiban.
 *)
   TAntiban = record
-    DoingAntiban: Boolean;
-    Debugging: Boolean;
-    DebugRandoms: Boolean;
+    WalkCameraAdjustments, DoingAntiban, Debugging, DebugRandoms: Boolean;
 
     Skills: array of ERSSkill;
 

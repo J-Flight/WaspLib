@@ -455,6 +455,8 @@ var
   timeout, countdown: TCountDown;
   position: record Current, Previous: TPoint; end;
   awct: Int64;
+  angleUpdated: Boolean;
+  pt: TPoint;
 begin
   timeout.Start(Round(GaussRand(20000, 25000)));
   countdown.Start(Round(GaussRand(500, 1500)));
@@ -485,6 +487,14 @@ begin
       Self.AdaptiveWalkCheck(Position.Current);
       awct := Time() + 1000;
     end;
+
+    if Antiban.WalkCameraAdjustments then
+      if not angleUpdated and Biometrics.RandomBoolean(0.5) then
+      begin
+        pt := TRSWalker.Point2MM(position.Current, destination, Minimap.CompassRadians);
+        with Minimap.ZoomQuad do
+          angleUpdated := Minimap.FacePointEx(pt, Top, Right, 20);
+      end;
 
     if Self.FancyMouse then Self.DoMouseAhead(position.Current);
     if not Self.Walking then Break;
