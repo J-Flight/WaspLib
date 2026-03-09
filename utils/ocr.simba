@@ -6,6 +6,9 @@ This page is about WaspLib's OCR.
 {$DEFINE WL_OCR_INCLUDED}
 {$INCLUDE_ONCE WaspLib/utils.simba}
 
+var
+  TEXT_SHADOW: TColor = $000000;
+
 type
 (*
 ## TOCR
@@ -93,7 +96,7 @@ var
   colors: TColorArray;
 begin
   img := Target.GetImage(bounds);
-  shadows := img.FindColor($0, 2.5, [1, 1, img.Width - 1, img.Height - 1]);
+  shadows := img.FindColor(TEXT_SHADOW, 0, [1, 1, img.Width - 1, img.Height - 1]);
   shadows := shadows.Offset([-1,-1]).ExcludePoints(shadows);
 
   colors := img.GetColors(shadows).Unique();
@@ -145,15 +148,10 @@ type
 Record containing pre-loaded RuneScape fonts and common text colors.
 *)
   TRSFonts = record
-    PLAIN_11:       TPixelFont;
-    PLAIN_12:       TPixelFont;
-    BOLD:           TPixelFont;
-    BOLD_SHADOW:    TPixelFont;
-    QUILL_8:        TPixelFont;
-    QUILL:          TPixelFont;
-    VERDANA_13:     TPixelFont;
-    VERDANA_13_Bold:TPixelFont;
-    VERDANA_15:     TPixelFont;
+    PLAIN_11, PLAIN_12,
+    BOLD, BOLD_SHADOW,
+    QUILL_8, QUILL,
+    VERDANA_13, VERDANA_13_BOLD, VERDANA_15: TPixelFont;
     Unzipping: Boolean;
     Timeout: TCountDown;
 

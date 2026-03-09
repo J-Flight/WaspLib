@@ -74,6 +74,7 @@ begin
       ITEM_SHADOW := $323232;
       ITEM_SHADOW_GRAY := $323232;
       ITEM_BORDER := $000000;
+      TEXT_SHADOW := $010000;
       ITEM_BORDER_WHITE := $FEFEFE;
       Exit(ERSClient.OFFICIAL);
     end;
@@ -324,6 +325,46 @@ begin
   if interval < 0 then interval := RandomMode(100, 50, 1500);
   Result := SleepUntil(Self.IsLoggedIn(), interval, time);
 end;
+
+
+(*
+## RSClient.ReadTooltip
+```pascal
+function TRSClient.ReadTooltip(): String;
+```
+Attempts to read the client tooltip if it's present.
+
+Example:
+```pascal
+WriteLn RSClient.ReadTooltip();
+```
+*)
+function TRSClient.ReadTooltip(): String;
+var
+  pt: TPoint;
+  b: TBox;
+  tpa: TPointArray;
+begin
+  pt := Target.MouseXY;
+  with Self._Bounds() do
+  begin
+    if not Contains(pt) then
+      Exit;
+    b := [Max(X1, pt.X)+4, Max(Y1, pt.Y+24)+5, X2, Min(Y2, pt.Y + 45)];
+  end;
+
+  tpa := Target.FindColor(TEXT_SHADOW, 0, b);
+  if tpa = [] then
+    Exit;
+
+  tpa := tpa.Cluster(6,4).SortFromFirstPointX(pt).First;
+  b.X2 := tpa.Bounds().X2;
+  case RSClient.Client of
+    ERSClient.OFFICIAL: Result := OCR.RecognizeShadow(b, RSFonts.PLAIN_12, 0);
+    ERSClient.RUNELITE, ERSClient.LEGACY: Result := OCR.RecognizeShadow(b, RSFonts.PLAIN_11, 0);
+  end;
+end;
+
 
 var
 (*
