@@ -359,7 +359,7 @@ begin
 
   tpa := tpa.Cluster(6,4).SortFromFirstPointX(pt).First;
   b.X2 := tpa.Bounds().X2;
-  case RSClient.Client of
+  case Self.Client of
     ERSClient.OFFICIAL: Result := OCR.RecognizeShadow(b, RSFonts.PLAIN_12, 0);
     ERSClient.RUNELITE, ERSClient.LEGACY: Result := OCR.RecognizeShadow(b, RSFonts.PLAIN_11, 0);
   end;
