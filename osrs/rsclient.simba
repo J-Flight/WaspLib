@@ -364,7 +364,7 @@ begin
   tpa := tpa.Cluster(6,4).SortFromFirstPointX(pt).First;
   b.X2 := tpa.Bounds().X2;
 
-  case RSClient.Client of
+  case Self.Client of
     ERSClient.OFFICIAL: font := @RSFonts.PLAIN_12;
     ERSClient.RUNELITE: font := @RSFonts.SMALL;
   end;
