@@ -344,7 +344,11 @@ var
   pt: TPoint;
   b: TBox;
   tpa: TPointArray;
+  font: ^TPixelFont;
 begin
+  if Self.Client <> ERSClient.OFFICIAL then
+    Exit;
+
   pt := Target.MouseXY;
   with Self._Bounds() do
   begin
@@ -359,10 +363,13 @@ begin
 
   tpa := tpa.Cluster(6,4).SortFromFirstPointX(pt).First;
   b.X2 := tpa.Bounds().X2;
-  case Self.Client of
-    ERSClient.OFFICIAL: Result := OCR.RecognizeShadow(b, RSFonts.PLAIN_12, 0);
-    ERSClient.RUNELITE, ERSClient.LEGACY: Result := OCR.RecognizeShadow(b, RSFonts.PLAIN_11, 0);
+
+  case RSClient.Client of
+    ERSClient.OFFICIAL: font := @RSFonts.PLAIN_12;
+    ERSClient.RUNELITE: font := @RSFonts.SMALL;
   end;
+
+  Result := OCR.RecognizeShadow(b, font^, 0);
 end;
 
 

@@ -135,6 +135,7 @@ begin
   Result := Self.Engine.Locate(img, font, Text);
 end;
 
+
 var
 (*
 ## OCR variable
@@ -148,6 +149,7 @@ type
 Record containing pre-loaded RuneScape fonts and common text colors.
 *)
   TRSFonts = record
+    SMALL,
     PLAIN_11, PLAIN_12,
     BOLD, BOLD_SHADOW,
     QUILL_8, QUILL,
@@ -173,6 +175,8 @@ Record containing pre-loaded RuneScape fonts and common text colors.
 
 procedure TRSFonts.Load();
 begin
+  Self.SMALL := OCR.Engine.LoadFont(Self.PATH + 'Small', 4);
+
   Self.PLAIN_11 := OCR.Engine.LoadFont(Self.PATH + 'Plain 11', 4);
   Self.PLAIN_12 := OCR.Engine.LoadFont(Self.PATH + 'Plain 12', 4);
 
