@@ -130,7 +130,7 @@ begin
 
     win := win.GetRootWindow();
     with win.GetBounds() do
-      win.SetBounds([X1, Y1, X2, Y1+535]);
+      win.SetBounds([X1, Y1, X2-1, Y1+535]);
     Result := [x1, 0, x2, 503];
   end
   else
@@ -327,6 +327,43 @@ begin
 end;
 
 
+function TRSClient.GetTooltipBounds(): TBox;
+var
+  pt: TPoint;
+  bounds: TBox;
+  tpa: TPointArray;
+begin
+  pt := Target.MouseXY;
+  bounds := Self._Bounds();
+
+  if not bounds.Contains(pt) then
+    Exit;
+
+  if pt.Y+43 > bounds.Y2 then
+  begin
+    bounds.Y1 := bounds.Y2 - 22;
+    bounds.Y2 := bounds.Y2 - 3;
+  end
+  else
+  begin
+    bounds.Y1 := pt.Y + 24;
+    bounds.Y2 := pt.Y + 43;
+  end;
+
+  tpa := Target.FindColor(TEXT_SHADOW, 0, bounds);
+  if tpa = [] then
+    Exit;
+
+  tpa := tpa.Cluster(8,4).SortFromFirstPointX(pt).First;
+  with tpa.Bounds() do
+  begin
+    bounds.X1 := Max(X1-6, 0);
+    bounds.X2 := X2+4;
+  end;
+  ShowOnTarget(bounds);
+  Result := bounds;
+end;
+
 (*
 ## RSClient.ReadTooltip
 ```pascal
@@ -341,35 +378,20 @@ WriteLn RSClient.ReadTooltip();
 *)
 function TRSClient.ReadTooltip(): String;
 var
-  pt: TPoint;
-  b: TBox;
-  tpa: TPointArray;
+  bounds: TBox;
   font: ^TPixelFont;
 begin
-  if Self.Client <> ERSClient.OFFICIAL then
-    Exit;
-
-  pt := Target.MouseXY;
-  with Self._Bounds() do
-  begin
-    if not Contains(pt) then
-      Exit;
-    b := [Max(X1, pt.X)+4, Max(Y1, pt.Y+24)+5, X2, Min(Y2, pt.Y + 45)];
-  end;
-
-  tpa := Target.FindColor(TEXT_SHADOW, 0, b);
-  if tpa = [] then
-    Exit;
-
-  tpa := tpa.Cluster(6,4).SortFromFirstPointX(pt).First;
-  b.X2 := tpa.Bounds().X2;
-
   case Self.Client of
     ERSClient.OFFICIAL: font := @RSFonts.PLAIN_12;
     ERSClient.RUNELITE: font := @RSFonts.SMALL;
+    else Exit;
   end;
 
-  Result := OCR.RecognizeShadow(b, font^, 0);
+  bounds := Self.GetTooltipBounds();
+  if bounds = Default(TBox) then
+    Exit;
+
+  Result := OCR.RecognizeShadow(bounds, font^, 0);
 end;
 
 
