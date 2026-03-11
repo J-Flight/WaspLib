@@ -37,6 +37,8 @@ Main type to handle {ref}`RSEntity`.
     MinDistance: Integer;
   end;
 
+  PRSEntity = ^TRSEntity;
+
 (*
 ## TRSEntityArray
 Array of {ref}`TRSEntity`.

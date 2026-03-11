@@ -272,31 +272,31 @@ end;
 
 function TRSCollectionBox.Hover(walk: Boolean = True): Boolean;
 var
-  obj: TRSObject;
-  npc: TRSEntity;
+  obj: PRSObject;
+  npc: PRSEntity;
   me: TPoint;
 begin
   if (Bank.Banks = []) or (Bank.Bankers = []) then
     Bank._SetupMapObjects();
 
   me := Map.Position();
-  obj := Bank.Banks[Bank.Banks.ClosestIndex(me)];
-  npc := Bank.Bankers[Bank.Bankers.ClosestIndex(me)];
+  obj := @Bank.Banks[Bank.Banks.ClosestIndex(me)];
+  npc := @Bank.Bankers[Bank.Bankers.ClosestIndex(me)];
 
-  if obj.DistanceTo(me) < npc.DistanceTo(me) then
+  if obj^.DistanceTo(me) < npc^.DistanceTo(me) then
   begin
-    if walk then Exit(obj.WalkHover());
-    Exit(obj.Hover());
+    if walk then Exit(obj^.WalkHover());
+    Exit(obj^.Hover());
   end;
 
-  if walk then Exit(npc.WalkHover());
-  Result := npc.Hover();
+  if walk then Exit(npc^.WalkHover());
+  Result := npc^.Hover();
 end;
 
 function TRSCollectionBox.Open(walk: Boolean = True): Boolean;
 var
-  obj: TRSObject;
-  npc: TRSEntity;
+  obj: PRSObject;
+  npc: PRSEntity;
   me: TPoint;
 begin
   if MSInterface.IsOpen() then
@@ -309,13 +309,13 @@ begin
     Bank._SetupMapObjects();
 
   me := Map.Position();
-  obj := Bank.Banks[Bank.Banks.ClosestIndex(me)];
-  npc := Bank.Bankers[Bank.Bankers.ClosestIndex(me)];
+  obj := @Bank.Banks[Bank.Banks.ClosestIndex(me)];
+  npc := @Bank.Bankers[Bank.Bankers.ClosestIndex(me)];
 
-  if obj.DistanceTo(me) < npc.DistanceTo(me) then
+  if obj^.DistanceTo(me) < npc^.DistanceTo(me) then
   begin
-    if walk then Result := obj.WalkInteract(['Collect'])
-    else Result := obj.Interact(['Collect']);
+    if walk then Result := obj^.WalkInteract(['Collect'])
+    else Result := obj^.Interact(['Collect']);
 
     if not Result then
     begin
@@ -323,13 +323,13 @@ begin
       if not Result then Exit;
     end;
 
-    obj.Walker^.WaitMoving();
+    obj^.Walker^.WaitMoving();
     Result := Self.WaitOpen(3000);
     Exit;
   end;
 
-  if walk then Result := npc.WalkInteract(['Collect'])
-  else Result := npc.Interact(['Collect']);
+  if walk then Result := npc^.WalkInteract(['Collect'])
+  else Result := npc^.Interact(['Collect']);
 
   if not Result then
   begin
@@ -337,7 +337,7 @@ begin
     if not Result then Exit;
   end;
 
-  npc.Walker^.WaitMoving();
+  npc^.Walker^.WaitMoving();
   Result := Self.WaitOpen(3000);
 end;
 

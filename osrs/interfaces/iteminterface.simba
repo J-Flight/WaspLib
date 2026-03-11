@@ -49,7 +49,7 @@ unless specified otherwise.
     Name: String;
     Slots: ^TRSSlotInterface;
     DiscoverOffset: TPoint;
-    CheckFunction: function (): Boolean of object;
+    PreConditionFunction: TInterfacePreConditionFunction;
   end;
 
 (*
@@ -82,12 +82,17 @@ Bank.Slots.Setup('Bank.Slots', Bank.SlotBoxes, @Bank.FindItemBoundaries);
 Bank.Items.Setup('Bank.Items', @Bank.Slots, [0, 1], @Bank.IsOpen);
 ```
 *)
-procedure TRSItemInterface.Setup(name: String; slots: ^TRSSlotInterface; discoverOffset: TPoint; checkFunc: function (): Boolean of object = nil);
+procedure TRSItemInterface.Setup(
+  name: String;
+  slots: ^TRSSlotInterface;
+  discoverOffset: TPoint;
+  checkFunc: TInterfacePreConditionFunction = nil
+);
 begin
   Self.Name := name;
   Self.Slots := slots;
   Self.DiscoverOffset := discoverOffset;
-  Self.CheckFunction := @checkFunc;
+  Self.PreConditionFunction := @checkFunc;
 end;
 
 
@@ -110,7 +115,7 @@ function TRSItemInterface.IndexOf(items: TRSItemArray): Integer;
 var
   match: TImageMatch;
 begin
-  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+  if (@Self.PreConditionFunction <> nil) and not Self.PreConditionFunction() then
     Exit(-1);
   if ItemFinder.Find(items, Self.Slots^.Boxes(), match) then
     Exit(match.Index);
@@ -137,7 +142,7 @@ function TRSItemInterface.IndicesOf(items: TRSItemArray): TIntegerArray;
 var
   match: TImageMatch;
 begin
-  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+  if (@Self.PreConditionFunction <> nil) and not Self.PreConditionFunction() then
     Exit;
 
   for match in ItemFinder.FindAll(items, Self.Slots^.Boxes()) do
@@ -170,7 +175,7 @@ function TRSItemInterface.FindAny(items: TRSItemArray; out slot: TBox): Boolean;
 var
   match: TImageMatch;
 begin
-  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+  if (@Self.PreConditionFunction <> nil) and not Self.PreConditionFunction() then
     Exit;
 
   Result := ItemFinder.Find(items, Self.Slots^.Boxes(), match);
@@ -210,7 +215,7 @@ function TRSItemInterface.Find(items: TRSItemArray; out slot: Integer): Boolean;
 var
   match: TImageMatch;
 begin
-  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+  if (@Self.PreConditionFunction <> nil) and not Self.PreConditionFunction() then
     Exit;
 
   Result := ItemFinder.Find(items, Self.Slots^.Boxes(), match);
@@ -254,7 +259,7 @@ function TRSItemInterface.FindAll(items: TRSItemArray): TBoxArray;
 var
   match: TImageMatch;
 begin
-  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+  if (@Self.PreConditionFunction <> nil) and not Self.PreConditionFunction() then
     Exit;
 
   for match in ItemFinder.FindAll(items, Self.Slots^.Boxes()) do
@@ -267,7 +272,7 @@ var
   i: Integer;
 begin
   slots := [];
-  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+  if (@Self.PreConditionFunction <> nil) and not Self.PreConditionFunction() then
     Exit;
 
   Result := ItemFinder.FindAll(items, Self.Slots^.Boxes(), matches);
@@ -282,7 +287,7 @@ var
   i: Integer;
 begin
   boxes := [];
-  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+  if (@Self.PreConditionFunction <> nil) and not Self.PreConditionFunction() then
     Exit;
 
   Result := ItemFinder.FindAll(items, Self.Slots^.Boxes(), matches);
@@ -361,7 +366,7 @@ function TRSItemInterface.ContainsAll(items: TRSItemArray): Boolean;
 var
   matches: TImageMatchArray;
 begin
-  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+  if (@Self.PreConditionFunction <> nil) and not Self.PreConditionFunction() then
     Exit;
   Result := ItemFinder.FindAll(items, Self.Slots^.Boxes(), matches);
 end;
@@ -409,7 +414,7 @@ end;
 
 function TRSItemInterface.Discover(slot: Integer): TRSItemArray;
 begin
-  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+  if (@Self.PreConditionFunction <> nil) and not Self.PreConditionFunction() then
     Exit;
 
   Result := Self._Discover(slot);
@@ -419,7 +424,7 @@ function TRSItemInterface.DiscoverAllEx(): array of TRSItemArray;
 var
   slot: Integer;
 begin
-  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+  if (@Self.PreConditionFunction <> nil) and not Self.PreConditionFunction() then
     Exit;
 
   for slot := Low(Self.Slots^.Boxes()) to High(Self.Slots^.Boxes()) do
@@ -431,7 +436,7 @@ var
   slot: Integer;
   items: TRSItemArray;
 begin
-  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+  if (@Self.PreConditionFunction <> nil) and not Self.PreConditionFunction() then
     Exit;
 
   for slot := Low(Self.Slots^.Boxes()) to High(Self.Slots^.Boxes()) do
@@ -693,7 +698,7 @@ var
   center: TPoint;
   dist, closest: Double;
 begin
-  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+  if (@Self.PreConditionFunction <> nil) and not Self.PreConditionFunction() then
     Exit;
   slots := Self.Slots^.Boxes();
   if not ItemFinder.FindAll([item], slots, matches) then Exit;
@@ -753,7 +758,7 @@ function TRSItemInterface.Interact(slot: Integer; option: String = ''): Boolean;
 var
   box: TBox;
 begin
-  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+  if (@Self.PreConditionFunction <> nil) and not Self.PreConditionFunction() then
     Exit;
     
   if not Self.Slots^.IsUsed(slot) then Exit;

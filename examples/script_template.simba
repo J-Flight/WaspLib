@@ -56,7 +56,7 @@ begin
 
   Map.Setup([ERSChunk.VARROCK]);
 
-  Antiban.Zoom.Max := 0;
+  Antiban.Zoom.Min := 0;
   Antiban.Zoom.Max := 50;
   Antiban.Skills := [ERSSkill.TOTAL];
 
@@ -157,6 +157,7 @@ begin
     FormCheckbox.SetChecked(True);
 
   Self.CreateAntibanTab();
+  Self.CreateMiscTab();
   Self.Run();
 end;
 

@@ -354,13 +354,13 @@ begin
   if tpa = [] then
     Exit;
 
-  tpa := tpa.Cluster(8,4).SortFromFirstPointX(pt).First;
+  tpa := tpa.Cluster(7,4).SortFromFirstPointX(pt).First;
   with tpa.Bounds() do
   begin
     bounds.X1 := Max(X1-6, 0);
     bounds.X2 := X2+4;
   end;
-  ShowOnTarget(bounds);
+
   Result := bounds;
 end;
 

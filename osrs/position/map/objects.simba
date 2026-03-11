@@ -26,6 +26,8 @@ Main type to handle {ref}`RSObjects`.
     MinDistance: Integer;
   end;
 
+  PRSObject = ^TRSObject;
+
 (*
 ## TRSObjectArray
 Array of {ref}`TRSObject`.

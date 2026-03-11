@@ -1394,8 +1394,8 @@ end;
 (*
 ## Bank.Hover
 ```pascal
-function TRSBank.Hover(constref obj: TRSObject; walk: Boolean = True): Boolean;
-function TRSBank.Hover(constref npc: TRSEntity; walk: Boolean = True): Boolean; overload;
+function TRSBank.Hover(const obj: TRSObject; walk: Boolean = True): Boolean;
+function TRSBank.Hover(const npc: TRSEntity; walk: Boolean = True): Boolean; overload;
 function TRSBank.Hover(walk: Boolean = True): Boolean; overload;
 ```
 Hovers the closest bank that WaspLib is aware of.
@@ -1409,14 +1409,14 @@ loaded map.
 
 If you are too far, it will attempt to walk closer to it.
 *)
-function TRSBank.Hover(constref obj: TRSObject; walk: Boolean = True): Boolean;
+function TRSBank.Hover(const obj: TRSObject; walk: Boolean = True): Boolean;
 begin
   if walk then
     Exit(obj.WalkHover());
   Result := obj.Hover();
 end;
 
-function TRSBank.Hover(constref npc: TRSEntity; walk: Boolean = True): Boolean; overload;
+function TRSBank.Hover(const npc: TRSEntity; walk: Boolean = True): Boolean; overload;
 begin
   if walk then
     Exit(npc.WalkHover());
@@ -1425,27 +1425,27 @@ end;
 
 function TRSBank.Hover(walk: Boolean = True): Boolean; overload;
 var
-  obj: TRSObject;
-  npc: TRSEntity;
+  obj: PRSObject;
+  npc: PRSEntity;
   me: TPoint;
 begin
   if (Self.Banks = []) or (Self.Bankers = []) then
     Self._SetupMapObjects();
 
   me := Map.Position();
-  obj := Self.Banks[Self.Banks.ClosestIndex(me)];
-  npc := Self.Bankers[Self.Bankers.ClosestIndex(me)];
+  obj := @Self.Banks[Self.Banks.ClosestIndex(me)];
+  npc := @Self.Bankers[Self.Bankers.ClosestIndex(me)];
 
-  if obj.DistanceTo(me) < npc.DistanceTo(me) then
-    Exit(Self.Hover(obj, walk));
-  Result := Self.Hover(npc, walk);
+  if obj^.DistanceTo(me) < npc^.DistanceTo(me) then
+    Exit(Self.Hover(obj^, walk));
+  Result := Self.Hover(npc^, walk);
 end;
 
 (*
 ## Bank.Open
 ```pascal
-function TRSBank.Open(constref obj: TRSObject; walk: Boolean = True): Boolean;
-function TRSBank.Open(constref npc: TRSEntity; walk: Boolean = True): Boolean; overload;
+function TRSBank.Open(const obj: TRSObject; walk: Boolean = True): Boolean;
+function TRSBank.Open(const npc: TRSEntity; walk: Boolean = True): Boolean; overload;
 function TRSBank.Open(walk: Boolean = True): Boolean; overload;
 ```
 Opens the bank for you.
@@ -1471,7 +1471,7 @@ end.
 ```{figure} ../../images/bankopen.gif
 ```
 *)
-function TRSBank.Open(constref obj: TRSObject; walk: Boolean = True): Boolean;
+function TRSBank.Open(const obj: TRSObject; walk: Boolean = True): Boolean;
 begin
   if walk then
     Result := obj.WalkInteract(['Bank B', 'Bank E', 'Bank G', 'Use B'])
@@ -1486,7 +1486,7 @@ begin
   Result := Self.WaitOpen(3000);
 end;
 
-function TRSBank.Open(constref npc: TRSEntity; walk: Boolean = True): Boolean; overload;
+function TRSBank.Open(const npc: TRSEntity; walk: Boolean = True): Boolean; overload;
 begin
   if walk then
     Result := npc.WalkInteract(['Bank B', 'Bank E'])
@@ -1502,8 +1502,8 @@ end;
 
 function TRSBank.Open(walk: Boolean = True): Boolean; overload;
 var
-  obj: TRSObject;
-  npc: TRSEntity;
+  obj: PRSObject;
+  npc: PRSEntity;
   me: TPoint;
 begin
   if MSInterface.IsOpen() then
@@ -1517,12 +1517,12 @@ begin
     Self._SetupMapObjects();
 
   me := Map.Position();
-  obj := Self.Banks[Self.Banks.ClosestIndex(me)];
-  npc := Self.Bankers[Self.Bankers.ClosestIndex(me)];
+  obj := @Self.Banks[Self.Banks.ClosestIndex(me)];
+  npc := @Self.Bankers[Self.Bankers.ClosestIndex(me)];
 
-  if obj.DistanceTo(me) < npc.DistanceTo(me) then
-    Exit(Self.Open(obj, walk));
-  Result := Self.Open(npc, walk);
+  if obj^.DistanceTo(me) < npc^.DistanceTo(me) then
+    Exit(Self.Open(obj^, walk));
+  Result := Self.Open(npc^, walk);
 end;
 
 (*

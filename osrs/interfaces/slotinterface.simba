@@ -35,6 +35,9 @@ instead.
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
+  TSlotsFunction = function (): TBoxArray of object;
+  TInterfacePreConditionFunction = function (): Boolean of object;
+
 (*
 ## TRSSlotInterface
 Main record to handle a {ref}`SlotInterface`.
@@ -47,8 +50,8 @@ unless specified otherwise.
   TRSSlotInterface = record
     Name: String;
     Slots: TBoxArray;
-    SlotsFunction: function (): TBoxArray of object;
-    CheckFunction: function (): Boolean of object;
+    SlotsFunction: TSlotsFunction;
+    PreConditionFunction: TInterfacePreConditionFunction;
   end;
 
 (*
@@ -86,12 +89,16 @@ Bank.Slots.Setup('Bank.Slots', Bank.SlotBoxes, @Bank.FindItemBoundaries);
 Just in case people would like to access the bank's static slots through it's
 `Slots` variable.
 *)
-procedure TRSSlotInterface.Setup(name: String; slots: TBoxArray; slotsFunction: function (): TBoxArray of object = nil; checkFunc: function (): Boolean of object = nil);
+procedure TRSSlotInterface.Setup(
+  name: String; slots: TBoxArray;
+  slotsFunc: TSlotsFunction = nil;
+  preConditionFunc: TInterfacePreConditionFunction = nil
+);
 begin
   Self.Name := name;
   Self.Slots := slots;
-  Self.SlotsFunction := @slotsFunction;
-  Self.CheckFunction := @checkFunc;
+  Self.SlotsFunction := @slotsFunc;
+  Self.PreConditionFunction := @preConditionFunc;
 end;
 
 (*
@@ -314,7 +321,7 @@ var
   slots: TBoxArray;
   i: Integer;
 begin
-  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+  if (@Self.PreConditionFunction <> nil) and not Self.PreConditionFunction() then
     Exit;
   slots := Self.Boxes();
   for i := 0 to High(slots) do
@@ -348,7 +355,7 @@ var
   slots: TBoxArray;
   i: Integer;
 begin
-  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+  if (@Self.PreConditionFunction <> nil) and not Self.PreConditionFunction() then
     Exit;
   slots := Self.Boxes();
   for i := 0 to High(slots) do
@@ -376,7 +383,7 @@ end.
 *)
 function TRSSlotInterface.IsUsed(slot: TBox): Boolean;
 begin
-  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+  if (@Self.PreConditionFunction <> nil) and not Self.PreConditionFunction() then
     Exit;
   Result := TRSItem.InBounds(slot);
 end;
@@ -404,7 +411,7 @@ end.
 *)
 function TRSSlotInterface.IsEmpty(slot: TBox): Boolean;
 begin
-  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+  if (@Self.PreConditionFunction <> nil) and not Self.PreConditionFunction() then
     Exit;
   Result := not TRSItem.InBounds(slot);
 end;
@@ -434,14 +441,14 @@ end.
 *)
 function TRSSlotInterface.IsFaded(slot: TBox): Boolean;
 begin
-  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+  if (@Self.PreConditionFunction <> nil) and not Self.PreConditionFunction() then
     Exit;
   Result := not TRSItem.InBounds(slot, 0) and TRSItem.InBounds(slot);
 end;
 
 function TRSSlotInterface.IsFaded(slot: Integer): Boolean; overload;
 begin
-  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+  if (@Self.PreConditionFunction <> nil) and not Self.PreConditionFunction() then
     Exit;
   Result := Self.IsFaded(Self.Box(slot));
 end;
@@ -564,7 +571,7 @@ end.
 *)
 function TRSSlotInterface.ReadStack(slot: TBox): Integer;
 begin
-  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+  if (@Self.PreConditionFunction <> nil) and not Self.PreConditionFunction() then
     Exit;
   Result := TRSItem.ReadStack(slot);
 end;
@@ -613,7 +620,7 @@ end.
 *)
 procedure TRSSlotInterface.Click(slot: Integer; button: EMouseButton = EMouseButton.LEFT);
 begin
-  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+  if (@Self.PreConditionFunction <> nil) and not Self.PreConditionFunction() then
     Exit;
   Self.Hover(slot);
   Target.MouseClick(button);
@@ -642,7 +649,7 @@ begin
   if slot = destination then
     Exit(True);
 
-  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+  if (@Self.PreConditionFunction <> nil) and not Self.PreConditionFunction() then
     Exit;
 
   slots := Self.Boxes([slot, destination]);
@@ -679,7 +686,7 @@ end.
 *)
 function TRSSlotInterface.Interact(slot: Integer; option: String = ''): Boolean;
 begin
-  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+  if (@Self.PreConditionFunction <> nil) and not Self.PreConditionFunction() then
     Exit;
   Self.Hover(slot);
 

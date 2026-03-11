@@ -395,7 +395,7 @@ var
 begin
   if not DepositBox.IsOpen() then Exit;
   WriteLn GetDebugLn('Antiban', 'Hovering a random deposit box item');
-  boxes := DepositBox.ISlots.Boxes();
+  boxes := DepositBox.Slots.Boxes();
   if boxes = [] then Exit;
   Mouse.Move(boxes.Random());
   Biometrics.Sleep(500, 2000, ERandomDir.LEFT);
