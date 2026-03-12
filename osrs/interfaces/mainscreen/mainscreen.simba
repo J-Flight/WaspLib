@@ -81,7 +81,6 @@ begin
   Self.Mask.DrawAlpha := $FF;
 end;
 
-
 (*
 ## UpText
 `UpText` refers to the text that shows up on the top left corner of the
@@ -295,7 +294,24 @@ end;
 
 
 {$R-}
-function TRSMainScreen._IsVisible(pt: TPoint; tabNone, xpbarClosed, chatClose: Boolean): Boolean;
+procedure TRSMainScreen._ConditionalMaskEx(outter, inner: TBox);
+begin
+  Self.Mask.DrawColor := $0;
+  Self.Mask.DrawBoxFilled(outter);
+  Self.Mask.SetAlphas(TPointArray.CreateFromBox(outter, True), $0);
+  Self.Mask.DrawColor := $FF00FF;
+  Self.Mask.DrawBoxFilled(inner);
+end;
+
+procedure TRSMainScreen._ConditionalMask(bounds: TBox);
+begin
+  Self.Mask.DrawColor := $FF00FF;
+  Self.Mask.DrawBoxFilled(bounds);
+end;
+
+function TRSMainScreen._Contains(
+  pt: TPoint; tabNone, xpbarClosed, chatClose, msInterfaceClosed: Boolean
+): Boolean;
 var
   color: TColor;
 begin
@@ -308,37 +324,39 @@ begin
     $00FFFF: Exit(tabNone);
     $00FF00: Exit(xpbarClosed);
     $0000FF: Exit(chatClose);
+    $FF00FF: Exit(msInterfaceClosed);
     $FFFFFF: Exit;
     else Exit;
   end;
 end;
+{$R+}
 
 (*
-## MainScreen.IsVisible
+## MainScreen.Contains
 ```pascal
-function TRSMainScreen.IsVisible(pt: TPoint): Boolean;
-function TRSMainScreen.AnyVisible(tpa: TPointArray): Boolean;
-function TRSMainScreen.AllVisible(tpa: TPointArray): Boolean;
+function TRSMainScreen.Contains(const pt: TPoint): Boolean;
+function TRSMainScreen.AnyVisible(const tpa: TPointArray): Boolean;
+function TRSMainScreen.ContainsAll(const tpa: TPointArray): Boolean;
 ```
 Returns `True` if a point `pt` is visible on the mainscreen.
 This also checks for open interfaces to check if the point is not behind them.
 
 Example:
 ```pascal
-WriteLn MainScreen.IsVisible([100,100]);
+WriteLn MainScreen.Contains([100,100]);
 ```
 *)
-function TRSMainScreen.IsVisible(pt: TPoint): Boolean;
+function TRSMainScreen.Contains(const pt: TPoint): Boolean;
 begin
   Result := pt <> pt; //overriden, check overrides.
 end;
 
-function TRSMainScreen.AnyVisible(tpa: TPointArray): Boolean;
+function TRSMainScreen.ContainsAny(const tpa: TPointArray): Boolean;
 begin
   Result := tpa <> tpa; //overriden, check overrides.
 end;
 
-function TRSMainScreen.AllVisible(tpa: TPointArray): Boolean;
+function TRSMainScreen.ContainsAll(const tpa: TPointArray): Boolean;
 begin
   Result := tpa <> tpa; //overriden, check overrides.
 end;
@@ -347,16 +365,16 @@ end;
 (*
 ## MainScreen.Filter
 ```pascal
-function TRSMainScreen.Filter(tpa: TPointArray): TPointArray;
+function TRSMainScreen.Filter(const tpa: TPointArray): TPointArray;
 ```
 Filters a TPA returning only the points visible on the mainscreens.
 This also checks for open interfaces to check if the points are not behind them.
 *)
-function TRSMainScreen.Filter(tpa: TPointArray): TPointArray;
+function TRSMainScreen.Filter(const tpa: TPointArray): TPointArray;
 begin
   Result := tpa.Copy(); //overriden, check overrides.
 end;
-{$R+}
+
 
 function TRSMainScreen._RedClicked(area: TBox): Boolean;
 begin

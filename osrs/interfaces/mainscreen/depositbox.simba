@@ -142,7 +142,8 @@ WriteLn DepositBox.IsOpen();
 *)
 function TRSDepositBox.IsOpen(): Boolean;
 begin
-  Result := (MSInterface.IsOpen(ERSInterfaceType.CLASSIC) and Self.Title.IsTitle('Deposit Box'));
+  Result := MSInterface.IsOpen(ERSInterfaceType.CLASSIC) and
+            Self.Title.IsTitle('Deposit Box');
 end;
 
 (*

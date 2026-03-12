@@ -123,11 +123,7 @@ WriteLn SilverScreen.IsOpen();
 *)
 function TRSSilverScreen.IsOpen(): Boolean;
 begin
-  try
-    Result := Self.Title.IsOpen();
-  except
-    Result := False;
-  end;
+  Result := Self.Title.IsOpen();
 end;
 
 (*

@@ -27,6 +27,10 @@ Enum that represent the client mode.
 *)
   ERSMode = enum(UNKNOWN, FIXED, RESIZABLE, MODERN_COMPACT, MODERN_WIDE);
 
+const
+  RESIZABLE_MODES: set of ERSMode = [ERSMode.RESIZABLE..ERSMode.MODERN_WIDE];
+
+type
 (*
 ## ERSPopoutPanel
 ```pascal

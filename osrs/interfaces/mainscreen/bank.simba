@@ -141,11 +141,7 @@ var
   i: Integer;
   btnColors: TRSButtonEnabledColorArray;
 begin
-  case RSClient.Mode of
-    ERSMode.FIXED: Self.Bounds := MSInterface.CreateBounds([0, 2, 0, -1], 488, 800);
-    ERSMode.RESIZABLE, ERSMode.MODERN_COMPACT, ERSMode.MODERN_WIDE:
-      Self.Bounds := MSInterface.CreateBounds([0, 2, 0, -1], 488, 800);
-  end;
+  Self.Bounds := MSInterface.CreateBounds([0, 2, 0, -1], 488, 800);
 
   Self.Scroll.Area.X1 := Self.Bounds.X1 + 5;
   Self.Scroll.Area.Y1 := Self.Bounds.Y1 + 77;

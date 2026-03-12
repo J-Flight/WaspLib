@@ -211,52 +211,128 @@ begin
   Result := inherited();
 end;
 
-{$R-}
-function TRSMainScreen.IsVisible(pt: TPoint): Boolean; override;
+
+procedure TRSMainScreen._ApplyResizableMasks();
+var
+  b: ^TBox;
 begin
-  Result := Self._IsVisible(pt, GameTabs.GetCurrent() = ERSGameTab.NONE, not XPBar.IsOpen(), not Chat.IsOpen());
+  if Bank.IsOpen() then
+    b := @Bank.Bounds
+  else if Anvil.IsOpen() then
+    b := @Anvil.Bounds
+  else if CollectionBox.IsOpen() then
+    b := @CollectionBox.Bounds
+  else if CargoHold.IsOpen() then
+    b := @CargoHold.Bounds
+  else if SilverScreen.IsOpen() then
+    b := @SilverScreen.Bounds
+  else if GoldScreen.IsOpen() then
+    b := @GoldScreen.Bounds
+  else if Lamp.IsOpen() then
+    b := @Lamp.Bounds
+  else if GrandExchangeHistory.IsOpen() then
+    b := @GrandExchangeHistory.Bounds
+  else if GrandExchangeOffer.IsOpen() then
+    b := @GrandExchangeOffer.Bounds
+  else if GrandExchange.IsOpen() then
+    b := @GrandExchange.Bounds
+  else if FairyRing.IsOpen() then
+    b := @FairyRing.Bounds;
+
+  MainScreen._ConditionalMaskEx(MSInterface.Bounds, b^.Expand(24).Clip(MSInterface.Bounds));
 end;
 
-function TRSMainScreen.AnyVisible(tpa: TPointArray): Boolean; override;
+
+function TRSMainScreen.Contains(const pt: TPoint): Boolean; override;
+var
+  msInterfaceClosed: Boolean;
+begin
+  msInterfaceClosed := not MSInterface.IsOpen();
+
+  if not msInterfaceClosed then
+  begin
+    if RSClient.Mode = ERSMode.FIXED then
+      Self._ConditionalMask(MSInterface.Bounds)
+    else if RSClient.Mode in RESIZABLE_MODES then
+      Self._ApplyResizableMasks();
+  end;
+
+  Result := Self._Contains(
+    pt,
+    GameTabs.GetCurrent() = ERSGameTab.NONE,
+    not XPBar.IsOpen(),
+    not Chat.IsOpen(), msInterfaceClosed
+  );
+end;
+
+{$R-}
+function TRSMainScreen.ContainsAny(const tpa: TPointArray): Boolean; override;
 var
   i: Integer;
-  tabNone, xpbarClosed, chatClosed: Boolean;
+  tabNone, xpbarClosed, chatClosed, msInterfaceClosed: Boolean;
 begin
   tabNone := GameTabs.GetCurrent() = ERSGameTab.NONE;
   xpbarClosed := not XPBar.IsOpen();
   chatClosed := not Chat.IsOpen();
+  msInterfaceClosed := not MSInterface.IsOpen();
+
+  if not msInterfaceClosed then
+  begin
+    if RSClient.Mode = ERSMode.FIXED then
+      Self._ConditionalMask(MSInterface.Bounds)
+    else if RSClient.Mode in RESIZABLE_MODES then
+      Self._ApplyResizableMasks();
+  end;
 
   for i := 0 to High(tpa) do
-    if Self._IsVisible(tpa[i], tabNone, xpbarClosed, chatClosed) then
+    if Self._Contains(tpa[i], tabNone, xpbarClosed, chatClosed, msInterfaceClosed) then
       Exit(True);
 end;
 
-function TRSMainScreen.AllVisible(tpa: TPointArray): Boolean; override;
+function TRSMainScreen.ContainsAll(const tpa: TPointArray): Boolean; override;
 var
   i: Integer;
-  tabNone, xpbarClosed, chatClosed: Boolean;
+  tabNone, xpbarClosed, chatClosed, msInterfaceClosed: Boolean;
 begin
   tabNone := GameTabs.GetCurrent() = ERSGameTab.NONE;
   xpbarClosed := not XPBar.IsOpen();
   chatClosed := not Chat.IsOpen();
+  msInterfaceClosed := not MSInterface.IsOpen();
+
+  if not msInterfaceClosed then
+  begin
+    if RSClient.Mode = ERSMode.FIXED then
+      Self._ConditionalMask(MSInterface.Bounds)
+    else if RSClient.Mode in RESIZABLE_MODES then
+      Self._ApplyResizableMasks();
+  end;
 
   Result := True;
   for i := 0 to High(tpa) do
-    if not Self._IsVisible(tpa[i], tabNone, xpbarClosed, chatClosed) then
+    if not Self._Contains(tpa[i], tabNone, xpbarClosed, chatClosed, msInterfaceClosed) then
       Exit(False);
 end;
 
-function TRSMainScreen.Filter(tpa: TPointArray): TPointArray; override;
+function TRSMainScreen.Filter(const tpa: TPointArray): TPointArray; override;
 var
   i: Integer;
-  tabNone, xpbarClosed, chatClosed: Boolean;
+  tabNone, xpbarClosed, chatClosed, msInterfaceClosed: Boolean;
 begin
   tabNone := GameTabs.GetCurrent() = ERSGameTab.NONE;
   xpbarClosed := not XPBar.IsOpen();
   chatClosed := not Chat.IsOpen();
+  msInterfaceClosed := not MSInterface.IsOpen();
+
+  if not msInterfaceClosed then
+  begin
+    if RSClient.Mode = ERSMode.FIXED then
+      Self._ConditionalMask(MSInterface.Bounds)
+    else if RSClient.Mode in RESIZABLE_MODES then
+      Self._ApplyResizableMasks();
+  end;
 
   for i := 0 to High(tpa) do
-    if Self._IsVisible(tpa[i], tabNone, xpbarClosed, chatClosed) then
+    if Self._Contains(tpa[i], tabNone, xpbarClosed, chatClosed, msInterfaceClosed) then
       Result += tpa[i];
 end;
 {$R+}

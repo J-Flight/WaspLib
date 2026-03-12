@@ -154,14 +154,7 @@ Returns `True` if the gold‑crafting interface is visible.
 *)
 function TRSGoldScreen.IsOpen(): Boolean;
 begin
-  try
-    Result := Self.Title.IsOpen();
-    //WriteLn('should draw: ', Result);
-    //if Result then
-    //  self.Draw();
-  except
-    Result := False;
-  end;
+  Result := Self.Title.IsOpen();
 end;
 
 (*
