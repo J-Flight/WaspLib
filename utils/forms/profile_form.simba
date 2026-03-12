@@ -443,7 +443,7 @@ function TProfileForm.BuildFilterSettings(): TSettings;
 ```
 Builds a TSettings record from the current state of all filter UI controls.
 *)
-function TProfileForm.BuildFilterSettings(): TSettings;
+function TProfileForm.BuildFilterSettings(): TWorldFetcherSettings;
 var
   i: Integer;
   excludeWorlds: TStringArray;
@@ -881,7 +881,7 @@ Handles the Generate Worlds button click. Applies current filter settings and re
 *)
 procedure TProfileForm.OnGenerateClick(sender: TLazObject);
 var
-  settings: TSettings;
+  settings: TWorldFetcherSettings;
 begin
   settings := Self.BuildFilterSettings();
 

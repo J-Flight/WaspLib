@@ -627,8 +627,8 @@ end;
 (*
 ## Map.DebugHeight
 ```pascal
-procedure TRSMap.DebugHeight(img: TImage; dots: ERSMinimapDots);
-procedure TRSMap.DebugHeight(dots: ERSMinimapDots = [ERSMinimapDot.PLAYER..ERSMinimapDot.ITEM]); overload;
+procedure TRSMap.DebugHeight(img: TImage; dots: ERSDots);
+procedure TRSMap.DebugHeight(dots: ERSDots = [ERSDot.PLAYER..ERSDot.ITEM]); overload;
 ```
 Debugs the heightmap with {ref}`MM2MS`.
 
@@ -648,7 +648,7 @@ end.
 ```{figure} ../../images/mm2ms_height.gif
 ```
 *)
-procedure TRSMap.DebugHeight(img: TImage; dots: ERSMinimapDots);
+procedure TRSMap.DebugHeight(img: TImage; dots: ERSDots);
 const
   DOT_COLORS: TColorArray = [$FFFFFF, $00FFFF, $0000FF];
 var
@@ -659,7 +659,7 @@ var
   vector: TVector3;
   corners: TVector3Array;
   angle, h: Single;
-  dot: ERSMinimapDot;
+  dot: ERSDot;
 begin
   angle := Minimap.CompassRadians;
 
@@ -735,7 +735,7 @@ begin
   end;
 end;
 
-procedure TRSMap.DebugHeight(dots: ERSMinimapDots = [ERSMinimapDot.PLAYER..ERSMinimapDot.ITEM]); overload;
+procedure TRSMap.DebugHeight(dots: ERSDots = ALL_DOTS); overload;
 var
   img: TImage;
 begin

@@ -1,6 +1,6 @@
 (*
 # DotFilters
-Methods to handle DotFilters. Dot filters are filters that filter in or out ERSMinimapDots.
+Methods to handle DotFilters. Dot filters are filters that filter in or out ERSDots.
 *)
 
 {$DEFINE WL_DOTFILTERS_INCLUDED}
@@ -30,7 +30,6 @@ Type used to filter minimap dots.
     Timer  : TCountDown;
   end;
 
-
 (*
 ## TRSDotFilter.Create
 ```pascal
@@ -38,7 +37,9 @@ function TRSDotFilter.Create(bounds: TPolygon; c: TCircle; inside: Boolean; time
 ```
 Static method to create a TRSDotFilter.
 *)
-function TRSDotFilter.Create(bounds: TPolygon; c: TCircle; inside: Boolean; time: Int32 = -1): TRSDotFilter; static;
+function TRSDotFilter.Create(
+  bounds: TPolygon; c: TCircle; inside: Boolean; time: Int32 = -1
+): TRSDotFilter; static;
 var
   timer: TCountDown;
 begin
@@ -178,12 +179,12 @@ end;
 (*
 ## TRSMinimap.GetFilteredDot
 ```pascal
-function TRSMinimap.GetFilteredDotArray(dot: ERSMinimapDot; dotFilters: TRSDotFilterArray): TPointArray;
-function TRSMinimap.GetFilteredDot(dot: ERSMinimapDot; dotFilters: TRSDotFilterArray): TPoint;
+function TRSMinimap.GetFilteredDotArray(dots: ERSDots; dotFilters: TRSDotFilterArray): TPointArray;
+function TRSMinimap.GetFilteredDot(dots: ERSDots; dotFilters: TRSDotFilterArray): TPoint;
 ```
 Retrieves and filters minimap dots according to the specified TRSDotFilters.
 *)
-function TRSMinimap.GetFilteredDotArray(dots: ERSMinimapDots; dotFilters: TRSDotFilterArray): TPointArray;
+function TRSMinimap.GetFilteredDotArray(dots: ERSDots; dotFilters: TRSDotFilterArray): TPointArray;
 var
   tpa, flat: TPointArray;
 begin
@@ -192,7 +193,7 @@ begin
   Result := dotFilters.FilterDots(flat);
 end;
 
-function TRSMinimap.GetFilteredDot(dots: ERSMinimapDots; dotFilters: TRSDotFilterArray): TPoint;
+function TRSMinimap.GetFilteredDot(dots: ERSDots; dotFilters: TRSDotFilterArray): TPoint;
 var
   tpa: TPointArray;
 begin

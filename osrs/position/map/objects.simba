@@ -586,7 +586,7 @@ You probably don't need to use this directly.
 *)
 function TRSObject._HoverHelper(strings: TStringArray; attempt, attempts: Integer): Boolean; static;
 begin
-  if MainScreen.IsUpText(strings) then
+  if MainScreen.Bounds.Contains(Mouse.Position) and MainScreen.IsUpText(strings) then
     Exit(True);
 
   if attempt < (attempts - 1) then
@@ -606,7 +606,7 @@ function TRSObject._WalkHoverHelper(strings: TStringArray; walker: PRSWalker; di
 var
   me, closest: TPoint;
 begin
-  if MainScreen.IsUpText(strings) then
+  if MainScreen.Bounds.Contains(Mouse.Position) and MainScreen.IsUpText(strings) then
     Exit(True);
 
   me := walker^.Position();
@@ -726,8 +726,10 @@ var
 begin
   if ChooseOption.IsOpen() then
   begin
-    if ((Self.UpText <> []) or (action <> [])) and ChooseOption.Find(Self.UpText + action) then
-      Exit(True);
+    if MainScreen.Bounds.Contains(Mouse.Position) then
+      if ((Self.UpText <> []) or (action <> [])) then
+        if ChooseOption.Find(Self.UpText + action) then
+          Exit(True);
     ChooseOption.Close();
   end;
 
@@ -811,9 +813,10 @@ var
 begin
   if ChooseOption.IsOpen() then
   begin
-    if ((Self.UpText <> []) or (action <> [])) then
-      if ChooseOption.Find(Self.UpText + action) then
-        Exit(True);
+    if MainScreen.Bounds.Contains(Mouse.Position) then
+      if ((Self.UpText <> []) or (action <> [])) then
+        if ChooseOption.Find(Self.UpText + action) then
+          Exit(True);
     ChooseOption.Close();
   end;
 

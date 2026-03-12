@@ -128,7 +128,7 @@ Configurable settings for filtering and scoring worlds in FindBestWorld.
 - `PingNormalize`: Normalization factor for ping values.
 - `PlayerNormalize`: Normalization factor for player count values.
 *)
-  TSettings = record
+  TWorldFetcherSettings = record
     // Limits
     MaxPing: Int32;
     MaxPlayers: Int32;
@@ -162,7 +162,7 @@ The main record for fetching and managing world information.
   TWorldFetcher = record
     Worlds: array of TWorldInfo;
     LastFetched: UInt64;
-    Settings: TSettings;
+    Settings: TWorldFetcherSettings;
   end;
 
 // Parses location string from HTML to enum
@@ -878,7 +878,7 @@ Settings.ExcludeActivities := [WA_DANGEROUS, WA_RESTRICTED];
 Worlds := WorldFetcher.FilterBySettings(Settings);
 ```
 *)
-function TWorldFetcher.FilterBySettings(Settings: TSettings): array of TWorldInfo;
+function TWorldFetcher.FilterBySettings(const Settings: TWorldFetcherSettings): array of TWorldInfo;
 var
   i, j: Int32;
   excluded, included: Boolean;

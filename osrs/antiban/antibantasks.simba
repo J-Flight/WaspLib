@@ -24,7 +24,7 @@ procedure TAntiban.RandomRightClick;
 procedure TAntiban.AdjustZoom;
 procedure TAntiban.SwivelNear(start: TBox; radius: Int32; Iterations: Int32=1); overload;
 procedure TAntiban.Swivel;
-procedure TAntiban.HoverMSTile(dotType: ERSMinimapDot; rightClick: Boolean = False);
+procedure TAntiban.HoverMSTile(dotType: ERSDot; rightClick: Boolean = False);
 procedure TAntiban.HoverRandomNPC;
 procedure TAntiban.HoverRandomPlayer;
 procedure TAntiban.HoverRandomGrounditem;
@@ -713,7 +713,7 @@ end;
 
 
 
-procedure TAntiBan.HoverMSTile(dotType: ERSMinimapDot; rightClick: Boolean = False);
+procedure TAntiBan.HoverMSTile(dotType: ERSDot; rightClick: Boolean = False);
 var
   tries: Int32;
   a: Double;
@@ -748,17 +748,17 @@ end;
 
 procedure TAntiban.HoverRandomNPC();
 begin
-  Self.HoverMSTile(ERSMinimapDot.NPC);
+  Self.HoverMSTile(ERSDot.NPC);
 end;
 
 procedure TAntiban.HoverRandomPlayer();
 begin
-  Self.HoverMSTile(ERSMinimapDot.PLAYER);
+  Self.HoverMSTile(ERSDot.PLAYER);
 end;
 
-procedure TAntiban.HoverRandomGrounditem();
+procedure TAntiban.HoverRandomGroundItem();
 begin
-  Self.HoverMSTile(ERSMinimapDot.ITEM);
+  Self.HoverMSTile(ERSDot.ITEM);
 end;
 
 

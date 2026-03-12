@@ -597,7 +597,7 @@ Example:
 var
   pt: TPoint;
 begin
-  pt := Minimap.GetDots(ERSMinimapDot.ITEM)[0]; //find an item dot and returns it's coodinates.
+  pt := Minimap.GetDots(ERSDot.ITEM)[0]; //find an item dot and returns it's coodinates.
   RSMouseZoom.SetZoomLevel(Minimap.GetZoomToPoint(pt));
 end.
 ```
@@ -655,13 +655,13 @@ end;
 (*
 ### Minimap.DebugTiles
 ```pascal
-procedure TRSMinimap.DebugTiles(img: TImage; dots: ERSMinimapDots);
-procedure TRSMinimap.DebugTiles(dots: ERSMinimapDots = [ERSMinimapDot.PLAYER..ERSMinimapDot.ITEM]); overload;
+procedure TRSMinimap.DebugTiles(img: TImage; dots: ERSDots);
+procedure TRSMinimap.DebugTiles(dots: ERSDots = [ERSDot.PLAYER..ERSDot.ITEM]); overload;
 ```
 Simply meant for debugging purposes.
 Will draw a grid of tiles on the mainscreen with the help of `MM2MS`.
 
-You can optionally specify which minimap `ERSMinimapDot` you want to highlight.
+You can optionally specify which minimap `ERSDot` you want to highlight.
 By default all are highlighted.
 
 Example:
@@ -669,14 +669,14 @@ Example:
 Minimap.DebugTiles();
 ```
 *)
-procedure TRSMinimap.DebugTiles(img: TImage; dots: ERSMinimapDots);
+procedure TRSMinimap.DebugTiles(img: TImage; dots: ERSDots);
 const
   DOT_COLORS: TColorArray = [$FFFFFF, $00FFFF, $0000FF];
 var
   pt: TPoint;
   vector: TVector3;
   quad: TQuad;
-  dot: ERSMinimapDot;
+  dot: ERSDot;
   radians: Single;
   tpa: TPointArray;
 begin
@@ -717,7 +717,7 @@ begin
   img.DrawTPA(tpa);
 end;
 
-procedure TRSMinimap.DebugTiles(dots: ERSMinimapDots = [ERSMinimapDot.PLAYER..ERSMinimapDot.ITEM]); overload;
+procedure TRSMinimap.DebugTiles(dots: ERSDots = ALL_DOTS); overload;
 var
   img: TImage;
 begin

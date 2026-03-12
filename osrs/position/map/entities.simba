@@ -2,13 +2,13 @@
 # RSEntities
 This file is responsible for interacting with `RSEntities`.
 
-`RSEntities` is anything in the game that has a {ref}`ERSMinimapDot` assign to
+`RSEntities` is anything in the game that has a {ref}`ERSDot` assign to
 it on the {ref}`Minimap`.
 
 These are functionally very similar to {ref}`RSObjects` and you create and
 interact with them almost the same way.
 
-They only differ in the fact that `TRSEntity` can use a {ref}`ERSMinimapDot` to
+They only differ in the fact that `TRSEntity` can use a {ref}`ERSDot` to
 help find them and/or {ref}`TRSDotFilters`.
 Also, due to the unpredictability of entities that move, unlike {ref}`RSObjects`
 these do not have a rotation field.
@@ -31,7 +31,7 @@ Main type to handle {ref}`RSEntity`.
     Coordinates: TPointArray;
     Filter: TRSDotFilterArray;
     Finder: TColorFinder;
-    MinimapDots: ERSMinimapDots;
+    MinimapDots: ERSDots;
     LastCoordinate, DotOffset: TPoint;
     Walker: PRSWalker;
     MinDistance: Integer;
@@ -48,7 +48,7 @@ Array of {ref}`TRSEntity`.
 (*
 ## TRSEntity.Create
 ```pascal
-function TRSEntity.Create(var walker: TRSWalker; size: TVector3; coordinates: TPointArray; uptext: TStringArray = []; dots: ERSMinimapDots = []): TRSEntity; static;
+function TRSEntity.Create(var walker: TRSWalker; size: TVector3; coordinates: TPointArray; uptext: TStringArray = []; dots: ERSDots = []): TRSEntity; static;
 function TRSEntity.Create(var walker: TRSWalker; json: TJSONObject): TRSEntity; static; overload;
 ```
 Create function to create your {ref}`TRSEntity`.
@@ -63,7 +63,7 @@ var
   npc: TRSEntity;
 begin
   Map.Setup([ERSChunk.VARROCK]);             //varrock west southern most banker
-  npc := TRSEntity.Create(Map.Walker, [1,1,7], [[8652,36686]], ['Banker'], [ERSMinimapDot.NPC]);
+  npc := TRSEntity.Create(Map.Walker, [1,1,7], [[8652,36686]], ['Banker'], [ERSDot.NPC]);
   //npc.Finder.Colors += [$543B3B, 10.121, EColorSpace.HSV, [0.528, 1.275, 1.199]];
 end;
 ```
@@ -81,7 +81,7 @@ begin
 end;
 ```
 *)
-function TRSEntity.Create(var walker: TRSWalker; size: TVector3; radius: Integer; coordinates: TPointArray; uptext: TStringArray = []; dots: ERSMinimapDots = []): TRSEntity; static;
+function TRSEntity.Create(var walker: TRSWalker; size: TVector3; radius: Integer; coordinates: TPointArray; uptext: TStringArray = []; dots: ERSDots = []): TRSEntity; static;
 var
   pt: TPoint;
 begin
@@ -118,7 +118,7 @@ begin
       Result.UpText := [AsString];
 
   if json.Item[Ord(ENPCData.MINIMAPDOT)].AsBool then
-    Result.MinimapDots := [ERSMinimapDot.NPC];
+    Result.MinimapDots := [ERSDot.NPC];
 
   with json.Item[Ord(ENPCData.SIZE)] do
   begin
@@ -528,7 +528,7 @@ var
   npc: TRSEntity;
 begin
   Map.Setup([Chunk(Box(40,49,41,48), 0)]);
-  npc := TRSEntity.Create(Map.Walker, [1,1,7], 8, [[10432, 37966]], ['Dominic Onion'], [ERSMinimapDot.NPC]);
+  npc := TRSEntity.Create(Map.Walker, [1,1,7], 8, [[10432, 37966]], ['Dominic Onion'], [ERSDot.NPC]);
   WriteLn npc.Hover();
 end.
 ```
@@ -543,8 +543,9 @@ var
 begin
   if ChooseOption.IsOpen() then
   begin
-    if (Self.UpText <> []) and ChooseOption.Find(Self.UpText) then
-      Exit(True);
+    if MainScreen.Bounds.Contains(Mouse.Position) then
+      if (Self.UpText <> []) and ChooseOption.Find(Self.UpText) then
+        Exit(True);
     ChooseOption.Close();
   end;
 
@@ -599,7 +600,7 @@ var
   npc: TRSEntity;
 begin
   Map.Setup([Chunk(Box(40,49,41,48), 0)]);
-  npc := TRSEntity.Create(Map.Walker, [1,1,7], 8, [[10432, 37966]], ['Dominic Onion'], [ERSMinimapDot.NPC]);
+  npc := TRSEntity.Create(Map.Walker, [1,1,7], 8, [[10432, 37966]], ['Dominic Onion'], [ERSDot.NPC]);
   WriteLn npc.WalkHover();
 end.
 ```
@@ -614,8 +615,9 @@ var
 begin
   if ChooseOption.IsOpen() then
   begin
-    if (Self.UpText <> []) and ChooseOption.Find(Self.UpText) then
-      Exit(True);
+    if MainScreen.Bounds.Contains(Mouse.Position) then
+      if (Self.UpText <> []) and ChooseOption.Find(Self.UpText) then
+        Exit(True);
     ChooseOption.Close();
   end;
 
@@ -684,7 +686,7 @@ var
   npc: TRSEntity;
 begin
   Map.Setup([Chunk(Box(40,49,41,48), 0)]);
-  npc := TRSEntity.Create(Map.Walker, [1,1,7], 8, [[10432, 37966]], ['Dominic Onion'], [ERSMinimapDot.NPC]);
+  npc := TRSEntity.Create(Map.Walker, [1,1,7], 8, [[10432, 37966]], ['Dominic Onion'], [ERSDot.NPC]);
   WriteLn npc.Click();
 end.
 ```
@@ -709,7 +711,7 @@ var
   npc: TRSEntity;
 begin
   Map.Setup([Chunk(Box(40,49,41,48), 0)]);
-  npc := TRSEntity.Create(Map.Walker, [1,1,7], 8, [[10432, 37966]], ['Dominic Onion'], [ERSMinimapDot.NPC]);
+  npc := TRSEntity.Create(Map.Walker, [1,1,7], 8, [[10432, 37966]], ['Dominic Onion'], [ERSDot.NPC]);
   WriteLn npc.Interact(['Dream']);
 end.
 *)
@@ -733,7 +735,7 @@ var
   npc: TRSEntity;
 begin
   Map.Setup([Chunk(Box(40,49,41,48), 0)]);
-  npc := TRSEntity.Create(Map.Walker, [1,1,7], 8, [[10432, 37966]], ['Dominic Onion'], [ERSMinimapDot.NPC]);
+  npc := TRSEntity.Create(Map.Walker, [1,1,7], 8, [[10432, 37966]], ['Dominic Onion'], [ERSDot.NPC]);
   WriteLn npc.WalkClick();
 end.
 ```
@@ -763,7 +765,7 @@ var
   npc: TRSEntity;
 begin
   Map.Setup([Chunk(Box(40,49,41,48), 0)]);
-  npc := TRSEntity.Create(Map.Walker, [1,1,7], 8, [[10432, 37966]], ['Dominic Onion'], [ERSMinimapDot.NPC]);
+  npc := TRSEntity.Create(Map.Walker, [1,1,7], 8, [[10432, 37966]], ['Dominic Onion'], [ERSDot.NPC]);
   WriteLn npc.WalkInteract(['Dream']);
 end.
 ```
