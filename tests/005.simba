@@ -43,7 +43,7 @@ begin
     // Test deposit buttons - should have 3 buttons (WORN, LOOT, INVENTORY)
     Assert(Length(DepositBox.DepositButtons) = 3);
 
-    // Test that ISlots can count items in deposit box
-    Assert(DepositBox.ISlots.Count() > 0);
+    // Test that Slots can count items in deposit box
+    Assert(DepositBox.Slots.Count() > 0);
   end;
 end;
