@@ -425,7 +425,8 @@ Credits: Heavily based on Olly's solution for this on his 2.0 library.
 *)
 function TRSChat.GetMessage(line: Integer): String;
 const
-  BG_COLOR: TColorTolerance = [$6793AA, 3.287, EColorSpace.HSL, [2.025, 0.581, 0.395]];
+  //Find chatbox_bg_colors.txt has the colors used
+  BG_COLOR: TColorTolerance = [$6593AC, 3.329, EColorSpace.HSL, [2.063, 0.536, 0.402]];
   STATIC_OFFSET: Integer = 2;
 var
   b: TBox;
@@ -436,8 +437,6 @@ begin
   with Self.MessageLines[line] do
     b := [X1, Y1-STATIC_OFFSET, X2, Y2];
 
-  if colors = [] then colors := Self.Colors;
-
   if not Self.IsTransparent() then
   begin
     tpa := Target.FindColor(BG_COLOR, b).Invert();
@@ -446,7 +445,6 @@ begin
   end;
 
   img := Target.GetImage(b);
-
   // First shadow from above line draws over our line.
   // Mark the shadow as a match since OCR requires 100% character match.
   tpa := img.FindColor($000000, 0, [0, STATIC_OFFSET, img.Width, STATIC_OFFSET]);
@@ -473,7 +471,7 @@ Example:
 WriteLn Chat.FindMessageLine('Hello world');
 ```
 *)
-function TRSChat.FindMessageLine(msg: String; caseSensitive: Boolean = False): Integer;
+function TRSChat.IndexOfMessage(msg: String; caseSensitive: Boolean = False): Integer;
 var
   i: Integer;
 begin
@@ -497,9 +495,74 @@ WriteLn Chat.ContainsMessage('Hello world');
 *)
 function TRSChat.ContainsMessage(msg: String; caseSensitive: Boolean = False): Boolean;
 begin
-  Result := Self.FindMessageLine(msg, caseSensitive) > -1;
+  Result := Self.IndexOfMessage(msg, caseSensitive) > -1;
 end;
 
+(*
+## Chat.CountNewMessage
+```pascal
+function TRSChat.CountNewMessage(msg: String; caseSensitive: Boolean = False): Integer;
+```
+Counts how many time the specified `msg` repeats without any other message in
+between from the most recent one.
+
+This can be useful to know if you performed a task sometimes, for example,
+knowing if you tried to light a fire on top of another:
+```pascal
+{$I WaspLib/osrs.simba}
+var
+  oldCount, newCount: Integer;
+begin
+  oldCount := Chat.CountNewMessage('You can''t light a fire here.');
+  Inventory.Combine('Tinderbox', 'Logs');
+  Sleep(8*TICK);
+  newCount := Chat.CountNewMessage('You can''t light a fire here.');
+  if newCount > oldCount then
+    WriteLn('Tried to light a fire and failed.');
+end.
+```
+*)
+function TRSChat.CountNewMessage(msg: String; caseSensitive: Boolean = False): Integer;
+var
+  i: Integer;
+begin
+  for i := High(Self.MessageLines) downto 0 do
+  begin
+    if not Self.GetMessage(i).Equals(msg, caseSensitive) then
+      Exit;
+    Inc(Result);
+  end;
+end;
+
+
+(*
+## Chat.GetMessagesString
+```pascal
+function TRSChat.GetMessagesString(): String;
+```
+Returns every chat message visible as a string.
+
+Example:
+```pascal
+WriteLn Chat.GetMessagesString();
+```
+*)
+function TRSChat.GetMessagesString(): String;
+var
+  i: Integer;
+  msg: String;
+begin
+  for i := 0 to High(Self.MessageLines) do
+  begin
+    msg := Self.GetMessage(i);
+    if msg <> '' then
+    begin
+      if Result <> '' then
+        Result += LINE_SEP;
+      Result += msg;
+    end;
+  end;
+end;
 
 (*
 ## Chat.InputHasText

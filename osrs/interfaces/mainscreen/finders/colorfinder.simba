@@ -76,6 +76,14 @@ CTS2(5526875, 15, 0.19, 0.06), // grey
 {$DEFINE WL_COLORFINDER_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
+{$R-}
+
+{$IFDEF RANGECHECKS}
+begin
+  WriteLn GetDebugLn('TColorFinder', 'Range checks are enabled for TColorFinder, these should be disabled in production!', ELogLevel.WARN);
+end;
+{$ENDIF}
+
 type
 (*
 ## TColorFinderTransformer
@@ -418,4 +426,4 @@ function TColorFinder.Find(out atpa: T2DPointArray): Boolean; overload;
 begin
   Result := Self.Find(atpa, [MainScreen.Bounds]);
 end;
-
+{$R+}

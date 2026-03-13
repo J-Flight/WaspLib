@@ -33,18 +33,19 @@ Type used to filter minimap dots.
 (*
 ## TRSDotFilter.Create
 ```pascal
-function TRSDotFilter.Create(bounds: TPolygon; c: TCircle; inside: Boolean; time: Int32 = -1): TRSDotFilter; static;
+function TRSDotFilter.Create(const bounds: TPolygon; const circle: TCircle; inside: Boolean; time: Integer = -1): TRSDotFilter; static;
 ```
 Static method to create a TRSDotFilter.
 *)
 function TRSDotFilter.Create(
-  bounds: TPolygon; c: TCircle; inside: Boolean; time: Int32 = -1
+  const bounds: TPolygon; const circle: TCircle;
+  inside: Boolean; time: Integer = -1
 ): TRSDotFilter; static;
 var
   timer: TCountDown;
 begin
   timer.Start(time);
-  Result := [bounds, c, inside, (time > 0), timer];
+  Result := [bounds, circle, inside, (time > 0), timer];
 end;
 
 (*
@@ -62,22 +63,32 @@ end;
 (*
 ## TRSDotFilter.IsValid
 ```pascal
-function TRSDotFilter.IsValid(p: TPoint): Boolean;
+function TRSDotFilter.IsValid(const pt: TPoint): Boolean;
 ```
-Checks if a point is valid accordint to the current TRSDotFilter;
+Checks if `pt` is valid accordint to the current TRSDotFilter;
 *)
-function TRSDotFilter.IsValid(p: TPoint): Boolean;
+function TRSDotFilter.IsValid(const pt: TPoint): Boolean;
 var
   inPoly, inCircle: Boolean;
 begin
-  if Self.Poly <> [] then inPoly := Self.Poly.Contains(p);
-  if Self.Circle <> [] then inCircle := Self.Circle.Contains(p);
+  if Self.Poly <> Default(TPolygon) then
+    inPoly := Self.Poly.Contains(pt);
+  if Self.Circle <> Default(TCircle) then
+    inCircle := Self.Circle.Contains(pt);
 
   if Self.Inside then
     Result := inPoly or inCircle
   else
     Result := not inPoly and not inCircle;
 end;
+
+{$R-}
+
+{$IFDEF RANGECHECKS}
+begin
+  WriteLn GetDebugLn('TRSDotFilterArray', 'Range checks are enabled for TRSDotFilterArray, these should be disabled in production!', ELogLevel.WARN);
+end;
+{$ENDIF}
 
 type
 (*
@@ -90,29 +101,25 @@ Type used to manage and interact with arrays of TRSDotFilters.
 (*
 ## TRSDotFilterArray.Setup
 ```pascal
-procedure TRSDotFilterArray.Setup(bounds: TPolygon; circle: TCircle; inside: Boolean; time: Int32 = -1);
-procedure TRSDotFilterArray.SetupBounds(bounds: TPolygon; inside: Boolean; time: Int32 = -1);
-procedure TRSDotFilterArray.SetupCircle(circle: TCircle; inside: Boolean; time: Int32 = -1);
+procedure TRSDotFilterArray.Setup(const bounds: TPolygon; const circle: TCircle; inside: Boolean; time: Integer = -1);
+procedure TRSDotFilterArray.SetupBounds(const bounds: TPolygon; inside: Boolean; time: Integer = -1);
+procedure TRSDotFilterArray.SetupCircle(const circle: TCircle; inside: Boolean; time: Integer = -1);
 ```
 Creates and adds a TRSDotFilter to the current TRSDotFilterArray.
 *)
-procedure TRSDotFilterArray.Setup(bounds: TPolygon; circle: TCircle; inside: Boolean; time: Int32 = -1);
+procedure TRSDotFilterArray.Setup(const bounds: TPolygon; const circle: TCircle; inside: Boolean; time: Integer = -1);
 begin
   Self += TRSDotFilter.Create(bounds, circle, inside, time);
 end;
 
-procedure TRSDotFilterArray.SetupBounds(bounds: TPolygon; inside: Boolean; time: Int32 = -1);
-var
-  c: TCircle;
+procedure TRSDotFilterArray.SetupBounds(const bounds: TPolygon; inside: Boolean; time: Integer = -1);
 begin
-  Self.Setup(bounds, c, inside, time);
+  Self.Setup(bounds, Default(TCircle), inside, time);
 end;
 
-procedure TRSDotFilterArray.SetupCircle(circle: TCircle; inside: Boolean; time: Int32 = -1);
-var
-  bounds: TPolygon := [];
+procedure TRSDotFilterArray.SetupCircle(const circle: TCircle; inside: Boolean; time: Integer = -1);
 begin
-  Self.Setup(bounds, circle, inside, time);
+  Self.Setup(Default(TPolygon), circle, inside, time);
 end;
 
 
@@ -127,7 +134,7 @@ Other methods already take care of this by default for you regardless.
 *)
 procedure TRSDotFilterArray.ClearExpired();
 var
-  i: Int32;
+  i: Integer;
 begin
   for i := High(Self) downto 0 do
     if Self[i].IsExpired() then
@@ -138,67 +145,75 @@ end;
 (*
 ## TRSDotFilterArray.IsValid
 ```pascal
-function TRSDotFilterArray.IsValid(dot: TPoint; clearExpired: Boolean = True): Boolean;
+function TRSDotFilterArray.IsValid(const pt: TPoint; clearExpired: Boolean = True): Boolean;
 ```
-Checks if a dot/point is valid in any of the TRSDotFilters in the current array.
+Checks if a `pt` is valid in any of the TRSDotFilters in the current array.
 By default, expired TRSDotFilters are cleared from the array while this runs.
 *)
-function TRSDotFilterArray.IsValid(dot: TPoint; clearExpired: Boolean = True): Boolean;
+function TRSDotFilterArray.IsValid(const pt: TPoint; clearExpired: Boolean = True): Boolean;
 var
-  i: Int32;
+  i: Integer;
 begin
-  for i := High(Self) downto 0 do
+  if clearExpired then
   begin
-    if clearExpired and Self[i].IsExpired() then
+    for i := High(Self) downto 0 do
     begin
-      Delete(Self, i, 1);
-      Continue;
-    end;
+      if Self[i].IsExpired() then
+      begin
+        Delete(Self, i, 1);
+        Continue;
+      end;
 
-    if Self[i].IsValid(dot) then
-      Exit(True);
+      if Self[i].IsValid(pt) then
+        Exit(True);
+    end;
+    Exit;
   end;
+
+  for i := High(Self) downto 0 do
+    if Self[i].IsValid(pt) then
+      Exit(True);
 end;
 
 (*
 ## TRSDotFilterArray.FilterDots
 ```pascal
-function TRSDotFilterArray.FilterDots(dots: TPointArray): TPointArray;
+function TRSDotFilterArray.FilterDots(dots: TPointArray; clearExpired: Boolean): TPointArray;
 ```
 Filter the dots/points passed into this according to our current TRSDotFilters.
 *)
-function TRSDotFilterArray.FilterDots(dots: TPointArray): TPointArray;
+function TRSDotFilterArray.FilterDots(dots: TPointArray; clearExpired: Boolean): TPointArray;
 var
   dot: TPoint;
 begin
   for dot in dots do
-    if Self.IsValid(dot, True) then
+    if Self.IsValid(dot, clearExpired) then
       Result += dot;
 end;
 
 (*
 ## TRSMinimap.GetFilteredDot
 ```pascal
-function TRSMinimap.GetFilteredDotArray(dots: ERSDots; dotFilters: TRSDotFilterArray): TPointArray;
-function TRSMinimap.GetFilteredDot(dots: ERSDots; dotFilters: TRSDotFilterArray): TPoint;
+function TRSMinimap.GetFilteredDotArray(dots: ERSDots; dotFilters: TRSDotFilterArray; clearExpired: Boolean): TPointArray;
+function TRSMinimap.GetFilteredDot(dots: ERSDots; dotFilters: TRSDotFilterArray; clearExpired: Boolean): TPoint;
 ```
 Retrieves and filters minimap dots according to the specified TRSDotFilters.
 *)
-function TRSMinimap.GetFilteredDotArray(dots: ERSDots; dotFilters: TRSDotFilterArray): TPointArray;
+function TRSMinimap.GetFilteredDotArray(dots: ERSDots; dotFilters: TRSDotFilterArray; clearExpired: Boolean): TPointArray;
 var
   tpa, flat: TPointArray;
 begin
   for tpa in Self.GetDots(dots) do
     flat += tpa;
-  Result := dotFilters.FilterDots(flat);
+  Result := dotFilters.FilterDots(flat, clearExpired);
 end;
 
-function TRSMinimap.GetFilteredDot(dots: ERSDots; dotFilters: TRSDotFilterArray): TPoint;
+function TRSMinimap.GetFilteredDot(dots: ERSDots; dotFilters: TRSDotFilterArray; clearExpired: Boolean): TPoint;
 var
   tpa: TPointArray;
 begin
-  tpa := Self.GetFilteredDotArray(dots, dotFilters);
+  tpa := Self.GetFilteredDotArray(dots, dotFilters, clearExpired);
   if tpa <> [] then
     Result := tpa[0];
 end;
-
+{$R+}

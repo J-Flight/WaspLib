@@ -17,6 +17,14 @@ these do not have a rotation field.
 {$DEFINE WL_RSENTITIES_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
+{$R-}
+
+{$IFDEF RANGECHECKS}
+begin
+  WriteLn GetDebugLn('TRSEntity', 'Range checks are enabled for TRSEntity, these should be disabled in production!', ELogLevel.WARN);
+end;
+{$ENDIF}
+
 type
   ENPCData = enum(ID, NAME, LEVEL, CATEGORY, MINIMAPDOT, ACTIONS, SIZE, COORDINATES, COLORS);
 
@@ -99,7 +107,7 @@ begin
   Result.DotOffset := [1,1];
 
   for pt in coordinates do
-    Result.Filter += TRSDotFilter.Create([], TCircle.Create(pt.X, pt.Y, radius), True);
+    Result.Filter.SetupCircle(TCircle.Create(pt.X, pt.Y, radius), True);
 end;
 
 function TRSEntity.Create(var walker: TRSWalker; json: TJSONObject): TRSEntity; static; overload;
@@ -131,12 +139,21 @@ begin
     Result.Size.Z := 3.0;
 
   with json.Item[Ord(ENPCData.COORDINATES)] do
+  begin
+    SetLength(Result.Coordinates, Count);
+    SetLength(Result.Filter, Count);
+
     for i := 0 to Count-1 do
     begin
       coord := Item[i];
-      Result.Coordinates += [coord.Item[0].AsInt, coord.Item[1].AsInt];
-      Result.Filter += TRSDotFilter.Create([], TCircle.Create(coord.Item[0].AsInt, coord.Item[1].AsInt, 40), True);
+      Result.Coordinates[i] := [coord.Item[0].AsInt, coord.Item[1].AsInt];
+      Result.Filter[i] := TRSDotFilter.Create(
+        Default(TPolygon),
+        TCircle.Create(coord.Item[0].AsInt, coord.Item[1].AsInt, 40),
+        True
+      );
     end;
+  end;
 
   with json.Item[Ord(ENPCData.COLORS)] do
     for i := 0 to Count-1 do
@@ -156,10 +173,11 @@ begin
       unique += [color];
     end;
 
+  SetLength(Result.Finder.Colors, Length(unique));
   for i := 0 to High(unique) do
   begin
     best := GetBestColor(EColorSpace.HSL, unique[i]);
-    Result.Finder.Colors += [best.Color, best.Tolerance*1.5, EColorSpace.HSL, [best.Mods[0]*1.5, best.Mods[1]*1.5, best.Mods[2]*1.5]];
+    Result.Finder.Colors[i] := [best.Color, best.Tolerance*1.5, EColorSpace.HSL, [best.Mods[0]*1.5, best.Mods[1]*1.5, best.Mods[2]*1.5]];
   end;
 
   Result.Walker := @walker;
@@ -269,7 +287,10 @@ begin
 
   if Self.Filter <> [] then
   begin
-    dots := Minimap.GetFilteredDotArray(Self.MinimapDots, Self.Walker^.FiltersToMM(me, Self.Filter, radians));
+    dots := Minimap.GetFilteredDotArray(
+      Self.MinimapDots, Self.Walker^.FiltersToMM(me, Self.Filter, radians), False
+    );
+
     if dots = [] then
       Exit;
 
@@ -339,6 +360,7 @@ begin
   for i := 0 to High(boundsArray) do
     Result += TPointArray(boundsArray[i]).Connect().ShapeFill();
 end;
+{$R-}
 
 (*
 ## TRSEntity.FindEx

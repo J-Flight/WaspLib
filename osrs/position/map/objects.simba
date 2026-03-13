@@ -7,6 +7,14 @@ game objects.
 {$DEFINE WL_RSOBJECTS_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
+{$R-}
+
+{$IFDEF RANGECHECKS}
+begin
+  WriteLn GetDebugLn('TRSObject', 'Range checks are enabled for TRSObject, these should be disabled in production!', ELogLevel.WARN);
+end;
+{$ENDIF}
+
 type
   EObjectData = enum(ID, NAME, TYP, CATEGORY, ACTIONS, COORDINATES, SIZE, ROTATIONS, COLORS);
 
@@ -346,7 +354,7 @@ begin
   for i := 0 to High(boundsArray) do
     Result += TPointArray(boundsArray[i]).Connect().ShapeFill();
 end;
-
+{$R+}
 
 (*
 ## RSObject.FindEx
@@ -596,13 +604,13 @@ end;
 (*
 ## RSObject._WalkHoverHelper
 ```pascal
-function TRSObject._WalkHoverHelper(strings: TStringArray; walker: PRSWalker; dist, attempt, attempts: Integer; const coordinates: TPointArray): Boolean; static;
+function TRSObject._WalkHoverHelper(strings: TStringArray; walker: PRSWalker; dist, attempt, attempts: Integer; coordinates: TPointArray): Boolean; static;
 ```
 Internal `TRSObject` helper method that is used by both {ref}`TRSObject.WalkHover`
 and {ref}`TRSEntity.WalkHover`.
 You probably don't need to use this directly.
 *)
-function TRSObject._WalkHoverHelper(strings: TStringArray; walker: PRSWalker; dist, attempt, attempts: Integer; const coordinates: TPointArray): Boolean; static;
+function TRSObject._WalkHoverHelper(strings: TStringArray; walker: PRSWalker; dist, attempt, attempts: Integer; coordinates: TPointArray): Boolean; static;
 var
   me, closest: TPoint;
 begin

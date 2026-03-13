@@ -8,6 +8,14 @@ iterations made by Olly.
 {$DEFINE WL_WALKER_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
+{$R-}
+
+{$IFDEF RANGECHECKS}
+begin
+  WriteLn GetDebugLn('TRSWalker', 'Range checks are enabled for TRSWalker, these should be disabled in production!', ELogLevel.WARN);
+end;
+{$ENDIF}
+
 type
 (*
 ## type PRSWalker
@@ -156,10 +164,11 @@ begin
     Result += TRSWalker.Point2MM(me, pt, radians);
 end;
 
-function TRSWalker.FilterToMM(me: TPoint; dotFilter: TRSDotFilter; radians: Single): TRSDotFilter; static;
-var pt: TPoint;
+function TRSWalker.FilterToMM(me: TPoint; const dotFilter: TRSDotFilter; radians: Single): TRSDotFilter; static;
+var
+  pt: TPoint;
 begin
-  if dotFilter.Circle <> [] then
+  if dotFilter.Circle <> Default(TCircle) then
     with TRSWalker.Point2MM(me, dotFilter.Circle.Center, radians) do
       Result.Circle := [X, Y, dotFilter.Circle.Radius];
 
@@ -172,9 +181,8 @@ end;
 
 function TRSWalker.FiltersToMM(me: TPoint; dotFilters: TRSDotFilterArray; radians: Single): TRSDotFilterArray; static;
 var
-  i: Int32;
+  i: Integer;
 begin
-
   for i := High(dotFilters) downto 0 do
   begin
     if dotFilters[i].IsExpired() then
@@ -237,7 +245,8 @@ var
   pt, currLoc: TPoint;
   arr: TPointArray;
 begin
-  if not me.InRange(mapPoint, Projection.RENDER_DISTANCE) then Exit;
+  if not me.InRange(mapPoint, Projection.RENDER_DISTANCE) then
+    Exit;
   vector := Self.Point2MMVec(me, mapPoint, radians);
   pt := vector.ToPoint();
 
@@ -1042,3 +1051,5 @@ function TRSWalker.CheckConnection(a, b: TPoint): Boolean;
 begin
   Result := Self.Graph^.WalkableClusters.InSameTPA(a, b);
 end;
+
+{$R+}
