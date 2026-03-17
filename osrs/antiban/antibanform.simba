@@ -863,6 +863,8 @@ procedure TAntibanFormHelper.OnSleepChange(sender: TLazObject);
 var
   str: String;
 begin
+  if not Self.SleepCheckbox.IsChecked() then
+    Exit;
   str := Self.SleepTimeEdit.Text;
 
   Antiban._UpdateSleep(
