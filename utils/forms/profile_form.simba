@@ -560,9 +560,9 @@ Converts a world location enum to its display string.
 *)
 function TProfileForm.GetLocationString(loc: EWorldLocation): String;
 const
-  LOCATION_NAMES: array [EWorldLocation] of String = ['Germany', 'UK', 'USA', 'Australia'];
+  NAMES: TStringArray = ['Germany', 'UK', 'USA', 'Australia'];
 begin
-  Result := LOCATION_NAMES[loc];
+  Result := NAMES[loc];
 end;
 
 (*
@@ -574,9 +574,9 @@ Converts a world type enum to its display string.
 *)
 function TProfileForm.GetTypeString(worldType: EWorldType): String;
 const
-  TYPE_NAMES: array [EWorldType] of String = ['F2P', 'Members'];
+  NAMES: TStringArray = ['F2P', 'Members'];
 begin
-  Result := TYPE_NAMES[worldType];
+  Result := NAMES[worldType];
 end;
 
 
