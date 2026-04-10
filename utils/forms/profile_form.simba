@@ -30,7 +30,7 @@ The account management system that handles profile storage, validation, and UI.
 
     F2PCheckbox, MembersCheckbox: TLazCheckBox;
 
-    GermanyCheckbox, UKCheckbox, USCheckbox, AustraliaCheckbox: TLazCheckBox;
+    GermanyCheckbox, UKCheckbox, USCheckbox, AustraliaCheckbox , BrazilCheckbox: TLazCheckBox;
 
     NormalCheckbox, DangerousCheckbox, RestrictedCheckbox, SkillTotalCheckbox: TLazCheckBox;
 
@@ -470,6 +470,8 @@ begin
     Result.ExcludeLocations += [EWorldLocation.UNITED_STATES];
   if not Self.AustraliaCheckbox.IsChecked() then
     Result.ExcludeLocations += [EWorldLocation.AUSTRALIA];
+  if not Self.BrazilCheckbox.IsChecked() then
+    Result.ExcludeLocations += [EWorldLocation.BRAZIL];
 
   if not Self.NormalCheckbox.IsChecked() then
     Result.ExcludeActivities += [EWorldActivity.NORMAL];
@@ -560,7 +562,9 @@ Converts a world location enum to its display string.
 *)
 function TProfileForm.GetLocationString(loc: EWorldLocation): String;
 const
-  NAMES: TStringArray = ['Germany', 'UK', 'USA', 'Australia'];
+  NAMES: array [EWorldLocation] of String = [
+    'Germany', 'UK', 'USA', 'Australia', 'Brazil'
+  ];
 begin
   Result := NAMES[loc];
 end;
@@ -574,7 +578,7 @@ Converts a world type enum to its display string.
 *)
 function TProfileForm.GetTypeString(worldType: EWorldType): String;
 const
-  NAMES: TStringArray = ['F2P', 'Members'];
+  NAMES: array [EWorldType] of String = ['F2P', 'Members'];
 begin
   Result := NAMES[worldType];
 end;
@@ -704,6 +708,7 @@ begin
       EWorldLocation.UNITED_KINGDOM: if not Self.UKCheckbox.IsChecked() then Continue;
       EWorldLocation.UNITED_STATES: if not Self.USCheckbox.IsChecked() then Continue;
       EWorldLocation.AUSTRALIA: if not Self.AustraliaCheckbox.IsChecked() then Continue;
+      EWorldLocation.BRAZIL: if not Self.BrazilCheckbox.IsChecked() then Continue;
     end;
     tempWorlds[j] := tempWorlds[i];
     Inc(j);
@@ -1025,6 +1030,13 @@ begin
   Self.AustraliaCheckbox.Caption := 'Australia';
   Self.AustraliaCheckbox.SetBounds(10, locY, Round(100 * scale), checkboxHeight);
   Self.AustraliaCheckbox.SetChecked(True);
+
+  locY += checkboxHeight + 3;
+  Self.BrazilCheckbox := TLazCheckBox.Create(Self.LocationPanel);
+  Self.BrazilCheckbox.Parent := Self.LocationPanel;
+  Self.BrazilCheckbox.Caption := 'Brazil';
+  Self.BrazilCheckbox.SetBounds(10, locY, Round(100 * scale), checkboxHeight);
+  Self.BrazilCheckbox.SetChecked(True);
 end;
 
 (*
