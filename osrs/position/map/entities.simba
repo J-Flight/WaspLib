@@ -736,6 +736,7 @@ begin
   npc := TRSEntity.Create(Map.Walker, [1,1,7], 8, [[10432, 37966]], ['Dominic Onion'], [ERSDot.NPC]);
   WriteLn npc.Interact(['Dream']);
 end.
+```
 *)
 function TRSEntity.Interact(action: TStringArray; attempts: Integer = 2): Boolean;
 begin
