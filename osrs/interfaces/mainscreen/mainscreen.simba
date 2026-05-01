@@ -6,6 +6,9 @@ Methods to interact with the mainscreen.
 {$DEFINE WL_MAINSCREEN_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
+{%anchor WL_DEBUG_UPTEXT}
+{.$DEFINE WL_DEBUG_UPTEXT}
+
 type
 (*
 ## TRSMainScreen

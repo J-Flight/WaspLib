@@ -18,6 +18,8 @@ For debugging purposes you can use `{$DEFINE WL_DEBUG_MAP}` before including
 
 {$DEFINE WL_MAP_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
+
+{%anchor WL_DEBUG_MAP}
 {.$DEFINE WL_DEBUG_MAP}
 
 type

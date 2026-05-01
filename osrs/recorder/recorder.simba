@@ -8,10 +8,19 @@ SimbaRecorder.Start(30); // Start recording with 30 second buffer
 SimbaRecorder.Start(30, 'MyVideos'); // Custom save directory
 // Videos are automatically saved on script end
 ```
+
+You may debug the recorder with the compiler directive:
+```pascal
+{$DEFINE WL_DEBUG_RECORDER}
+```
+Which should be added to your script before {ref}`WaspLib`.
 *)
 
 {$DEFINE WL_RECORDER_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
+
+{%anchor WL_DEBUG_RECORDER}
+{.$DEFINE WL_DEBUG_RECORDER}
 
 type
 (*
@@ -41,6 +50,7 @@ Starts recording with specified buffer duration and save path.
 procedure TSimbaRecorder.Start();
 var
   window, plugin: String;
+  process: TRunningProcess;
 begin
   if not Self.Enabled or Self.IsRecording then
     Exit;
@@ -51,28 +61,37 @@ begin
     ERSClient.OFFICIAL:
     begin
       window := ToStr(WaspInput.Window);
-      plugin := 'plugin=wasp-input';
+      plugin := 'wasp-input';
     end;
     {$ENDIF}
     ERSClient.LEGACY, ERSClient.RUNELITE:
     begin
       window := ToStr(RemoteInput.Window);
-      plugin := 'plugin=remote-input';
+      plugin := 'remote-input';
     end;
   end;
   {$ENDIF}
 
-  //TODO: Simba is bugged with this.
-  //RunSimbaScript({$MACRO DIR} + 'recorder_subprocess.simba',
-  //  [
-  //    'script=' + ToStr(GetProcessID()),
-  //    'target=' + window,
-  //    'time=' + ToStr(Self.BufferSeconds),
-  //    plugin,
-  //    'path=' + WLEnv.VideosDir
-  //  ]
-  //);
+  process := StartProcess(
+    GetProcessPath(GetProcessID()),
+    [
+      {$IFDEF WL_DEBUG_RECORDER}'--open', {$ENDIF}
+      '--run',
+      {$MACRO DIR} + 'recorder_subprocess.simba'
+    ],
+    '',
+    [
+      {$IFDEF WL_DEBUG_RECORDER}'debugging=true', {$ENDIF}
+      'script=' + ToStr(GetProcessID()),
+      'target=' + window,
+      'time='   + ToStr(Self.BufferSeconds),
+      'plugin=' + plugin,
+      'path='   + WLEnv.VideosDir
+    ]
+  );
+
   Self.IsRecording := True;
+  process.Free();
 end;
 
 var

@@ -21,7 +21,8 @@ the correct "F-Key".
 {$DEFINE WL_GAMETABS_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
-{.$DEFINE WL_KEYBINDS_DEBUG}
+{%anchor WL_DEBUG_KEYBINDS}
+{.$DEFINE WL_DEBUG_KEYBINDS}
 
 type
 (*
@@ -209,7 +210,7 @@ WriteLn GameTabs.FKeyOpen(ERSGameTab.INVENTORY);
 *)
 function TRSGameTabs.FKeyOpen(tab: ERSGameTab): Boolean;
 var
-  current, new: ERSGameTab;
+  current, newTab: ERSGameTab;
   i: Integer;
   switched: Boolean;
 begin
@@ -230,17 +231,21 @@ begin
   current := Self.GetCurrent();
   Keyboard.KeyPress(Self.AvailableKeys[i]);
 
-  switched := SleepUntil(current <> (new := Self.GetCurrent()), RandomMode(100, 50, 1500), 600);
+  switched := SleepUntil(current <> (newTab := Self.GetCurrent()), RandomMode(100, 50, 1500), 600);
 
   if switched then //if tab switched we are sure of this key-gametab pair
   begin
-   Self.Keybinds[new] := Self.AvailableKeys[i];
+   Self.Keybinds[newTab] := Self.AvailableKeys[i];
    Delete(Self.AvailableKeys, i, 1);
+
+   {$IFDEF WL_DEBUG_KEYBINDS}
+   WriteLn GetDebugLn('GameTabs', 'New keybind found: ' + ToStr(newTab) + ' = ' + ToStr(Self.Keybinds[newTab]));
+   {$ENDIF}
   end
-  else if Self.Keybinds[new] <> EKeyCode.UNKNOWN then
+  else if Self.Keybinds[newTab] <> EKeyCode.UNKNOWN then
     Delete(Self.AvailableKeys, i, 1); //This key has no pair
 
-  Result := new = Tab;
+  Result := newTab = Tab;
 end;
 
 

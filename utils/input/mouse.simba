@@ -12,6 +12,7 @@ compiler directive before you include WaspLib:
 {$DEFINE WL_MOUSE_INCLUDED}
 {$INCLUDE_ONCE WaspLib/utils.simba}
 
+{%anchor WL_DEBUG_MOUSE}
 {.$DEFINE WL_DEBUG_MOUSE}
 
 {$IFDEF SIMBAHEADLESS}{$UNDEF WL_DEBUG_MOUSE}{$ENDIF}

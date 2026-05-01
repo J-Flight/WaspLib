@@ -21,7 +21,10 @@ And wasp-input here: https://github.com/WaspScripts/wasp-input
 {$DEFINE WL_FAKE_INPUT_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
+{%anchor WL_DISABLE_FAKE_INPUT}
 {.$DEFINE WL_DISABLE_FAKE_INPUT}
+
+{$IFDEF WL_TEST}{$DEFINE WL_DISABLE_FAKE_INPUT}{$ENDIF}
 
 {$IFNDEF WL_DISABLE_FAKE_INPUT}
 

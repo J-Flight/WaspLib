@@ -24,25 +24,33 @@ end;
 {$H+}
 
 var
+  Debugging: Boolean;
   Recorder: TRecorder;
   Window: TWindowHandle;
 begin
-  Process := StrToInt(GetProcessArg('script'));
-  Window := StrToInt(GetProcessArg('target'));
-  case GetProcessArg('plugin') of
+  Debugging := LowerCase(GetEnvVar('debugging')) = 'true';
+  if Debugging then
+  begin
+    WriteLn('Arguments: ', GetProcessArgs());
+    WriteLn('Env Variables: ', GetEnvVars());
+  end;
+
+  Process := StrToInt(GetEnvVar('script'));
+  Window := StrToInt(GetEnvVar('target'));
+  case GetEnvVar('plugin') of
     'remote-input': Target.SetPlugin({$MACRO LOADEDLIB(libremoteinput)}, ToStr(Window.GetPID()));
     'wasp-input': Target.SetPlugin({$MACRO LOADEDLIB(waspinput)}, ToStr(Window.GetPID()));
     else Target.SetWindow(Window);
   end;
 
   Recorder := TRecorder.Create(
-    StrToInt(GetProcessArg('time'), 20), GetProcessArg('path'),
+    StrToInt(GetEnvVar('time'), 20), GetEnvVar('path'),
     Target.Width, Target.Height,
     @GetFrame, @IsTerminated
   );
 
   Recorder.SetFFMPEG(SimbaEnv.PluginsPath + 'wasp-plugins' + PATH_SEP + 'librecorder' + PATH_SEP + 'ffmpeg.exe');
 
-  Recorder.Run(LowerCase(GetProcessArg('debugging')) = 'true');
+  Recorder.Run(Debugging);
   Recorder.Free();
 end;

@@ -1,3 +1,4 @@
+{%anchor WaspLib}
 (*
 # WaspLib
 WaspLib is a library used to bot OldSchool RuneScape with Simba 2.0.
@@ -8,17 +9,19 @@ and the original [WaspLib](https://github.com/Torwent/WaspLib) in Simba 1.4 in a
 less confusing way.
 *)
 
+{%anchor Compiler Directives}
 (*
-## Compile Directives
+## Compiler Directives
 ```pascal
-{$DEFINE WL_DEBUG_MOUSE}
 {$DEFINE WL_DISABLE_FAKE_INPUT}
-{$DEFINE WL_KEYBINDS_DEBUG}
+{$DEFINE WL_GENERATE_GRAPH_ALWAYS}
+{$DEFINE WL_DEBUG_MOUSE}
+{$DEFINE WL_DEBUG_KEYBINDS}
 {$DEFINE WL_DEBUG_UPTEXT}
 {$DEFINE WL_DEBUG_INTERFACES}
-{$DEFINE WL_GENERATE_GRAPH_ALWAYS}
 {$DEFINE WL_DEBUG_MAP}
-{$DEFINE WL_TRANSPORTER_DEBUG}
+{$DEFINE WL_DEBUG_TRANSPORTER}
+{$DEFINE WL_DEBUG_RECORDER}
 ```
 These are the main compiler directives available in the library.
 

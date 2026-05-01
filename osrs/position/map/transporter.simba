@@ -7,7 +7,8 @@ This is not meant to be used directly but through {ref}`TRSWalker` WebWalking.
 {$DEFINE WL_TRANSPORTER_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
-{.$DEFINE WL_TRANSPORTER_DEBUG}
+{%anchor WL_DEBUG_TRANSPORTER}
+{.$DEFINE WL_DEBUG_TRANSPORTER}
 
 type
   ESpellTeleport = enum(
