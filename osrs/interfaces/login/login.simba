@@ -281,16 +281,21 @@ Example:
 WriteLn Login.ClearInput(ERSLoginInput.USERNAME);
 ```
 *)
-function TRSLogin.ClearInput(field: ERSLoginInput): Boolean; 
+function TRSLogin.ClearInput(field: ERSLoginInput): Boolean;
+var
+  timeout: TCountDown;
 begin
   if not Self.InputIsFilled(field) then Exit(True);
   if not Self.SelectInput(field) then Exit;
 
-  while self.InputIsFilled(field) do
-  Keyboard.KeyPress(EKeyCode.BACK);
+  timeout.Start(6 * ONE_SECOND);
 
-  Result := SleepUntil(not Self.InputIsFilled(field), RandomMode(100, 50, 1500),  6000);
-  Keyboard.KeyUp(EKeyCode.BACK);
+  repeat
+    Keyboard.KeyPress(EKeyCode.BACK);
+    if not Self.InputIsFilled(field) then
+      Exit(True);
+    Sleep(Random(Keyboard.IntervalMin, Keyboard.IntervalMax));
+  until timeout.IsFinished;
 end;  
 
 (*

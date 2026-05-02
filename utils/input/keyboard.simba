@@ -88,6 +88,31 @@ begin
 end;
 
 (*
+### Keyboard.IntervalMin
+```pascal
+property TKeyboard.IntervalMin: Integer;
+```
+Get `TKeyboard` minimum interval time between key presses.
+*)
+property TKeyboard.IntervalMin: Integer;
+begin
+  Result := Target.Options.KeyPressMin + 10;
+end;
+
+(*
+### Keyboard.IntervalMax
+```pascal
+property TKeyboard.IntervalMax: Integer;
+```
+Get `TKeyboard` maximum interval time between key presses.
+*)
+property TKeyboard.IntervalMax: Integer;
+begin
+  Result := Target.Options.KeyPressMax + 25;
+end;
+
+
+(*
 ## Keyboard.KeyDown
 ```pascal
 procedure TKeyboard.KeyDown(key: EKeyCode);
@@ -156,7 +181,7 @@ begin
   for i := 1 to Length(text) do
   begin
     Target.KeySend(text[i]);
-    Sleep(Random(Target.Options.KeyPressMin+10, Target.Options.KeyPressMax+25));
+    Sleep(Random(Self.IntervalMin, Self.IntervalMax));
   end;
 
   Self.LastKey := Target.KeyCodeFromChar(text[Length(text)]);
