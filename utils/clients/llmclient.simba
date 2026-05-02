@@ -12,73 +12,167 @@ Responsible for connecting to a LLM server.
 This expects an Ollama/OpenAI compatible REST API to talk to.
 *)
 type
-  TLLMClient = record
-    Client: THTTPClient;
-    Server, APIKey, Model, SystemMessage: String;
+  ELLMService = enum(LOCAL, DEEPSEEK, OPENAI, OLLAMA);
 
+  TLLMClient = record
+    Service: ELLMService;
+    Client: THTTPClient;
+    CustomModel, SystemMessage: String;
+
+    Think: Boolean;
     Lock: TLock;
+    ModelIndex, MaxCharacters, MaxMessages: Integer;
+
+    BasePayload, Payload: TJSONObject;
+
+    MsgKeys, Servers: array [ELLMService] of String;
+    Models: array [ELLMService] of TStringArray;
     IsSetup: Boolean;
   end;
-
-procedure TLLMClient.SetServer(server: String);
-begin
-  Self.Server := server;
-end;
-
-procedure TLLMClient.SetLocalhost(port: Integer = 11434);
-begin
-  Self.Server := 'http://127.0.0.1:' + ToStr(port) + '/';
-end;
-
 
 procedure TLLMClient.Setup();
 begin
   Self.Client := new THTTPClient();
   Self.Client.RequestHeader['Content-Type'] := 'application/json';
-  Self.Client.RequestHeader['apikey'] := Self.APIKey;
   Self.IsSetup := True;
+
+  Self.Servers[ELLMService.LOCAL]    := 'http://127.0.0.1:11434/api/chat/';
+  Self.Servers[ELLMService.DEEPSEEK] := 'https://api.deepseek.com/chat/completions/';
+  Self.Servers[ELLMService.OPENAI]   := 'https://api.openai.com/v1/chat/completions/';
+  Self.Servers[ELLMService.OLLAMA]   := 'https://ollama.com/api/chat/';
+
+  Self.Models[ELLMService.DEEPSEEK] := ['deepseek-v4-flash', 'deepseek-v4-pro'];
+  Self.Models[ELLMService.OPENAI]   := ['gpt-5.5', 'gpt-5.4', 'gpt-5.4-mini'];
+  Self.Models[ELLMService.OLLAMA]   := ['gemma3'];
+
+  Self.MsgKeys[ELLMService.LOCAL]    := 'messages';
+  Self.MsgKeys[ELLMService.DEEPSEEK] := 'messages';
+  Self.MsgKeys[ELLMService.OPENAI]   := 'input';
+  Self.MsgKeys[ELLMService.OLLAMA]   := 'messages';
+
+  Self.MaxCharacters := 180;
+  Self.MaxMessages := 14;
 end;
 
-procedure TLLMClient.SetupSystemMessage(msg: String);
+property TLLMClient.LocalhostPort(port: Integer);
 begin
-
+  if not Self.IsSetup then
+    Exit;
+  Self.SERVERS[0] := 'http://127.0.0.1:' + ToStr(port) + '/api/chat/';
 end;
 
 
-function TLLMClient.Generate(message: String): String;
+property TLLMClient.APIKey: String;
+begin
+  if not Self.IsSetup then
+    Exit;
+  Result := Self.Client.RequestHeader['Authorization'].After('Bearer ');
+end;
+
+property TLLMClient.APIKey(value: String);
+begin
+  if not Self.IsSetup then
+    Exit;
+  Self.Client.RequestHeader['Authorization'] := 'Bearer ' + value;
+end;
+
+
+procedure TLLMClient.SetupPayload();
 var
-  payload: TJSONObject;
+  msg, thinking: TJSONObject;
+  msgs: TJSONArray;
 begin
-  payload := new TJSONObject();
-  payload.AddString('model', Self.Model);
-  payload.AddString('system', Self.SystemMessage);
-  payload.AddString('prompt', message);
-  payload.AddBool('stream', False);
-  Result := Self.Client.Post(Self.Server + 'api/generate/', payload.Format());
-end;
+  Self.BasePayload := new TJSONObject();
 
-function TLLMClient.Chat(message: String): String;
-var
-  payload, msg: TJSONObject;
-  messages: TJSONArray;
-begin
-  messages := new TJSONArray();
+  msgs := new TJSONArray();
 
   msg := new TJSONObject();
   msg.AddString('role', 'system');
   msg.AddString('content', Self.SystemMessage);
-  messages.AddObject('message', msg);
+  msgs.AddObject('message', msg);
+
+  msg := new TJSONObject();
+  msg.AddString('role', 'system');
+  msg.AddString('content', 'Your messages should never exceed ' + ToStr(Self.MaxCharacters) + ', the more concise they are the better.');
+  msgs.AddObject('message', msg);
+
+  case Self.Service of
+    ELLMService.LOCAL:
+    begin
+      Self.BasePayload.AddString('model', Self.CustomModel);
+      Self.BasePayload.AddBool('think', Self.Think);
+    end;
+
+    ELLMService.OLLAMA:
+    begin
+      Self.BasePayload.AddString('model', Self.Models[Self.Service][Self.ModelIndex]);
+      Self.BasePayload.AddBool('think', Self.Think);
+    end;
+
+    ELLMService.DEEPSEEK:
+    begin
+      thinking := new TJSONObject();
+      if Self.Think then
+        thinking.AddString('type', 'enabled')
+      else
+        thinking.AddString('type', 'disabled');
+
+      Self.BasePayload.AddString('model', Self.Models[Self.Service][Self.ModelIndex]);
+      Self.BasePayload.AddObject('thinking', thinking);
+    end;
+
+    ELLMService.OPENAI:
+    begin
+      thinking := new TJSONObject();
+      if Self.Think then
+        thinking.AddString('effort', 'medium')
+      else
+        thinking.AddString('effort', 'none');
+
+      Self.BasePayload.AddString('model', Self.Models[Self.Service][Self.ModelIndex]);
+      Self.BasePayload.AddObject('reasoning', thinking);
+    end;
+  end;
+
+  Self.BasePayload.AddArray(Self.MsgKeys[Self.Service], msgs); 
+  Self.BasePayload.AddBool('stream', False);
+end;
+
+function TLLMClient.Chat(message: String): String;
+var
+  msg: TJSONObject;
+  response: String;
+  parser: TJSONParser;
+begin
+  if not Self.IsSetup then
+    Exit;
+
+  if Self.Payload = nil then
+    Self.Payload := Self.BasePayload.Clone();
 
   msg := new TJSONObject();
   msg.AddString('role', 'user');
   msg.AddString('content', message);
-  messages.AddObject('message', msg);
+  Self.Payload.Item[Self.MsgKeys[Self.Service]].AddObject('message', msg);
 
-  payload := new TJSONObject();
-  payload.AddString('model', Self.Model);
-  payload.AddArray('messages', messages);
-  payload.AddBool('stream', False);
-  Result := Self.Client.Post(Self.Server + 'api/chat/', payload.Format());
+  response := Self.Client.Post(Self.Servers[Self.Service], Self.Payload.Format());
+  if not InRange(Self.Client.ResponseStatus.AsInteger, 200, 299) then
+    Exit;
+
+  parser := new TJSONParser();
+  parser.Parse(response);
+
+  if not parser.Has('message') then
+    Exit;
+  if not parser.Item['message'].Has('content') then
+    Exit;
+
+  Result := parser.Item['message'].Item['content'].AsString;
+
+  if Self.Payload.Item[Self.MsgKeys[Self.Service]].Count < Self.MaxMessages then
+    Self.Payload.Item[Self.MsgKeys[Self.Service]].AddObject('message', parser.Item['message'].Clone())
+  else
+    Self.Payload := nil;
 end;
 
 
