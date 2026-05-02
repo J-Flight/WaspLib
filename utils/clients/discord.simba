@@ -31,7 +31,7 @@ Example with embeds:
 ```pascal
 var
   Discord: TDiscordClient;
-  EmbedIdx: Int32;
+  EmbedIdx: Integer;
 begin
   Discord.Setup();
   Discord.SetWebhook('https://discord.com/api/webhooks/your_webhook_id/your_webhook_token');
@@ -51,15 +51,7 @@ end;
 *)
 
 {$DEFINE WL_DISCORD_INCLUDED}
-{$IFNDEF WL_CONFIG_INCLUDED}
-  {$I WaspLib/utils/config.simba}
-{$ENDIF}
-
-{$IFNDEF WL_LOGGER_INCLUDED}
-  {$I WaspLib/utils/logger.simba}
-{$ENDIF}
-
-
+{$INCLUDE_ONCE WaspLib/utils.simba}
 
 type
 (*
@@ -69,7 +61,7 @@ type
 TDiscordEmbed = record
   Title: String;
   Description: String;
-  Color: Int32;
+  Color: Integer;
   Footer: String;
   ImageURL: String;
   ThumbnailURL: String;
@@ -80,7 +72,7 @@ Represents a Discord embed object that can be attached to messages.
   TDiscordEmbed = record
     Title: String;
     Description: String;
-    Color: Int32;
+    Color: Integer;
     Footer: String;
     ImageURL: String;
     ThumbnailURL: String;
@@ -120,8 +112,8 @@ TDiscordClient = record
   Logger: TLogger;
   LastResponse: String;
   LastError: String;
-  RetryCount: Int32;
-  RetryDelay: Int32;
+  RetryCount: Integer;
+  RetryDelay: Integer;
   ScreenshotPath: String;
 end;
 ```
@@ -135,8 +127,8 @@ Main client for interacting with Discord webhooks.
     Logger: TLogger;
     LastResponse: String;
     LastError: String;
-    RetryCount: Int32;
-    RetryDelay: Int32;
+    RetryCount: Integer;
+    RetryDelay: Integer;
     ScreenshotPath: String;
   end;
 
@@ -161,7 +153,7 @@ end;
 (*
 ## TDiscordWebhook.AddEmbed
 ```pascal
-function TDiscordWebhook.AddEmbed: Int32;
+function TDiscordWebhook.AddEmbed: Integer;
 ```
 Adds a new embed to the webhook and returns its index.
 
@@ -171,7 +163,7 @@ EmbedIdx := MyWebhook.AddEmbed();
 MyWebhook.Embeds[EmbedIdx].Title := 'Status Report';
 ```
 *)
-function TDiscordWebhook.AddEmbed: Int32;
+function TDiscordWebhook.AddEmbed: Integer;
 var
   NewEmbed: TDiscordEmbed;
 begin
@@ -218,7 +210,7 @@ var
   JSON: TJSONObject;
   EmbedsArray: TJSONArray;
   EmbedObj, FooterObj, ImageObj, ThumbObj: TJSONObject;
-  i: Int32;
+  i: Integer;
 begin
   JSON := new TJSONObject();
 
@@ -372,7 +364,7 @@ MyDiscord.SetWebhook('https://discord.com/api/webhooks/your_webhook_id/your_webh
 function TDiscordClient.SetWebhook(WebhookURL: String): Boolean;
 var
   response: String;
-  statusCode: Int32;
+  statusCode: Integer;
   emptyPayload: String;
   oldURL: String;
 begin
@@ -528,8 +520,8 @@ if MyDiscord.Send() then
 function TDiscordClient.Send: Boolean;
 var
   Payload: String;
-  Attempts: Int32;
-  StatusCode: Int32;
+  Attempts: Integer;
+  StatusCode: Integer;
 begin
   Self.LastError := '';
   Self.LastResponse := '';
@@ -620,8 +612,7 @@ function TDiscordClient.SendFile(FilePath: String): Boolean;
 var
   Boundary, FileContents, Ext, MimeType: String;
   Payload: String;
-  Attempts: Int32;
-  StatusCode: Int32;
+  Attempts, StatusCode: Integer;
 begin
   Self.LastError := '';
   Self.LastResponse := '';

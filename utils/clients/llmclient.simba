@@ -1,0 +1,86 @@
+(*
+# LLM Client
+Client to interact with LLMs.
+*)
+
+{$DEFINE WL_LLMCLIENT_INCLUDED}
+{$INCLUDE_ONCE WaspLib/utils.simba}
+
+(*
+## TLLMClient
+Responsible for connecting to a LLM server.
+This expects an Ollama/OpenAI compatible REST API to talk to.
+*)
+type
+  TLLMClient = record
+    Client: THTTPClient;
+    Server, APIKey, Model, SystemMessage: String;
+
+    Lock: TLock;
+    IsSetup: Boolean;
+  end;
+
+procedure TLLMClient.SetServer(server: String);
+begin
+  Self.Server := server;
+end;
+
+procedure TLLMClient.SetLocalhost(port: Integer = 11434);
+begin
+  Self.Server := 'http://127.0.0.1:' + ToStr(port) + '/';
+end;
+
+
+procedure TLLMClient.Setup();
+begin
+  Self.Client := new THTTPClient();
+  Self.Client.RequestHeader['Content-Type'] := 'application/json';
+  Self.Client.RequestHeader['apikey'] := Self.APIKey;
+  Self.IsSetup := True;
+end;
+
+procedure TLLMClient.SetupSystemMessage(msg: String);
+begin
+
+end;
+
+
+function TLLMClient.Generate(message: String): String;
+var
+  payload: TJSONObject;
+begin
+  payload := new TJSONObject();
+  payload.AddString('model', Self.Model);
+  payload.AddString('system', Self.SystemMessage);
+  payload.AddString('prompt', message);
+  payload.AddBool('stream', False);
+  Result := Self.Client.Post(Self.Server + 'api/generate/', payload.Format());
+end;
+
+function TLLMClient.Chat(message: String): String;
+var
+  payload, msg: TJSONObject;
+  messages: TJSONArray;
+begin
+  messages := new TJSONArray();
+
+  msg := new TJSONObject();
+  msg.AddString('role', 'system');
+  msg.AddString('content', Self.SystemMessage);
+  messages.AddObject('message', msg);
+
+  msg := new TJSONObject();
+  msg.AddString('role', 'user');
+  msg.AddString('content', message);
+  messages.AddObject('message', msg);
+
+  payload := new TJSONObject();
+  payload.AddString('model', Self.Model);
+  payload.AddArray('messages', messages);
+  payload.AddBool('stream', False);
+  Result := Self.Client.Post(Self.Server + 'api/chat/', payload.Format());
+end;
+
+
+var
+  LLMClient: TLLMClient;
