@@ -156,6 +156,8 @@ begin
 
   if not Self.Memory then
     Exit;
+
+  user := LowerCase(user);
   if not FileExists(Self.PATH + user + '.json') then
     Exit;
 
@@ -180,11 +182,12 @@ begin
     Exit;
 
   payload := Self.Payload.Clone();
+  user := user.Trim();
   msgs := Self.GetChat(user);
 
   msg := new TJSONObject();
   msg.AddString('role', 'user');
-  msg.AddString('content', message);
+  msg.AddString('content', message.Trim());
   msgs.AddObject('message', msg);
 
   payload.AddArray(Self.MsgKeys[Self.Service], msgs.Clone());
@@ -218,8 +221,9 @@ begin
   if not Self.Memory then
     Exit;
 
+  user := LowerCase(user);
   msgs.AddObject('message', parser.Item['message'].Clone());
-  if not FileWrite(Self.PATH + user + '.json', msgs.Format()) then
+  if not FileWrite(Self.PATH + user + '.json', msgs.Format([EJSONFormatOption.SINGLE_LINE_OBJ, EJSONFormatOption.NO_WHITESPACE])) then
     raise GetDebugLn('LLMClient', 'Failed to delete file: ' + Self.PATH + user + '.json');
 end;
 
