@@ -19,15 +19,17 @@ type
     Client: THTTPClient;
     CustomModel, SystemMessage: String;
 
-    Think: Boolean;
+    Think, Memory: Boolean;
     Lock: TLock;
-    ModelIndex, MaxCharacters, MaxMessages: Integer;
+    ModelIndex, MaxCharacters, MaxMessages, MaxAttempts: Integer;
 
-    BasePayload, Payload: TJSONObject;
+    Payload: TJSONObject;
 
     MsgKeys, Servers: array [ELLMService] of String;
     Models: array [ELLMService] of TStringArray;
     IsSetup: Boolean;
+
+    const PATH: String = WLEnv.CacheDir + 'chats' + PATH_SEP;
   end;
 
 procedure TLLMClient.Setup();
@@ -51,7 +53,11 @@ begin
   Self.MsgKeys[ELLMService.OLLAMA]   := 'messages';
 
   Self.MaxCharacters := 180;
-  Self.MaxMessages := 14;
+  Self.MaxMessages := 0;
+  Self.MaxAttempts := 3;
+
+  if not DirCreate(Self.PATH) then
+    raise GetDebugLn('LLMClient', 'Failed to create path: ' + Self.PATH);
 end;
 
 property TLLMClient.LocalhostPort(port: Integer);
@@ -79,34 +85,21 @@ end;
 
 procedure TLLMClient.SetupPayload();
 var
-  msg, thinking: TJSONObject;
-  msgs: TJSONArray;
+  thinking: TJSONObject;
 begin
-  Self.BasePayload := new TJSONObject();
-
-  msgs := new TJSONArray();
-
-  msg := new TJSONObject();
-  msg.AddString('role', 'system');
-  msg.AddString('content', Self.SystemMessage);
-  msgs.AddObject('message', msg);
-
-  msg := new TJSONObject();
-  msg.AddString('role', 'system');
-  msg.AddString('content', 'Your messages should never exceed ' + ToStr(Self.MaxCharacters) + ', the more concise they are the better.');
-  msgs.AddObject('message', msg);
+  Self.Payload := new TJSONObject();
 
   case Self.Service of
     ELLMService.LOCAL:
     begin
-      Self.BasePayload.AddString('model', Self.CustomModel);
-      Self.BasePayload.AddBool('think', Self.Think);
+      Self.Payload.AddString('model', Self.CustomModel);
+      Self.Payload.AddBool('think', Self.Think);
     end;
 
     ELLMService.OLLAMA:
     begin
-      Self.BasePayload.AddString('model', Self.Models[Self.Service][Self.ModelIndex]);
-      Self.BasePayload.AddBool('think', Self.Think);
+      Self.Payload.AddString('model', Self.Models[Self.Service][Self.ModelIndex]);
+      Self.Payload.AddBool('think', Self.Think);
     end;
 
     ELLMService.DEEPSEEK:
@@ -117,8 +110,8 @@ begin
       else
         thinking.AddString('type', 'disabled');
 
-      Self.BasePayload.AddString('model', Self.Models[Self.Service][Self.ModelIndex]);
-      Self.BasePayload.AddObject('thinking', thinking);
+      Self.Payload.AddString('model', Self.Models[Self.Service][Self.ModelIndex]);
+      Self.Payload.AddObject('thinking', thinking);
     end;
 
     ELLMService.OPENAI:
@@ -129,50 +122,105 @@ begin
       else
         thinking.AddString('effort', 'none');
 
-      Self.BasePayload.AddString('model', Self.Models[Self.Service][Self.ModelIndex]);
-      Self.BasePayload.AddObject('reasoning', thinking);
+      Self.Payload.AddString('model', Self.Models[Self.Service][Self.ModelIndex]);
+      Self.Payload.AddObject('reasoning', thinking);
     end;
   end;
 
-  Self.BasePayload.AddArray(Self.MsgKeys[Self.Service], msgs); 
-  Self.BasePayload.AddBool('stream', False);
+  Self.Payload.AddBool('stream', False);
 end;
 
-function TLLMClient.Chat(message: String): String;
+
+function TLLMClient.GetChat(user: String): TJSONArray;
 var
   msg: TJSONObject;
-  response: String;
   parser: TJSONParser;
+  i: Integer;
+begin
+  Result := new TJSONArray();
+
+  msg := new TJSONObject();
+  msg.AddString('role', 'system');
+  msg.AddString('content', 'Your messages should never exceed ' + ToStr(Self.MaxCharacters) + ', the more concise they are the better.');
+  Result.AddObject('msg', msg);
+
+  msg := new TJSONObject();
+  msg.AddString('role', 'system');
+  msg.AddString('content', Self.SystemMessage);
+  Result.AddObject('msg', msg);
+
+  msg := new TJSONObject();
+  msg.AddString('role', 'system');
+  msg.AddString('content', 'The user you are talking to is "' + user + '", avoid referring to him directly but keep it in mind if you need to.');
+  Result.AddObject('msg', msg);
+
+  if not Self.Memory then
+    Exit;
+  if not FileExists(Self.PATH + user + '.json') then
+    Exit;
+
+  parser := new TJSONParser();
+  parser.Load(Self.PATH + user + '.json');
+
+  for i := 0 to parser.Count - 1 do
+    if parser.Item[i].Item['role'].AsString <> 'system' then
+      Result.AddObject('msg', parser.Item[i].Clone());
+end;
+
+
+function TLLMClient.Chat(user, message: String): String;
+var
+  payload, msg: TJSONObject;
+  msgs: TJSONArray;
+  request, response: String;
+  parser: TJSONParser;
+  i: Integer;
 begin
   if not Self.IsSetup then
     Exit;
 
-  if Self.Payload = nil then
-    Self.Payload := Self.BasePayload.Clone();
+  payload := Self.Payload.Clone();
+  msgs := Self.GetChat(user);
 
   msg := new TJSONObject();
   msg.AddString('role', 'user');
   msg.AddString('content', message);
-  Self.Payload.Item[Self.MsgKeys[Self.Service]].AddObject('message', msg);
+  msgs.AddObject('message', msg);
 
-  response := Self.Client.Post(Self.Servers[Self.Service], Self.Payload.Format());
-  if not InRange(Self.Client.ResponseStatus.AsInteger, 200, 299) then
+  payload.AddArray(Self.MsgKeys[Self.Service], msgs.Clone());
+  request := payload.Format();
+
+  for i := Self.MaxAttempts downto 0 do
+  begin
+    if i = 0 then
+      Exit;
+
+    response := Self.Client.Post(Self.Servers[Self.Service], request);
+    if not InRange(Self.Client.ResponseStatus.AsInteger, 200, 299) then
+      Continue;
+
+    parser := new TJSONParser();
+    parser.Parse(response);
+
+    if not parser.Has('message') then
+      Continue;
+    if not parser.Item['message'].Has('content') then
+      Continue;
+
+    response := parser.Item['message'].Item['content'].AsString;
+
+    if Length(response) <= Self.MaxCharacters then
+      Break;
+  end;
+
+  Result := response;
+
+  if not Self.Memory then
     Exit;
 
-  parser := new TJSONParser();
-  parser.Parse(response);
-
-  if not parser.Has('message') then
-    Exit;
-  if not parser.Item['message'].Has('content') then
-    Exit;
-
-  Result := parser.Item['message'].Item['content'].AsString;
-
-  if Self.Payload.Item[Self.MsgKeys[Self.Service]].Count < Self.MaxMessages then
-    Self.Payload.Item[Self.MsgKeys[Self.Service]].AddObject('message', parser.Item['message'].Clone())
-  else
-    Self.Payload := nil;
+  msgs.AddObject('message', parser.Item['message'].Clone());
+  if not FileWrite(Self.PATH + user + '.json', msgs.Format()) then
+    raise GetDebugLn('LLMClient', 'Failed to delete file: ' + Self.PATH + user + '.json');
 end;
 
 
