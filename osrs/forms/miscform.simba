@@ -269,5 +269,4 @@ begin
   MiscForm.SetupLoginPanel(Result);
   MiscForm.SetupClientPanel(Result);
   MiscForm.SetupRecorderPanel(Result);
-  MiscForm.Setup();
 end;

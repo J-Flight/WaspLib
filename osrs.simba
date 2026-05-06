@@ -143,7 +143,7 @@ Summary: It includes this file until the current file is reached.
 {$IFNDEF WL_HOUSE_INCLUDED}                 {$INCLUDE_ONCE osrs/position/house/house.simba}
 {$IFNDEF WL_HOUSE_LAYOUT_FINDER_INCLUDED}   {$INCLUDE_ONCE osrs/finders/house_layout_finder.simba}
 {$IFNDEF WL_HOUSE_VIEWER_INCLUDED}          {$INCLUDE_ONCE osrs/interfaces/mainscreen/houseviewer.simba}
-{$IFNDEF WL_HOUSE_FORM_INCLUDED}            {$INCLUDE_ONCE osrs/position/house/house_form.simba}
+{$IFNDEF WL_HOUSE_FORM_INCLUDED}            {$INCLUDE_ONCE osrs/forms/house_form.simba}
 
 {$IFNDEF WL_BANKPIN_INCLUDED}               {$INCLUDE_ONCE osrs/interfaces/mainscreen/bankpin.simba}
 {$IFNDEF WL_BANK_INCLUDED}                  {$INCLUDE_ONCE osrs/interfaces/mainscreen/bank.simba}
@@ -164,18 +164,19 @@ Summary: It includes this file until the current file is reached.
 {$IFNDEF WL_HPBARS_INCLUDED}                {$INCLUDE_ONCE osrs/interfaces/mainscreen/finders/hpbars.simba}
 
 {$IFNDEF WL_GEAR_LAYOUTS_INCLUDED}          {$INCLUDE_ONCE osrs/interfaces/handlers/gear_layout.simba}
-{$IFNDEF WL_GEAR_FORM_INCLUDED}             {$INCLUDE_ONCE osrs/interfaces/handlers/gear_form.simba}
+{$IFNDEF WL_GEAR_FORM_INCLUDED}             {$INCLUDE_ONCE osrs/forms/gear_form.simba}
 {$IFNDEF WL_INVENTORY_LAYOUTS_INCLUDED}     {$INCLUDE_ONCE osrs/interfaces/handlers/inventory_layout.simba}
-{$IFNDEF WL_INVENTORY_FORM_INCLUDED}        {$INCLUDE_ONCE osrs/interfaces/handlers/inventory_form.simba}
-{$IFNDEF WL_PRAYER_FORM_INCLUDED}           {$INCLUDE_ONCE osrs/interfaces/handlers/prayer_form.simba}
+{$IFNDEF WL_INVENTORY_FORM_INCLUDED}        {$INCLUDE_ONCE osrs/forms/inventory_form.simba}
+{$IFNDEF WL_PRAYER_FORM_INCLUDED}           {$INCLUDE_ONCE osrs/forms/prayer_form.simba}
 {$IFNDEF WL_CONSUMABLES_INCLUDED}           {$INCLUDE_ONCE osrs/interfaces/handlers/consumables.simba}
 {$IFNDEF WL_TRANSPORTER_INCLUDED}           {$INCLUDE_ONCE osrs/position/map/transporter.simba}
 
 
 {$IFNDEF WL_ANTIBAN_TASKS_INCLUDED}         {$INCLUDE_ONCE osrs/antiban/antibantasks.simba}
-{$IFNDEF WL_ANTIBAN_FORM_INCLUDED}          {$INCLUDE_ONCE osrs/antiban/antibanform.simba} 
+{$IFNDEF WL_ANTIBAN_FORM_INCLUDED}          {$INCLUDE_ONCE osrs/forms/antibanform.simba}
 {$IFNDEF WL_RECORDER_INCLUDED}              {$INCLUDE_ONCE osrs/recorder/recorder.simba}
-{$IFNDEF WL_MISC_FORM_INCLUDED}             {$INCLUDE_ONCE osrs/miscform.simba}
+{$IFNDEF WL_MISC_FORM_INCLUDED}             {$INCLUDE_ONCE osrs/forms/miscform.simba}
+{$IFNDEF WL_LLM_FORM_INCLUDED}              {$INCLUDE_ONCE osrs/forms/llmform.simba}
 
 {$IFNDEF WL_SETUP_INCLUDED}                 {$INCLUDE_ONCE osrs/interfaces/setup.simba}
 {$IFNDEF WL_INTERFACE_DEBUGGING_INCLUDED}   {$INCLUDE_ONCE osrs/interfaces/debugging.simba}
@@ -190,4 +191,4 @@ Summary: It includes this file until the current file is reached.
 {$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
 {$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
 {$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
-{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
+{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}

@@ -1,0 +1,99 @@
+(*
+# LLM Form
+This page is about the {ref}`LLM Client` dedicated `TLazForm` utilities.
+
+This is meant to be used with {ref}`TScriptForm` with
+{ref}`TScriptForm.CreateLLMTab` and will setup a a `TLazTabSheet` on it
+with several controls to configure the {ref}`LLM Client`:
+```{figure} ../../images/LLMForm.png
+```
+*)
+{$DEFINE WL_LLM_FORM_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
+
+type
+(*
+## TLLMFormHelper
+The `TLLMFormHelper` type is, as it's name implies a helper type for the
+`LLM Form`.
+
+It has a lot of methods and callbacks that are hidden by default and won't be
+mentioned on this page because they are internal methods you shouldn't touch.
+
+Do feel free to read the source code though if you so desire.
+*)
+  TLLMFormHelper = record
+    ServiceComboBox: TLazComboBox;
+    PortEdit: TLazSpinEdit;
+    Config: TConfigJSON;
+  end;
+
+procedure TLLMFormHelper.Setup();
+begin
+  LLMClient.Setup();
+  Self.Config.Setup('llm' + PATH_SEP + ToStr(ProfileIndex));
+end;
+
+procedure TLLMFormHelper.OnServiceChange(sender: TLazObject);
+begin
+  LLMClient.Service := ELLMService(TLazComboBox(sender).ItemIndex);
+  Self.PortEdit.Enabled := LLMClient.Service = ELLMService.LOCAL;
+end;
+
+procedure TLLMFormHelper.OnThinkingChange(sender: TLazObject);
+begin
+  LLMClient.Think := TLazCheckBox(sender).IsChecked();
+end;
+
+var
+(*
+## LLMForm variable
+Global {ref}`TLLMFormHelper` variable.
+*)
+  LLMForm: TLLMFormHelper;
+
+(*
+## ScriptForm CreateInventoryTab
+```pascal
+function TScriptForm.CreateInventoryTab(): TLazTabSheet;
+```
+Sets up a `TLazTabSheet` on your `TScriptForm` to configure your `Inventory Layouts`.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+var
+  form: TScriptForm;
+begin
+  form.Setup();
+  form.CreateInventoryTab();
+  form.Run();
+end.
+```
+```{figure} ../../images/inventoryform.gif
+```
+For a more complete example check out the file `Simba/Includes/WaspLib/examples/inventory_form.simba`.
+*)
+function TScriptForm.CreateLLMTab(): TLazTabSheet;
+var
+  checkbox: TLazCheckBox;
+begin
+  Result := Self.CreateTab('LLM Chat');
+  LLMForm.Setup();
+
+  LLMForm.ServiceComboBox := TLazComboBox.CreateEx(Result, 'Service:', 'LLM Service to use.', 100, 100);
+  LLMForm.ServiceComboBox.Items.AddStrings([
+    'Local', 'DeepSeek', 'OpenAI', 'Ollama', 'Gemini'
+  ]);
+  LLMForm.ServiceComboBox.ItemIndex := 0;
+  LLMForm.ServiceComboBox.OnChange := @LLMForm.OnServiceChange;
+
+  LLMForm.PortEdit := TLazSpinEdit.CreateEx(Result, 'Port:', 'Charge localhost port.', LLMForm.ServiceComboBox.Right + 20, LLMForm.ServiceComboBox.Top, 70);
+  LLMForm.PortEdit.Value := LLMClient.Port;
+
+  checkbox := TLazCheckBox.CreateEx(Result, 'Thinking:', 'Whether you want to let the LLM to "think" or not.', LLMForm.ServiceComboBox.Left, LLMForm.ServiceComboBox.Bottom + 20);
+  checkbox.OnChange := @LLMForm.OnThinkingChange;
+
+
+  LLMForm.OnServiceChange(LLMForm.ServiceComboBox);
+end;
