@@ -1,0 +1,57 @@
+(*
+# Misc Form
+This page is about {ref}`Misc` dedicated `TLazForm` utilities.
+
+This is meant to be used with {ref}`TScriptForm` with
+{ref}`TScriptForm.CreateMiscTab` and will setup a a `TLazTabSheet` on it
+with several controls to configure {ref}`Misc`:
+```{figure} ../../images/waspclientform.png
+```
+*)
+{$DEFINE WL_MISC_FORM_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
+
+(*
+## ScriptForm CreateInventoryTab
+```pascal
+function TScriptForm.CreateInventoryTab(): TLazTabSheet;
+```
+Sets up a `TLazTabSheet` on your `TScriptForm` to configure your `Inventory Layouts`.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+var
+  form: TScriptForm;
+begin
+  form.Setup();
+  form.CreateInventoryTab();
+  form.Run();
+end.
+```
+```{figure} ../../images/inventoryform.gif
+```
+For a more complete example check out the file `Simba/Includes/WaspLib/examples/inventory_form.simba`.
+*)
+function TScriptForm.CreateMiscTab(): TLazTabSheet;
+var
+  pageControl: TLazPageControl;
+  tab: TLazTabSheet;
+begin
+  Result := Self.CreateTab('Misc');
+
+  pageControl := TLazPageControl.CreateEx(Result);
+  pageControl.Left := Round(Result.Width * 0.1);
+  pageControl.Top := Round(Result.Height * 0.1);
+  pageControl.Width := Round(Result.Width * 0.8);
+  pageControl.Height := Round(Result.Height * 0.7);
+
+  tab := pageControl.AddTabEx('WaspClient');
+  WaspClientForm.Setup(tab);
+
+  tab := pageControl.AddTabEx('Recorder');
+  RecorderForm.Setup(tab);
+
+  tab := pageControl.AddTabEx('LLM Chat');
+  LLMForm.Setup(tab);
+end;

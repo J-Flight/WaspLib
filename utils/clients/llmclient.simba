@@ -26,7 +26,7 @@ type
     Payload: TJSONObject;
 
     Models: array [ELLMService] of TStringArray;
-    IsSetup: Boolean;
+    IsSetup, Enabled: Boolean;
 
     const PATH: String = WLEnv.CacheDir + 'chats' + PATH_SEP;
     const FORMAT_OPTIONS: EJSONFormatOptions = [EJSONFormatOption.SINGLE_LINE_OBJ, EJSONFormatOption.NO_WHITESPACE];
@@ -325,7 +325,7 @@ var
   parser: TJSONParser;
   i: Integer;
 begin
-  if not Self.IsSetup then
+  if not Self.IsSetup or not Self.Enabled then
     Exit;
 
   Self.Lock.Enter();
@@ -436,7 +436,6 @@ begin
     Self.Lock.Leave();
   end;
 end;
-
 
 var
   LLMClient: TLLMClient;
