@@ -41,10 +41,10 @@ begin
   Result := Self.CreateTab('Misc');
 
   pageControl := TLazPageControl.CreateEx(Result);
-  pageControl.Left := Round(Result.Width * 0.1);
-  pageControl.Top := Round(Result.Height * 0.1);
-  pageControl.Width := Round(Result.Width * 0.8);
-  pageControl.Height := Round(Result.Height * 0.7);
+  pageControl.Left := Round(Result.Width * 0.05);
+  pageControl.Top := Round(Result.Height * 0.05);
+  pageControl.Width := Round(Result.Width * 0.9);
+  pageControl.Height := Round(Result.Height * 0.8);
 
   tab := pageControl.AddTabEx('WaspClient');
   WaspClientForm.Setup(tab);
@@ -54,4 +54,6 @@ begin
 
   tab := pageControl.AddTabEx('LLM Chat');
   LLMForm.Setup(tab);
+
+  pageControl.ActiveTabIndex := 2;
 end;

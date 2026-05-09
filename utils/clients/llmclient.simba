@@ -80,6 +80,7 @@ begin
   Self.Client.RequestHeader['Content-Type'] := 'application/json';
   Self.IsSetup := True;
 
+  Self.Models[ELLMService.DEEPSEEK] := ['custom', 'granite4.1:3b'];
   Self.Models[ELLMService.DEEPSEEK] := ['deepseek-v4-flash', 'deepseek-v4-pro'];
   Self.Models[ELLMService.OPENAI]   := ['gpt-5.5', 'gpt-5.4', 'gpt-5.4-mini'];
   Self.Models[ELLMService.OLLAMA]   := ['gemma3'];

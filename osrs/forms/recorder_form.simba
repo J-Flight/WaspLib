@@ -73,18 +73,33 @@ var
 begin
   Self.Config.Setup('recorder' + PATH_SEP + ToStr(ProfileIndex));
 
-  enabled := TLazCheckBox.CreateEx(parent, 'Record crashes', 'Enabled/Disabled the built-in WaspLib recorder.', 20, 20);
+  enabled := TLazCheckBox.CreateEx(
+    parent, 'Record crashes', 'Enabled/Disabled the built-in WaspLib recorder.',
+    20, 20
+  );
   enabled.OnChange := @Self.OnEnabledChange;
 
-  info := TLazLabel.CreateEx(parent, '', '', enabled.Left, enabled.Bottom + 40, 0, 80);
-  info.Caption := 'Recorder records the last X seconds of a script running.' + LINE_SEP + LINE_SEP +
-                  'This is a great to analyze issues that shut down scripts unexpectedly.' + LINE_SEP +
-                  'Keep in mind that this increases RAM usage and the longer you make' + LINE_SEP +
-                  'your videos the more RAM is required.';
+  info := TLazLabel.CreateEx(
+    parent, '', '',
+    Round(parent.Width * 0.1), enabled.Bottom + 40,
+    Round(parent.Width * 0.8), 80
+  );
+
+  info.Caption :=
+    'Recorder records the last X seconds of a script running.' + LINE_SEP +
+    LINE_SEP +
+    'This is a great to analyze issues that shut down scripts unexpectedly.' +
+    LINE_SEP +
+    'Keep in mind that this increases RAM usage and the longer you make' +
+    LINE_SEP +
+    'your videos the more RAM is required.';
   info.Alignment := ELazAlignment.Center;
   info.Font.Name := 'Courier New';
+  info.OptimalFill := True;
 
-  lbl := TLazLabel.CreateEx(parent, 'Record last', '', parent.Width div 2 - 120, info.Bottom + 80);
+  lbl := TLazLabel.CreateEx(
+    parent, 'Record last', '', parent.Width div 2 - 120, info.Bottom + 80
+  );
   lbl.Font.Name := 'Courier New';
   len := TLazSpinEdit.CreateEx(parent);
   len.AnchorHorizontally(lbl, 4);
