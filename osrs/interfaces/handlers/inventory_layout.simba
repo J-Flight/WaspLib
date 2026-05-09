@@ -281,14 +281,14 @@ function TRSInventoryLayout.Reorder(): Boolean;
 var
   i, j: Integer;
   items: array [0..27] of TRSItemArray;
-  tmp: TRSItemArray;
 begin
   for i := 0 to 27 do
   begin
     if items[i] = [] then
       items[i] := Inventory.Items.Discover(i);
 
-    if items[i].Contains(Self.Layout.Items[i].Item) then Continue;
+    if items[i].Contains(Self.Layout.Items[i].Item) then
+      Continue;
 
     for j := i+1 to 27 do
     begin
@@ -297,12 +297,9 @@ begin
 
       if items[j].Contains(Self.Layout.Items[i].Item) then
       begin
-        if not Inventory.Slots.Move(j, i) then Exit;
-
-        tmp := items[i];
-        items[i] := items[j];
-        items[j] := tmp;
-
+        if not Inventory.Slots.Move(j, i) then
+          Exit;
+        Swap(items[i], items[j]);
         Break;
       end;
     end;
