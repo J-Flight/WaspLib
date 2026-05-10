@@ -220,7 +220,6 @@ Example:
 {$I WaspLib/osrs.simba}
 
 procedure LogLastChatMessage(const sender: TStringArray);
-var
 begin
   WriteLn sender[7];
 end;
