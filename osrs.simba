@@ -21,6 +21,7 @@ less confusing way.
 {$DEFINE WL_DEBUG_INTERFACES}
 {$DEFINE WL_DEBUG_MAP}
 {$DEFINE WL_DEBUG_TRANSPORTER}
+{$DEFINE WL_DEBUG_CHAT_LISTENER}
 {$DEFINE WL_DEBUG_RECORDER}
 ```
 These are the main compiler directives available in the library.

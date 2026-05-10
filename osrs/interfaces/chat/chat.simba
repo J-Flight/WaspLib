@@ -255,7 +255,7 @@ begin
   b.X2 := b.X1 + Self.InputLine.Width div 4;
   b.Y2 := Self.InputLine.Y2;
 
-  Result := Target.CountColor($FFFFFF, 0, b) > 0;
+  Result := Target.HasColor($FFFFFF, 0, 1, b);
 end;
 
 
@@ -409,6 +409,50 @@ begin
 end;
 
 
+function TRSChat._GetMessage(line: Integer): String;
+const
+  STATIC_OFFSET: Integer = 2;
+var
+  b: TBox;
+  tpa: TPointArray;
+  colors: TColorArray;
+begin
+  with Self.MessageLines[line] do
+    b := [X1, Y1-STATIC_OFFSET, X2, Y2];
+
+  //Find chatbox_bg_colors.txt has the colors used
+  tpa := Target.FindColor([$6593AC, 3.329, EColorSpace.HSL, [2.063, 0.536, 0.402]], b).Invert();
+  colors := Target.GetColors(tpa).Unique();
+  Exit(OCR.Recognize(b, RSFonts.PLAIN_12, colors, 0));
+end;
+
+function TRSChat._GetTransparentMessage(line: Integer): String;
+const
+  STATIC_OFFSET: Integer = 2;
+var
+  b: TBox;
+  img: TImage;
+  tpa: TPointArray;
+begin
+  with Self.MessageLines[line] do
+    b := [X1, Y1-STATIC_OFFSET, X2, Y2];
+
+  img := Target.GetImage(b);
+  // First shadow from above line draws over our line.
+  // Mark the shadow as a match since OCR requires 100% character match.
+  tpa := img.FindColor($000000, 0, [0, STATIC_OFFSET, img.Width, STATIC_OFFSET]);
+  img.DrawColor := $FFFFFF;
+  img.DrawTPA(tpa);
+
+  // Now find shadows, offset by -1,-1 to find colors of text
+  tpa := img.FindColor(0, 0, [1, 1, img.Width, img.Height]);
+  tpa := tpa.Offset([-1,-1]).ExcludePoints(tpa);
+  img.ReplaceColorBinary(False, img.GetColors(tpa).Unique(), 0);
+
+  Result := OCR.Engine.Recognize(img, RSFonts.PLAIN_12, [0,0]);
+end;
+
+
 (*
 ## Chat.GetMessage
 ```pascal
@@ -424,39 +468,11 @@ WriteLn Chat.GetMessage(5);
 Credits: Heavily based on Olly's solution for this on his 2.0 library.
 *)
 function TRSChat.GetMessage(line: Integer): String;
-const
-  //Find chatbox_bg_colors.txt has the colors used
-  BG_COLOR: TColorTolerance = [$6593AC, 3.329, EColorSpace.HSL, [2.063, 0.536, 0.402]];
-  STATIC_OFFSET: Integer = 2;
-var
-  b: TBox;
-  img: TImage;
-  tpa: TPointArray;
-  colors: TColorArray;
 begin
-  with Self.MessageLines[line] do
-    b := [X1, Y1-STATIC_OFFSET, X2, Y2];
-
   if not Self.IsTransparent() then
-  begin
-    tpa := Target.FindColor(BG_COLOR, b).Invert();
-    colors := Target.GetColors(tpa).Unique();
-    Exit(OCR.Recognize(b, RSFonts.PLAIN_12, colors, 0));
-  end;
+    Exit(Self._GetMessage(line));
 
-  img := Target.GetImage(b);
-  // First shadow from above line draws over our line.
-  // Mark the shadow as a match since OCR requires 100% character match.
-  tpa := img.FindColor($000000, 0, [0, STATIC_OFFSET, img.Width, STATIC_OFFSET]);
-  img.DrawColor := $FFFFFF;
-  img.DrawTPA(tpa);
-
-  // Now find shadows, offset by -1,-1 to find colors of text
-  tpa := img.FindColor(0, 0, [1, 1, img.Width, img.Height]);
-  tpa := tpa.Offset([-1,-1]).ExcludePoints(tpa);
-  img.ReplaceColorBinary(False, img.GetColors(tpa).Unique(), 0);
-
-  Result := OCR.Engine.Recognize(img, RSFonts.PLAIN_12, [0,0]);
+  Result := Self._GetTransparentMessage(line);
 end;
 
 (*
@@ -552,9 +568,25 @@ var
   i: Integer;
   msg: String;
 begin
+  if Self.IsTransparent() then
+  begin
+    for i := 0 to High(Self.MessageLines) do
+    begin
+      msg := Self._GetTransparentMessage(i);
+      if msg <> '' then
+      begin
+        if Result <> '' then
+          Result += LINE_SEP;
+        Result += msg;
+      end;
+    end;
+
+    Exit;
+  end;
+
   for i := 0 to High(Self.MessageLines) do
   begin
-    msg := Self.GetMessage(i);
+    msg := Self._GetMessage(i);
     if msg <> '' then
     begin
       if Result <> '' then
