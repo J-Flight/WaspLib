@@ -41,10 +41,10 @@ begin
   Self.Bounds.X2 := bounds.X2 - 50;
   Self.Bounds.Y2 := Self.Bounds.Y1 + 17;
 
-  Self.CloseButton.X1 := bounds.X2-27;
-  Self.CloseButton.Y1 := bounds.Y1+8;
-  Self.CloseButton.X2 := bounds.X2-7;
-  Self.CloseButton.Y2 := bounds.Y1+28;
+  Self.CloseButton.X1 := bounds.X2-28;
+  Self.CloseButton.Y1 := bounds.Y1+7;
+  Self.CloseButton.X2 := bounds.X2-6;
+  Self.CloseButton.Y2 := bounds.Y1+29;
 
   Self.TitleColor := RSFonts.ORANGE;
 
