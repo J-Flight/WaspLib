@@ -1,0 +1,194 @@
+(*
+# Chat Listener
+The {ref}`Chat Listener` is a tool that allows you to listen for chat messages
+and run an `OnMessage` callback which should be thread safe.
+*)
+{$DEFINE WL_CHAT_LISTENER_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
+
+type
+  TChatListener = record
+    OCR: TOCR;
+    MessageLines: TBoxArray;
+    InputLine: TBox;
+    LastMessages: TStringArray;
+    OnMessage: array of procedure (const sender: TStringArray) of object;
+    Interval: Integer;
+  end;
+
+procedure TChatListener.Setup();
+begin
+  Self.MessageLines := Chat.MessageLines.Copy();
+  Self.InputLine := Chat.InputLine;
+
+  SetLength(Self.LastMessages, Length(Self.MessageLines));
+
+  if Self.Interval <= 0 then
+    Self.Interval := 300;
+end;
+
+(*
+## ChatListener.IsTransparent
+```pascal
+function TChatListener.IsTransparent(): Boolean;
+```
+Identical to {ref}`Chat.IsTransparent`.
+Returns true if the {ref}`Chat` box is in transparent mode.
+
+Example:
+```pascal
+WriteLn ChatListener.IsTransparent();
+```
+*)
+function TChatListener.IsTransparent(): Boolean;
+var
+  b: TBox;
+begin
+  b.X1 := Self.InputLine.X1;
+  b.Y1 := Self.InputLine.Y1;
+  b.X2 := b.X1 + Self.InputLine.Width div 4;
+  b.Y2 := Self.InputLine.Y2;
+
+  Result := Target.CountColor($FFFFFF, 0, b) > 0;
+end;
+
+(*
+## ChatListener.GetMessage
+```pascal
+function TChatListener.GetMessage(isTransparent: Boolean; line: Integer): String;
+```
+Almost identical to `Chat.GetMessage`
+Gets the message on the last `Chat` `line`.
+
+Example:
+```pascal
+WriteLn ChatListener.GetMessage(ChatListener.IsTransparent(), 5);
+```
+*)
+function TChatListener.GetMessage(isTransparent: Boolean; line: Integer): String;
+const
+  //chatbox_bg_colors.txt file has the colors used to generate this TColorSpace
+  BG_COLOR: TColorTolerance = [$6593AC, 3.329, EColorSpace.HSL, [2.063, 0.536, 0.402]];
+  STATIC_OFFSET: Integer = 2;
+var
+  b: TBox;
+  img: TImage;
+  tpa: TPointArray;
+  colors: TColorArray;
+begin
+  with Self.MessageLines[line] do
+    b := [X1, Y1-STATIC_OFFSET, X2, Y2];
+
+  if not isTransparent then
+  begin
+    tpa := Target.FindColor(BG_COLOR, b).Invert();
+    colors := Target.GetColors(tpa).Unique();
+    Exit(Self.OCR.Recognize(b, RSFonts.PLAIN_12, colors, 0));
+  end;
+
+  img := Target.GetImage(b);
+  // First shadow from above line draws over our line.
+  // Mark the shadow as a match since OCR requires 100% character match.
+  tpa := img.FindColor($000000, 0, [0, STATIC_OFFSET, img.Width, STATIC_OFFSET]);
+  img.DrawColor := $FFFFFF;
+  img.DrawTPA(tpa);
+
+  // Now find shadows, offset by -1,-1 to find colors of text
+  tpa := img.FindColor(0, 0, [1, 1, img.Width, img.Height]);
+  tpa := tpa.Offset([-1,-1]).ExcludePoints(tpa);
+  img.ReplaceColorBinary(False, img.GetColors(tpa).Unique(), 0);
+
+  Result := Self.OCR.Engine.Recognize(img, RSFonts.PLAIN_12, [0,0]);
+end;
+
+(*
+## ChatListener.HasNewMessages
+```pascal
+function TChatListener.HasNewMessages(): Boolean;
+```
+Returns true if there's been new messages.
+
+Example:
+```pascal
+WriteLn ChatListener.HasNewMessages();
+```
+*)
+function TChatListener.HasNewMessages(): Boolean;
+var
+  isTransparent: Boolean;
+  i: Integer;
+  msgs: TStringArray;
+begin
+  isTransparent := Self.IsTransparent();
+
+  SetLength(msgs, Length(Self.MessageLines));
+
+  for i := 0 to High(Self.MessageLines) do
+    msgs[i] := Self.GetMessage(isTransparent, i);
+
+  Result := not msgs.Equals(Self.LastMessages);
+
+  if Result then
+  begin
+    Self.LastMessages := msgs;
+    for i := 0 to High(Self.OnMessage) do
+      Self.OnMessage[i](msgs);
+  end;
+end;
+
+(*
+## ChatListener.Start
+```pascal
+procedure TChatListener.Start();
+```
+Starts `Chat Listener` in the current thread.
+
+Keep in mind that if you run this on the main thread you will be stuck on an
+infinite loop, use {ref}`ChatListener.StartInThread` instead.
+
+Example:
+```pascal
+ChatListener.Start();
+```
+*)
+procedure TChatListener.Start();
+begin
+  if Self.MessageLines = [] then
+    Self.Setup();
+
+  WriteLn GetDebugLn('ChatListener', 'Listening to new chat messages');
+  while True do
+  begin
+    Self.HasNewMessages();
+    Sleep(Self.Interval);
+  end;
+end;
+
+(*
+## ChatListener.StartInThread
+```pascal
+procedure TChatListener.StartInThread(interval: Integer = 300);
+```
+Starts `Chat Listener` in a separate thread.
+
+Example:
+```pascal
+ChatListener.StartInThread();
+```
+*)
+procedure TChatListener.StartInThread(interval: Integer = 300);
+var
+  thread: TThread;
+begin
+  Self.Interval := interval;
+  Self.Setup();
+  thread := TThread.Create(@Self.Start);
+  AddOnTerminate(thread.Free);
+end;
+
+var
+(*
+## ChatListener variable
+Global {ref}`TChatListener` variable.
+*)
+  ChatListener: TChatListener;
