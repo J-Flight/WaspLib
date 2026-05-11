@@ -42,10 +42,13 @@ Enum that represent the state of the popout panel on the official client.
 ## TRSClient
 Record representing the RuneScape client ({ref}`RSClient`.
 *)
+  PRSClient = ^TRSClient;
+
   TRSClient = record
     Client: ERSClient;
     Mode: ERSMode;
     Canvas: TExternalCanvas;
+    OnLogin: array of procedure (sender: PRSClient; mode: ERSMode) of object;
   end;
 
 (*
@@ -306,8 +309,17 @@ WriteLn RSClient.IsLoggedIn();
 ```
 *)
 function TRSClient.IsLoggedIn(): Boolean;
+var
+  i: Integer;
+  mode: ERSMode;
 begin
-  Result := Self.GetMode() <> ERSMode.UNKNOWN;
+  mode := Self.GetMode();
+  Result := mode <> ERSMode.UNKNOWN;
+  if not Result then
+    Exit;
+
+  for i := 0 to High(Self.OnLogin) do
+    Self.OnLogin[i](@Self, mode);
 end;
 
 (*

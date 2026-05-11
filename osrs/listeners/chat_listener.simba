@@ -21,7 +21,7 @@ type
     MessageLines: TBoxArray;
     Bounds, NameBox: TBox;
     LastMessages: TStringArray;
-    OnMessage: array of procedure (const sender: TStringArray) of object;
+    OnMessage: array of procedure (const msgs: TStringArray) of object;
     Interval: Integer;
     Thread: TThread;
     Running: Boolean;
@@ -85,7 +85,6 @@ begin
   img.DrawTPA(tpa.Invert());
 
   Result := Self.Engine.Recognize(img, RSFonts.PLAIN_12);
-  WriteLn Result;
 end;
 
 (*

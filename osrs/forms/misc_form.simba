@@ -54,6 +54,7 @@ begin
 
   tab := pageControl.AddTabEx('LLM Chat');
   LLMForm.Setup(tab);
+  tab.Enabled := False;
 
-  pageControl.ActiveTabIndex := 2;
+  pageControl.ActiveTabIndex := 0;
 end;
