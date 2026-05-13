@@ -43,7 +43,8 @@ Enum representing the 4 available minimap orbs.
   end;
 
 (*
-## TRSMinimap
+(TRSMinimap)=
+## TRSMinimap type
 Main record used to interact with the {ref}`Minimap`.
 *)
   TRSMinimap = record

@@ -19,8 +19,6 @@ Core record for `Interfaces` with a lot of interface coordinate data.
     const BORDER: TColor = $010000;
   end;
 
-  PRSInterface = ^TRSInterface;
-
 type
   TRSInterfaceTitle = record
     Bounds, CloseButton: TBox;
